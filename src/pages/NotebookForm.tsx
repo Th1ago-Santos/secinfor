@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
+import { useSections } from '@/hooks/useSections';
 import { z } from 'zod';
 
 const notebookSchema = z.object({
@@ -18,18 +20,28 @@ const notebookSchema = z.object({
   militar: z.string().trim().min(1, 'Militar é obrigatório').max(200),
 });
 
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 export default function NotebookForm() {
   const { id } = useParams();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [modelo, setModelo] = useState('');
   const [patrimonio, setPatrimonio] = useState('');
   const [secao, setSecao] = useState('');
   const [militar, setMilitar] = useState('');
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [existingFotoUrl, setExistingFotoUrl] = useState<string | null>(null);
+  const [removeFoto, setRemoveFoto] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(isEdit);
+
+  const { sections, loading: loadingSections } = useSections();
 
   useEffect(() => {
     if (isEdit) {
@@ -42,11 +54,63 @@ export default function NotebookForm() {
           setPatrimonio(data.patrimonio);
           setSecao(data.secao);
           setMilitar(data.militar);
+          if ((data as any).foto_url) {
+            setExistingFotoUrl((data as any).foto_url);
+          }
         }
         setLoadingData(false);
       });
     }
   }, [id, isEdit, navigate]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setError('Formato inválido. Aceitos: JPG, PNG, WebP.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Arquivo muito grande. Máximo: 5 MB.');
+      return;
+    }
+
+    setError('');
+    setFotoFile(file);
+    setRemoveFoto(false);
+    const reader = new FileReader();
+    reader.onload = () => setFotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const clearFoto = () => {
+    setFotoFile(null);
+    setFotoPreview(null);
+    setRemoveFoto(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const uploadPhoto = async (notebookId: string): Promise<string | null> => {
+    if (!fotoFile) return null;
+    const ext = fotoFile.name.split('.').pop();
+    const path = `${notebookId}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from('notebook-photos')
+      .upload(path, fotoFile, { upsert: true });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('notebook-photos')
+      .getPublicUrl(path);
+
+    return data.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,36 +125,51 @@ export default function NotebookForm() {
     setSaving(true);
     const values = result.data;
 
-    if (isEdit) {
-      const { error } = await supabase.from('notebooks').update(values).eq('id', id);
-      if (error) {
-        if (error.code === '23505') {
-          setError('Já existe um item com este número de patrimônio.');
+    try {
+      if (isEdit) {
+        let fotoUrl = existingFotoUrl;
+        if (fotoFile) {
+          fotoUrl = await uploadPhoto(id!);
+        } else if (removeFoto) {
+          fotoUrl = null;
+        }
+
+        const { error } = await supabase.from('notebooks').update({
+          ...values,
+          foto_url: fotoUrl,
+        } as any).eq('id', id);
+
+        if (error) {
+          setError(error.code === '23505' ? 'Já existe um item com este número de patrimônio.' : 'Erro ao atualizar item.');
         } else {
-          setError('Erro ao atualizar item.');
+          toast.success('Item atualizado com sucesso.');
+          navigate('/');
         }
       } else {
-        toast.success('Item atualizado com sucesso.');
-        navigate('/');
-      }
-    } else {
-      const { error } = await supabase.from('notebooks').insert([{
-        modelo: values.modelo,
-        patrimonio: values.patrimonio,
-        secao: values.secao,
-        militar: values.militar,
-      }]);
-      if (error) {
-        if (error.code === '23505') {
-          setError('Já existe um item com este número de patrimônio.');
-        } else {
-          setError('Erro ao cadastrar item.');
+        const { data: inserted, error } = await supabase.from('notebooks').insert([{
+          modelo: values.modelo,
+          patrimonio: values.patrimonio,
+          secao: values.secao,
+          militar: values.militar,
+        }] as any).select().single();
+
+        if (error) {
+          setError(error.code === '23505' ? 'Já existe um item com este número de patrimônio.' : 'Erro ao cadastrar item.');
+        } else if (inserted) {
+          if (fotoFile) {
+            const fotoUrl = await uploadPhoto((inserted as any).id);
+            if (fotoUrl) {
+              await supabase.from('notebooks').update({ foto_url: fotoUrl } as any).eq('id', (inserted as any).id);
+            }
+          }
+          toast.success('Item cadastrado com sucesso.');
+          navigate('/');
         }
-      } else {
-        toast.success('Item cadastrado com sucesso.');
-        navigate('/');
       }
+    } catch {
+      setError('Erro inesperado ao salvar.');
     }
+
     setSaving(false);
   };
 
@@ -104,6 +183,8 @@ export default function NotebookForm() {
       </div>
     );
   }
+
+  const currentPreview = fotoPreview || (!removeFoto ? existingFotoUrl : null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,13 +232,20 @@ export default function NotebookForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="secao">Seção *</Label>
-                <Input
-                  id="secao"
-                  placeholder="Ex: S2, S3, Comunicações"
-                  value={secao}
-                  onChange={(e) => setSecao(e.target.value)}
-                  required
-                />
+                <Select value={secao} onValueChange={setSecao}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a seção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingSections ? (
+                      <SelectItem value="_loading" disabled>Carregando...</SelectItem>
+                    ) : (
+                      sections.map((s) => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -169,6 +257,36 @@ export default function NotebookForm() {
                   onChange={(e) => setMilitar(e.target.value)}
                   required
                 />
+              </div>
+
+              {/* Foto upload */}
+              <div className="space-y-2">
+                <Label>Foto do Notebook (opcional)</Label>
+                <div className="flex items-center gap-3">
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="h-4 w-4 mr-1" />
+                    {currentPreview ? 'Trocar foto' : 'Anexar foto'}
+                  </Button>
+                  {currentPreview && (
+                    <Button type="button" variant="ghost" size="sm" onClick={clearFoto} className="text-destructive">
+                      <X className="h-4 w-4 mr-1" />
+                      Remover
+                    </Button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Máximo 5 MB.</p>
+                {currentPreview && (
+                  <div className="mt-2 rounded-md border overflow-hidden w-48">
+                    <img src={currentPreview} alt="Preview" className="w-full h-auto object-cover" />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">

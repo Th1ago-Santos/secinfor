@@ -7,21 +7,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Search, Monitor } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Pencil, Trash2, Search, Monitor, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
+import { useSections } from '@/hooks/useSections';
 import type { Database } from '@/integrations/supabase/types';
 
-type Notebook = Database['public']['Tables']['notebooks']['Row'];
+type Notebook = Database['public']['Tables']['notebooks']['Row'] & { foto_url?: string | null };
 
 export default function Index() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [secoes, setSecoes] = useState<string[]>([]);
   const [filterSecao, setFilterSecao] = useState('all');
   const [searchPatrimonio, setSearchPatrimonio] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const navigate = useNavigate();
+  const { sections } = useSections();
 
   const fetchNotebooks = async () => {
     setLoading(true);
@@ -38,22 +41,10 @@ export default function Index() {
     if (error) {
       toast.error('Erro ao carregar dados.');
     } else {
-      setNotebooks(data || []);
+      setNotebooks((data as Notebook[]) || []);
     }
     setLoading(false);
   };
-
-  const fetchSecoes = async () => {
-    const { data } = await supabase.from('notebooks').select('secao');
-    if (data) {
-      const unique = [...new Set(data.map((d) => d.secao))].sort();
-      setSecoes(unique);
-    }
-  };
-
-  useEffect(() => {
-    fetchSecoes();
-  }, []);
 
   useEffect(() => {
     fetchNotebooks();
@@ -67,7 +58,6 @@ export default function Index() {
     } else {
       toast.success('Item excluído com sucesso.');
       fetchNotebooks();
-      fetchSecoes();
     }
     setDeleteId(null);
   };
@@ -102,13 +92,13 @@ export default function Index() {
                 </div>
               </div>
               <Select value={filterSecao} onValueChange={setFilterSecao}>
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[220px]">
                   <SelectValue placeholder="Filtrar por seção" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as seções</SelectItem>
-                  {secoes.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  {sections.map((s) => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -130,6 +120,7 @@ export default function Index() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold w-12">Foto</TableHead>
                       <TableHead className="font-semibold">Patrimônio</TableHead>
                       <TableHead className="font-semibold">Modelo</TableHead>
                       <TableHead className="font-semibold">Seção</TableHead>
@@ -140,27 +131,33 @@ export default function Index() {
                   <TableBody>
                     {notebooks.map((nb) => (
                       <TableRow key={nb.id} className="hover:bg-muted/30">
+                        <TableCell>
+                          {nb.foto_url ? (
+                            <img
+                              src={nb.foto_url}
+                              alt="Foto"
+                              className="h-8 w-8 rounded object-cover cursor-pointer"
+                              onClick={() => setViewItem(nb)}
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                              <Monitor className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="font-mono font-medium">{nb.patrimonio}</TableCell>
                         <TableCell>{nb.modelo}</TableCell>
                         <TableCell>{nb.secao}</TableCell>
                         <TableCell>{nb.militar}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => navigate(`/itens/${nb.id}/editar`)}
-                              title="Editar"
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar">
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteId(nb.id)}
-                              title="Excluir"
-                              className="text-destructive hover:text-destructive"
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="text-destructive hover:text-destructive">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -174,6 +171,50 @@ export default function Index() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Modal de visualização rápida */}
+      <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Notebook</DialogTitle>
+          </DialogHeader>
+          {viewItem && (
+            <div className="space-y-4">
+              {viewItem.foto_url && (
+                <div className="rounded-lg overflow-hidden border">
+                  <img src={viewItem.foto_url} alt="Foto do notebook" className="w-full h-auto max-h-64 object-contain bg-muted" />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs">Patrimônio</p>
+                  <p className="font-mono font-semibold">{viewItem.patrimonio}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Modelo</p>
+                  <p className="font-semibold">{viewItem.modelo}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Seção</p>
+                  <p className="font-semibold">{viewItem.secao}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Militar</p>
+                  <p className="font-semibold">{viewItem.militar}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Criado em</p>
+                  <p className="text-xs">{new Date(viewItem.created_at).toLocaleString('pt-BR')}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Atualizado em</p>
+                  <p className="text-xs">{new Date(viewItem.updated_at).toLocaleString('pt-BR')}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Diálogo de confirmação de exclusão */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
