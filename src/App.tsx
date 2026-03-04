@@ -10,6 +10,9 @@ import Login from "./pages/Login";
 import NotebookForm from "./pages/NotebookForm";
 import Sections from "./pages/Sections";
 import PrintView from "./pages/PrintView";
+import Materials from "./pages/Materials";
+import MaterialForm from "./pages/MaterialForm";
+import MaterialsPrintView from "./pages/MaterialsPrintView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +29,10 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/itens/novo" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
             <Route path="/itens/:id/editar" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
+            <Route path="/materiais" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
+            <Route path="/materiais/novo" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+            <Route path="/materiais/:id/editar" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+            <Route path="/materiais/impressao" element={<ProtectedRoute><MaterialsPrintView /></ProtectedRoute>} />
             <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
             <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

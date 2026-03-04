@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LogOut, Monitor, Settings, Printer } from 'lucide-react';
+import { LogOut, Monitor, Settings, Printer, Package } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -16,6 +16,7 @@ export default function AppHeader() {
 
   const navItems = [
     { label: 'Notebooks', path: '/' },
+    { label: 'Material Carga', path: '/materiais', icon: Package },
     { label: 'Seções', path: '/secoes', icon: Settings },
     { label: 'Impressão', path: '/impressao', icon: Printer },
   ];

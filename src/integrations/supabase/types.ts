@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      materials: {
+        Row: {
+          codigo_material: string
+          created_at: string
+          id: string
+          nome: string
+          numero_ficha: string
+          patrimonio: string
+          updated_at: string
+        }
+        Insert: {
+          codigo_material: string
+          created_at?: string
+          id?: string
+          nome: string
+          numero_ficha: string
+          patrimonio: string
+          updated_at?: string
+        }
+        Update: {
+          codigo_material?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          numero_ficha?: string
+          patrimonio?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notebooks: {
         Row: {
           created_at: string
