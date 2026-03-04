@@ -17,6 +17,7 @@ export type Database = {
       notebooks: {
         Row: {
           created_at: string
+          foto_url: string | null
           id: string
           militar: string
           modelo: string
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          foto_url?: string | null
           id?: string
           militar: string
           modelo: string
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          foto_url?: string | null
           id?: string
           militar?: string
           modelo?: string
@@ -65,6 +68,24 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sections: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }

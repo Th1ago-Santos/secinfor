@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotebookForm from "./pages/NotebookForm";
+import Sections from "./pages/Sections";
+import PrintView from "./pages/PrintView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/itens/novo" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
             <Route path="/itens/:id/editar" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
+            <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
+            <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
