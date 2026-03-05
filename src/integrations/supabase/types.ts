@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      inventory_items: {
+        Row: {
+          conferido_em: string
+          created_at: string
+          id: string
+          item_id: string | null
+          item_tipo: string | null
+          patrimonio: string
+          session_id: string
+          status: string
+          usuario_id: string
+        }
+        Insert: {
+          conferido_em?: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_tipo?: string | null
+          patrimonio: string
+          session_id: string
+          status?: string
+          usuario_id: string
+        }
+        Update: {
+          conferido_em?: string
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_tipo?: string | null
+          patrimonio?: string
+          session_id?: string
+          status?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_sessions: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          secao_alvo: string | null
+          status: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          secao_alvo?: string | null
+          status?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          secao_alvo?: string | null
+          status?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           codigo_material: string
@@ -44,35 +118,95 @@ export type Database = {
         }
         Relationships: []
       }
+      movements: {
+        Row: {
+          created_at: string
+          data_hora: string
+          id: string
+          item_id: string
+          item_tipo: string
+          observacao: string | null
+          responsavel_anterior: string | null
+          responsavel_novo: string | null
+          secao_destino: string | null
+          secao_origem: string | null
+          tipo_evento: string
+          usuario_sistema: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_hora?: string
+          id?: string
+          item_id: string
+          item_tipo: string
+          observacao?: string | null
+          responsavel_anterior?: string | null
+          responsavel_novo?: string | null
+          secao_destino?: string | null
+          secao_origem?: string | null
+          tipo_evento: string
+          usuario_sistema?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_hora?: string
+          id?: string
+          item_id?: string
+          item_tipo?: string
+          observacao?: string | null
+          responsavel_anterior?: string | null
+          responsavel_novo?: string | null
+          secao_destino?: string | null
+          secao_origem?: string | null
+          tipo_evento?: string
+          usuario_sistema?: string | null
+        }
+        Relationships: []
+      }
       notebooks: {
         Row: {
           created_at: string
+          data_entrada_manutencao: string | null
+          data_saida_manutencao: string | null
           foto_url: string | null
           id: string
           militar: string
           modelo: string
+          motivo_manutencao: string | null
+          observacoes_manutencao: string | null
           patrimonio: string
           secao: string
+          status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          data_entrada_manutencao?: string | null
+          data_saida_manutencao?: string | null
           foto_url?: string | null
           id?: string
           militar: string
           modelo: string
+          motivo_manutencao?: string | null
+          observacoes_manutencao?: string | null
           patrimonio: string
           secao: string
+          status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          data_entrada_manutencao?: string | null
+          data_saida_manutencao?: string | null
           foto_url?: string | null
           id?: string
           militar?: string
           modelo?: string
+          motivo_manutencao?: string | null
+          observacoes_manutencao?: string | null
           patrimonio?: string
           secao?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
