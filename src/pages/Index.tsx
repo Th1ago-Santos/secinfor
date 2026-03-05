@@ -8,59 +8,69 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Search, Monitor, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Pencil, Trash2, Search, Monitor, Eye, History, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
 import { useSections } from '@/hooks/useSections';
-import type { Database } from '@/integrations/supabase/types';
+import { QRCodeSVG } from 'qrcode.react';
 
-type Notebook = Database['public']['Tables']['notebooks']['Row'] & { foto_url?: string | null };
+type Notebook = {
+  id: string;
+  patrimonio: string;
+  modelo: string;
+  secao: string;
+  militar: string;
+  status: string;
+  foto_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+const statusColor = (s: string) => {
+  if (s === 'Em uso') return 'default';
+  if (s === 'Em manutenção') return 'destructive';
+  if (s === 'Baixado') return 'secondary';
+  if (s === 'Em estoque') return 'outline';
+  return 'default';
+};
 
 export default function Index() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [filterSecao, setFilterSecao] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [searchPatrimonio, setSearchPatrimonio] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
+  const [qrItem, setQrItem] = useState<Notebook | null>(null);
   const navigate = useNavigate();
   const { sections } = useSections();
 
   const fetchNotebooks = async () => {
     setLoading(true);
     let query = supabase.from('notebooks').select('*').order('created_at', { ascending: false });
-
-    if (filterSecao && filterSecao !== 'all') {
-      query = query.eq('secao', filterSecao);
-    }
-    if (searchPatrimonio.trim()) {
-      query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
-    }
+    if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
+    if (filterStatus !== 'all') query = query.eq('status', filterStatus);
+    if (searchPatrimonio.trim()) query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
 
     const { data, error } = await query;
-    if (error) {
-      toast.error('Erro ao carregar dados.');
-    } else {
-      setNotebooks((data as Notebook[]) || []);
-    }
+    if (error) toast.error('Erro ao carregar dados.');
+    else setNotebooks((data as Notebook[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchNotebooks();
-  }, [filterSecao, searchPatrimonio]);
+  useEffect(() => { fetchNotebooks(); }, [filterSecao, filterStatus, searchPatrimonio]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from('notebooks').delete().eq('id', deleteId);
-    if (error) {
-      toast.error('Erro ao excluir item.');
-    } else {
-      toast.success('Item excluído com sucesso.');
-      fetchNotebooks();
-    }
+    if (error) toast.error('Erro ao excluir item.');
+    else { toast.success('Item excluído com sucesso.'); fetchNotebooks(); }
     setDeleteId(null);
   };
+
+  const baseUrl = window.location.origin;
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,33 +88,34 @@ export default function Index() {
             </Button>
           </CardHeader>
           <CardContent>
-            {/* Filtros */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por patrimônio..."
-                    value={searchPatrimonio}
-                    onChange={(e) => setSearchPatrimonio(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => setSearchPatrimonio(e.target.value)} className="pl-9" />
               </div>
               <Select value={filterSecao} onValueChange={setFilterSecao}>
-                <SelectTrigger className="w-full sm:w-[220px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Filtrar por seção" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as seções</SelectItem>
-                  {sections.map((s) => (
-                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                  ))}
+                  {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="Em uso">Em uso</SelectItem>
+                  <SelectItem value="Em manutenção">Em manutenção</SelectItem>
+                  <SelectItem value="Baixado">Baixado</SelectItem>
+                  <SelectItem value="Em estoque">Em estoque</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Tabela */}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -125,6 +136,7 @@ export default function Index() {
                       <TableHead className="font-semibold">Modelo</TableHead>
                       <TableHead className="font-semibold">Seção</TableHead>
                       <TableHead className="font-semibold">Militar</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
                       <TableHead className="font-semibold text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -133,12 +145,7 @@ export default function Index() {
                       <TableRow key={nb.id} className="hover:bg-muted/30">
                         <TableCell>
                           {nb.foto_url ? (
-                            <img
-                              src={nb.foto_url}
-                              alt="Foto"
-                              className="h-8 w-8 rounded object-cover cursor-pointer"
-                              onClick={() => setViewItem(nb)}
-                            />
+                            <img src={nb.foto_url} alt="Foto" className="h-8 w-8 rounded object-cover cursor-pointer" onClick={() => setViewItem(nb)} />
                           ) : (
                             <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
                               <Monitor className="h-4 w-4 text-muted-foreground" />
@@ -149,10 +156,19 @@ export default function Index() {
                         <TableCell>{nb.modelo}</TableCell>
                         <TableCell>{nb.secao}</TableCell>
                         <TableCell>{nb.militar}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusColor(nb.status) as any}>{nb.status}</Badge>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar">
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code">
+                              <QrCode className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico">
+                              <History className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar">
                               <Pencil className="h-4 w-4" />
@@ -172,7 +188,7 @@ export default function Index() {
         </Card>
       </main>
 
-      {/* Modal de visualização rápida */}
+      {/* View modal */}
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -182,7 +198,7 @@ export default function Index() {
             <div className="space-y-4">
               {viewItem.foto_url && (
                 <div className="rounded-lg overflow-hidden border">
-                  <img src={viewItem.foto_url} alt="Foto do notebook" className="w-full h-auto max-h-64 object-contain bg-muted" />
+                  <img src={viewItem.foto_url} alt="Foto" className="w-full h-auto max-h-64 object-contain bg-muted" />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -203,33 +219,50 @@ export default function Index() {
                   <p className="font-semibold">{viewItem.militar}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground text-xs">Status</p>
+                  <Badge variant={statusColor(viewItem.status) as any}>{viewItem.status}</Badge>
+                </div>
+                <div>
                   <p className="text-muted-foreground text-xs">Criado em</p>
                   <p className="text-xs">{new Date(viewItem.created_at).toLocaleString('pt-BR')}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Atualizado em</p>
-                  <p className="text-xs">{new Date(viewItem.updated_at).toLocaleString('pt-BR')}</p>
-                </div>
               </div>
+              <div className="flex justify-center pt-2">
+                <QRCodeSVG value={`${baseUrl}/consulta/${viewItem.patrimonio}`} size={120} />
+              </div>
+              <p className="text-xs text-center text-muted-foreground">Escaneie para consulta rápida</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de confirmação de exclusão */}
+      {/* QR Code modal */}
+      <Dialog open={!!qrItem} onOpenChange={() => setQrItem(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>QR Code — {qrItem?.patrimonio}</DialogTitle>
+          </DialogHeader>
+          {qrItem && (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <QRCodeSVG value={`${baseUrl}/consulta/${qrItem.patrimonio}`} size={200} />
+              <p className="text-sm text-muted-foreground text-center">
+                Escaneie para abrir a consulta rápida deste item
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este notebook? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir este notebook? Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
