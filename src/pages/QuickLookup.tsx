@@ -4,131 +4,217 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Monitor, History, Printer, ArrowLeft } from 'lucide-react';
+import { Monitor, History, Printer, ArrowLeft, CheckCircle, Wrench, Archive, Package as PackageIcon, XCircle, Laptop, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
-type Notebook = {
+type ItemData = {
   id: string;
   patrimonio: string;
-  modelo: string;
-  secao: string;
-  militar: string;
-  status: string;
-  foto_url: string | null;
-  created_at: string;
-  updated_at: string;
+  tipo: 'notebook' | 'material';
+  modelo?: string;
+  nome?: string;
+  secao?: string;
+  militar?: string;
+  status?: string;
+  foto_url?: string | null;
+  codigo_material?: string;
+  numero_ficha?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
-const statusColor = (s: string) => {
-  if (s === 'Em uso') return 'default';
-  if (s === 'Em manutenção') return 'destructive';
-  if (s === 'Baixado') return 'secondary';
-  if (s === 'Em estoque') return 'outline';
-  return 'default';
+const statusConfig: Record<string, { icon: React.ElementType; color: string; variant: string }> = {
+  'Em uso': { icon: CheckCircle, color: 'text-emerald-500', variant: 'default' },
+  'Em manutenção': { icon: Wrench, color: 'text-amber-500', variant: 'destructive' },
+  'Baixado': { icon: Archive, color: 'text-red-400', variant: 'secondary' },
+  'Em estoque': { icon: PackageIcon, color: 'text-blue-400', variant: 'outline' },
 };
 
 export default function QuickLookup() {
   const { patrimonio } = useParams<{ patrimonio: string }>();
   const navigate = useNavigate();
-  const [notebook, setNotebook] = useState<Notebook | null>(null);
+  const [item, setItem] = useState<ItemData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchItem = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      setNotFound(false);
+
+      // Search notebooks first
+      const { data: nb } = await supabase
         .from('notebooks')
         .select('*')
         .eq('patrimonio', patrimonio!)
         .single();
 
-      if (error || !data) {
-        setNotFound(true);
-      } else {
-        setNotebook(data as any);
+      if (nb) {
+        const d = nb as any;
+        setItem({
+          id: d.id,
+          patrimonio: d.patrimonio,
+          tipo: 'notebook',
+          modelo: d.modelo,
+          secao: d.secao,
+          militar: d.militar,
+          status: d.status,
+          foto_url: d.foto_url,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        });
+        setLoading(false);
+        return;
       }
+
+      // Search materials
+      const { data: mat } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('patrimonio', patrimonio!)
+        .single();
+
+      if (mat) {
+        const d = mat as any;
+        setItem({
+          id: d.id,
+          patrimonio: d.patrimonio,
+          tipo: 'material',
+          nome: d.nome,
+          codigo_material: d.codigo_material,
+          numero_ficha: d.numero_ficha,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        });
+        setLoading(false);
+        return;
+      }
+
+      setNotFound(true);
       setLoading(false);
     };
-    fetch();
+    fetchItem();
   }, [patrimonio]);
+
+  const baseUrl = window.location.origin;
+  const statusInfo = item?.status ? statusConfig[item.status] || statusConfig['Em uso'] : null;
+  const StatusIcon = statusInfo?.icon || CheckCircle;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Monitor className="h-5 w-5 text-primary" />
-            Consulta Rápida
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : notFound ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Monitor className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg font-medium">Item não encontrado</p>
-              <p className="text-sm">Patrimônio: {patrimonio}</p>
-            </div>
-          ) : notebook && (
-            <div className="space-y-4">
-              {notebook.foto_url && (
-                <div className="rounded-lg overflow-hidden border">
-                  <img src={notebook.foto_url} alt="Foto" className="w-full h-auto max-h-64 object-contain bg-muted" />
+      <div className="w-full max-w-md animate-in-page">
+        {loading ? (
+          <Card>
+            <CardContent className="flex justify-center py-16">
+              <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
+            </CardContent>
+          </Card>
+        ) : notFound ? (
+          <Card className="border-destructive/30">
+            <CardContent className="text-center py-12">
+              <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <XCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <p className="text-xl font-semibold mb-1">Item não encontrado</p>
+              <p className="text-sm text-muted-foreground mb-1">Patrimônio: <span className="font-mono font-medium">{patrimonio}</span></p>
+              <p className="text-xs text-muted-foreground">Este patrimônio não está cadastrado no sistema.</p>
+            </CardContent>
+          </Card>
+        ) : item && (
+          <Card className="overflow-hidden">
+            {/* Status banner */}
+            {item.tipo === 'notebook' && item.status && (
+              <div className={`px-4 py-2.5 flex items-center justify-center gap-2 text-sm font-medium ${
+                item.status === 'Em uso' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                item.status === 'Em manutenção' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                item.status === 'Baixado' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+              }`}>
+                <StatusIcon className="h-4 w-4" />
+                {item.status}
+              </div>
+            )}
+
+            <CardHeader className="text-center pb-3">
+              <CardTitle className="flex items-center justify-center gap-2 text-lg">
+                {item.tipo === 'notebook' ? <Laptop className="h-5 w-5 text-primary" /> : <PackageIcon className="h-5 w-5 text-primary" />}
+                {item.tipo === 'notebook' ? 'Notebook' : 'Material Carga'}
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {/* Photo */}
+              {item.foto_url && (
+                <div className="rounded-lg overflow-hidden border bg-muted">
+                  <img src={item.foto_url} alt="Foto" className="w-full h-auto max-h-56 object-contain" />
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs">Patrimônio</p>
-                  <p className="font-mono font-semibold">{notebook.patrimonio}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Modelo</p>
-                  <p className="font-semibold">{notebook.modelo}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Seção</p>
-                  <p className="font-semibold">{notebook.secao}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Militar</p>
-                  <p className="font-semibold">{notebook.militar}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-muted-foreground text-xs">Status</p>
-                  <Badge variant={statusColor(notebook.status) as any}>{notebook.status}</Badge>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Criado em</p>
-                  <p className="text-xs">{new Date(notebook.created_at).toLocaleString('pt-BR')}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Atualizado em</p>
-                  <p className="text-xs">{new Date(notebook.updated_at).toLocaleString('pt-BR')}</p>
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <InfoField label="Patrimônio" value={item.patrimonio} mono />
+                {item.tipo === 'notebook' && (
+                  <>
+                    <InfoField label="Modelo" value={item.modelo} />
+                    <InfoField label="Seção" value={item.secao} />
+                    <InfoField label="Militar" value={item.militar} />
+                  </>
+                )}
+                {item.tipo === 'material' && (
+                  <>
+                    <InfoField label="Nome" value={item.nome} />
+                    <InfoField label="Código" value={item.codigo_material} mono />
+                    <InfoField label="Nº Ficha" value={item.numero_ficha} mono />
+                  </>
+                )}
+                {item.created_at && (
+                  <InfoField label="Cadastrado em" value={new Date(item.created_at).toLocaleDateString('pt-BR')} />
+                )}
+                {item.updated_at && (
+                  <InfoField label="Atualizado em" value={new Date(item.updated_at).toLocaleDateString('pt-BR')} />
+                )}
+              </div>
+
+              {/* QR Code */}
+              <div className="flex justify-center pt-1">
+                <div className="p-3 bg-white rounded-lg">
+                  <QRCodeSVG value={`${baseUrl}/consulta/${item.patrimonio}`} size={100} />
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
-                <Button size="sm" variant="outline" onClick={() => navigate(`/notebooks/${notebook.id}/historico`)}>
-                  <History className="h-4 w-4 mr-1" />
-                  Histórico
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => window.print()}>
-                  <Printer className="h-4 w-4 mr-1" />
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                {item.tipo === 'notebook' && (
+                  <Button size="sm" variant="outline" className="flex-1 transition-hover" onClick={() => navigate(`/notebooks/${item.id}/historico`)}>
+                    <History className="h-4 w-4 mr-1.5" />
+                    Histórico
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="flex-1 transition-hover" onClick={() => window.print()}>
+                  <Printer className="h-4 w-4 mr-1.5" />
                   Imprimir
                 </Button>
               </div>
-            </div>
-          )}
-          <div className="mt-4 text-center">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Ir para o sistema
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="mt-4 text-center">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-hover">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Ir para o sistema
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoField({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
+  return (
+    <div>
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">{label}</p>
+      <p className={`text-sm font-semibold ${mono ? 'font-mono' : ''}`}>{value || '—'}</p>
     </div>
   );
 }

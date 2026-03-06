@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Monitor, Eye, History, QrCode } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop } from 'lucide-react';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
 import { useSections } from '@/hooks/useSections';
@@ -75,26 +76,27 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="container mx-auto py-6 px-4">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <main className="container mx-auto py-6 px-4 animate-in-page">
+        <Card className="animate-in-card">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4">
             <CardTitle className="flex items-center gap-2 text-xl">
-              <Monitor className="h-5 w-5 text-primary" />
+              <Laptop className="h-5 w-5 text-primary" />
               Notebooks Cadastrados
             </CardTitle>
-            <Button onClick={() => navigate('/itens/novo')}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button onClick={() => navigate('/itens/novo')} className="transition-hover">
+              <Plus className="h-4 w-4 mr-1.5" />
               Novo Notebook
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => setSearchPatrimonio(e.target.value)} className="pl-9" />
+                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => setSearchPatrimonio(e.target.value)} className="pl-9 h-9" />
               </div>
               <Select value={filterSecao} onValueChange={setFilterSecao}>
-                <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px] h-9">
                   <SelectValue placeholder="Filtrar por seção" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,7 +105,7 @@ export default function Index() {
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] h-9">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -117,63 +119,65 @@ export default function Index() {
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-md" />
+                ))}
               </div>
             ) : notebooks.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Monitor className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <div className="text-center py-16 text-muted-foreground animate-in-card">
+                <Laptop className="h-14 w-14 mx-auto mb-4 opacity-20" />
                 <p className="text-lg font-medium">Nenhum item encontrado</p>
-                <p className="text-sm">Cadastre um novo notebook ou altere os filtros.</p>
+                <p className="text-sm mt-1">Cadastre um novo notebook ou altere os filtros.</p>
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-lg border overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
                       <TableHead className="font-semibold w-12">Foto</TableHead>
                       <TableHead className="font-semibold">Patrimônio</TableHead>
                       <TableHead className="font-semibold">Modelo</TableHead>
-                      <TableHead className="font-semibold">Seção</TableHead>
-                      <TableHead className="font-semibold">Militar</TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell">Seção</TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell">Militar</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
                       <TableHead className="font-semibold text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {notebooks.map((nb) => (
-                      <TableRow key={nb.id} className="hover:bg-muted/30">
+                    {notebooks.map((nb, idx) => (
+                      <TableRow key={nb.id} className="hover:bg-muted/20 transition-hover" style={{ animationDelay: `${idx * 30}ms` }}>
                         <TableCell>
                           {nb.foto_url ? (
-                            <img src={nb.foto_url} alt="Foto" className="h-8 w-8 rounded object-cover cursor-pointer" onClick={() => setViewItem(nb)} />
+                            <img src={nb.foto_url} alt="Foto" className="h-9 w-9 rounded-md object-cover cursor-pointer border hover:scale-110 transition-transform duration-200" onClick={() => setViewItem(nb)} />
                           ) : (
-                            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                              <Monitor className="h-4 w-4 text-muted-foreground" />
+                            <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
+                              <Laptop className="h-4 w-4 text-muted-foreground" />
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono font-medium">{nb.patrimonio}</TableCell>
-                        <TableCell>{nb.modelo}</TableCell>
-                        <TableCell>{nb.secao}</TableCell>
-                        <TableCell>{nb.militar}</TableCell>
+                        <TableCell className="font-mono font-medium text-sm">{nb.patrimonio}</TableCell>
+                        <TableCell className="text-sm">{nb.modelo}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">{nb.secao}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">{nb.militar}</TableCell>
                         <TableCell>
-                          <Badge variant={statusColor(nb.status) as any}>{nb.status}</Badge>
+                          <Badge variant={statusColor(nb.status) as any} className="text-xs">{nb.status}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar">
+                          <div className="flex justify-end gap-0.5">
+                            <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 transition-hover hover:text-primary">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code">
+                            <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 transition-hover hover:text-primary">
                               <QrCode className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico">
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 transition-hover hover:text-primary hidden sm:flex">
                               <History className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar">
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar" className="h-8 w-8 transition-hover hover:text-primary">
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="text-destructive hover:text-destructive">
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="h-8 w-8 text-destructive hover:text-destructive transition-hover">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -184,6 +188,10 @@ export default function Index() {
                 </Table>
               </div>
             )}
+
+            {!loading && notebooks.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-3">{notebooks.length} registro(s) encontrado(s)</p>
+            )}
           </CardContent>
         </Card>
       </main>
@@ -192,45 +200,50 @@ export default function Index() {
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Detalhes do Notebook</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Laptop className="h-5 w-5 text-primary" />
+              Detalhes do Notebook
+            </DialogTitle>
           </DialogHeader>
           {viewItem && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in-card">
               {viewItem.foto_url && (
-                <div className="rounded-lg overflow-hidden border">
-                  <img src={viewItem.foto_url} alt="Foto" className="w-full h-auto max-h-64 object-contain bg-muted" />
+                <div className="rounded-lg overflow-hidden border bg-muted">
+                  <img src={viewItem.foto_url} alt="Foto" className="w-full h-auto max-h-56 object-contain" />
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-muted-foreground text-xs">Patrimônio</p>
-                  <p className="font-mono font-semibold">{viewItem.patrimonio}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Patrimônio</p>
+                  <p className="font-mono font-semibold text-sm">{viewItem.patrimonio}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Modelo</p>
-                  <p className="font-semibold">{viewItem.modelo}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Modelo</p>
+                  <p className="font-semibold text-sm">{viewItem.modelo}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Seção</p>
-                  <p className="font-semibold">{viewItem.secao}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Seção</p>
+                  <p className="font-semibold text-sm">{viewItem.secao}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Militar</p>
-                  <p className="font-semibold">{viewItem.militar}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Militar</p>
+                  <p className="font-semibold text-sm">{viewItem.militar}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Status</p>
-                  <Badge variant={statusColor(viewItem.status) as any}>{viewItem.status}</Badge>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Status</p>
+                  <Badge variant={statusColor(viewItem.status) as any} className="text-xs">{viewItem.status}</Badge>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs">Criado em</p>
-                  <p className="text-xs">{new Date(viewItem.created_at).toLocaleString('pt-BR')}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Atualizado</p>
+                  <p className="text-xs">{new Date(viewItem.updated_at).toLocaleString('pt-BR')}</p>
                 </div>
               </div>
               <div className="flex justify-center pt-2">
-                <QRCodeSVG value={`${baseUrl}/consulta/${viewItem.patrimonio}`} size={120} />
+                <div className="p-3 bg-white rounded-lg">
+                  <QRCodeSVG value={`${baseUrl}/consulta/${viewItem.patrimonio}`} size={110} />
+                </div>
               </div>
-              <p className="text-xs text-center text-muted-foreground">Escaneie para consulta rápida</p>
+              <p className="text-[11px] text-center text-muted-foreground">Escaneie para consulta rápida</p>
             </div>
           )}
         </DialogContent>
@@ -238,15 +251,17 @@ export default function Index() {
 
       {/* QR Code modal */}
       <Dialog open={!!qrItem} onOpenChange={() => setQrItem(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-xs">
           <DialogHeader>
-            <DialogTitle>QR Code — {qrItem?.patrimonio}</DialogTitle>
+            <DialogTitle className="text-center">QR Code — {qrItem?.patrimonio}</DialogTitle>
           </DialogHeader>
           {qrItem && (
-            <div className="flex flex-col items-center gap-4 py-4">
-              <QRCodeSVG value={`${baseUrl}/consulta/${qrItem.patrimonio}`} size={200} />
+            <div className="flex flex-col items-center gap-4 py-4 animate-in-card">
+              <div className="p-4 bg-white rounded-xl">
+                <QRCodeSVG value={`${baseUrl}/consulta/${qrItem.patrimonio}`} size={180} />
+              </div>
               <p className="text-sm text-muted-foreground text-center">
-                Escaneie para abrir a consulta rápida deste item
+                Escaneie para abrir a consulta rápida
               </p>
             </div>
           )}
