@@ -6,42 +6,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Printer, Search, Monitor, Package } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Printer, Search, Laptop, Package } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
 
-type Notebook = {
-  id: string;
-  patrimonio: string;
-  modelo: string;
-  secao: string;
-  militar: string;
-  status: string;
-  foto_url: string | null;
-};
-
-type Material = {
-  id: string;
-  patrimonio: string;
-  codigo_material: string;
-  numero_ficha: string;
-  nome: string;
-};
+type Notebook = { id: string; patrimonio: string; modelo: string; secao: string; militar: string; status: string; foto_url: string | null };
+type Material = { id: string; patrimonio: string; codigo_material: string; numero_ficha: string; nome: string };
 
 export default function PrintView() {
   const { sections } = useSections();
   const [tab, setTab] = useState('notebooks');
-
-  // Notebook filters
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [nbFilterSecao, setNbFilterSecao] = useState('all');
   const [nbFilterStatus, setNbFilterStatus] = useState('all');
   const [nbSearch, setNbSearch] = useState('');
   const [nbIncludeQR, setNbIncludeQR] = useState(false);
   const [nbLoading, setNbLoading] = useState(true);
-
-  // Material filters
   const [materials, setMaterials] = useState<Material[]>([]);
   const [matSearch, setMatSearch] = useState('');
   const [matLoading, setMatLoading] = useState(true);
@@ -75,12 +57,11 @@ export default function PrintView() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="container mx-auto py-6 px-4">
-        {/* Filters - no print */}
+      <main className="container mx-auto py-6 px-4 animate-in-page">
         <div className="no-print mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="animate-in-card">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-xl">
                 <Printer className="h-5 w-5 text-primary" />
                 Impressão de Relatórios
               </CardTitle>
@@ -88,29 +69,25 @@ export default function PrintView() {
             <CardContent>
               <Tabs value={tab} onValueChange={setTab}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="notebooks"><Monitor className="h-4 w-4 mr-1" />Notebooks</TabsTrigger>
-                  <TabsTrigger value="materials"><Package className="h-4 w-4 mr-1" />Material Carga</TabsTrigger>
+                  <TabsTrigger value="notebooks" className="transition-hover"><Laptop className="h-4 w-4 mr-1.5" />Notebooks</TabsTrigger>
+                  <TabsTrigger value="materials" className="transition-hover"><Package className="h-4 w-4 mr-1.5" />Material Carga</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="notebooks">
+                <TabsContent value="notebooks" className="animate-in-card">
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <div className="flex-1 relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Buscar por patrimônio..." value={nbSearch} onChange={(e) => setNbSearch(e.target.value)} className="pl-9" />
+                      <Input placeholder="Buscar por patrimônio..." value={nbSearch} onChange={(e) => setNbSearch(e.target.value)} className="pl-9 h-9" />
                     </div>
                     <Select value={nbFilterSecao} onValueChange={setNbFilterSecao}>
-                      <SelectTrigger className="w-full sm:w-[200px]">
-                        <SelectValue placeholder="Seção" />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue placeholder="Seção" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as seções</SelectItem>
                         {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                     <Select value={nbFilterStatus} onValueChange={setNbFilterStatus}>
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos os status</SelectItem>
                         <SelectItem value="Em uso">Em uso</SelectItem>
@@ -120,26 +97,26 @@ export default function PrintView() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex items-center gap-2">
                       <Checkbox id="include-qr" checked={nbIncludeQR} onCheckedChange={(v) => setNbIncludeQR(!!v)} />
-                      <label htmlFor="include-qr" className="text-sm">Incluir QR Code</label>
+                      <label htmlFor="include-qr" className="text-sm cursor-pointer">Incluir QR Code</label>
                     </div>
-                    <Button onClick={handlePrint} disabled={nbLoading || notebooks.length === 0}>
-                      <Printer className="h-4 w-4 mr-1" />Imprimir
+                    <Button onClick={handlePrint} disabled={nbLoading || notebooks.length === 0} className="transition-hover">
+                      <Printer className="h-4 w-4 mr-1.5" />Imprimir
                     </Button>
                     <span className="text-sm text-muted-foreground">{nbLoading ? 'Carregando...' : `${notebooks.length} registro(s)`}</span>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="materials">
+                <TabsContent value="materials" className="animate-in-card">
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <div className="flex-1 relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Buscar por nome, patrimônio ou código..." value={matSearch} onChange={(e) => setMatSearch(e.target.value)} className="pl-9" />
+                      <Input placeholder="Buscar por nome, patrimônio ou código..." value={matSearch} onChange={(e) => setMatSearch(e.target.value)} className="pl-9 h-9" />
                     </div>
-                    <Button onClick={handlePrint} disabled={matLoading || materials.length === 0}>
-                      <Printer className="h-4 w-4 mr-1" />Imprimir
+                    <Button onClick={handlePrint} disabled={matLoading || materials.length === 0} className="transition-hover">
+                      <Printer className="h-4 w-4 mr-1.5" />Imprimir
                     </Button>
                     <span className="text-sm text-muted-foreground">{matLoading ? 'Carregando...' : `${materials.length} registro(s)`}</span>
                   </div>
@@ -152,24 +129,16 @@ export default function PrintView() {
         {/* Print area */}
         <div className="print-area">
           <div className="hidden print:block mb-6 text-center border-b-2 border-foreground pb-4">
-            <h1 className="text-xl font-bold">
-              {tab === 'notebooks' ? 'CONTROLE DE PATRIMÔNIO — NOTEBOOKS' : 'MATERIAL CARGA DA SEÇÃO'}
-            </h1>
-            <p className="text-sm mt-1">
-              Data: {new Date().toLocaleDateString('pt-BR')} — Hora: {new Date().toLocaleTimeString('pt-BR')}
-            </p>
-            {tab === 'notebooks' && nbFilterSecao !== 'all' && (
-              <p className="text-sm font-semibold mt-1">Seção: {nbFilterSecao}</p>
-            )}
-            {tab === 'notebooks' && nbFilterStatus !== 'all' && (
-              <p className="text-sm font-semibold mt-1">Status: {nbFilterStatus}</p>
-            )}
+            <h1 className="text-xl font-bold">{tab === 'notebooks' ? 'CONTROLE DE PATRIMÔNIO — NOTEBOOKS' : 'MATERIAL CARGA DA SEÇÃO'}</h1>
+            <p className="text-sm mt-1">Data: {new Date().toLocaleDateString('pt-BR')} — Hora: {new Date().toLocaleTimeString('pt-BR')}</p>
+            {tab === 'notebooks' && nbFilterSecao !== 'all' && <p className="text-sm font-semibold mt-1">Seção: {nbFilterSecao}</p>}
+            {tab === 'notebooks' && nbFilterStatus !== 'all' && <p className="text-sm font-semibold mt-1">Status: {nbFilterStatus}</p>}
           </div>
 
           {tab === 'notebooks' && !nbLoading && notebooks.length > 0 && (
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-muted/50 print:bg-gray-200">
+                <tr className="bg-muted/40 print:bg-gray-200">
                   <th className="border px-3 py-2 text-left font-semibold">#</th>
                   <th className="border px-3 py-2 text-left font-semibold">Patrimônio</th>
                   <th className="border px-3 py-2 text-left font-semibold">Modelo</th>
@@ -181,18 +150,14 @@ export default function PrintView() {
               </thead>
               <tbody>
                 {notebooks.map((nb, i) => (
-                  <tr key={nb.id} className="even:bg-muted/20 print:even:bg-gray-50">
+                  <tr key={nb.id} className="even:bg-muted/15 print:even:bg-gray-50">
                     <td className="border px-3 py-1.5">{i + 1}</td>
                     <td className="border px-3 py-1.5 font-mono">{nb.patrimonio}</td>
                     <td className="border px-3 py-1.5">{nb.modelo}</td>
                     <td className="border px-3 py-1.5">{nb.secao}</td>
                     <td className="border px-3 py-1.5">{nb.militar}</td>
                     <td className="border px-3 py-1.5">{nb.status}</td>
-                    {nbIncludeQR && (
-                      <td className="border px-3 py-1.5">
-                        <QRCodeSVG value={`${baseUrl}/consulta/${nb.patrimonio}`} size={48} />
-                      </td>
-                    )}
+                    {nbIncludeQR && <td className="border px-3 py-1.5"><QRCodeSVG value={`${baseUrl}/consulta/${nb.patrimonio}`} size={48} /></td>}
                   </tr>
                 ))}
               </tbody>
@@ -202,7 +167,7 @@ export default function PrintView() {
           {tab === 'materials' && !matLoading && materials.length > 0 && (
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-muted/50 print:bg-gray-200">
+                <tr className="bg-muted/40 print:bg-gray-200">
                   <th className="border px-3 py-2 text-left font-semibold">#</th>
                   <th className="border px-3 py-2 text-left font-semibold">Patrimônio</th>
                   <th className="border px-3 py-2 text-left font-semibold">Código do Material</th>
@@ -212,7 +177,7 @@ export default function PrintView() {
               </thead>
               <tbody>
                 {materials.map((m, i) => (
-                  <tr key={m.id} className="even:bg-muted/20 print:even:bg-gray-50">
+                  <tr key={m.id} className="even:bg-muted/15 print:even:bg-gray-50">
                     <td className="border px-3 py-1.5">{i + 1}</td>
                     <td className="border px-3 py-1.5 font-mono">{m.patrimonio}</td>
                     <td className="border px-3 py-1.5 font-mono">{m.codigo_material}</td>

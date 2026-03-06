@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, History } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 
@@ -35,7 +36,6 @@ export default function MovementHistory() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch item info
       if (itemTipo === 'notebook') {
         const { data } = await supabase.from('notebooks').select('patrimonio, modelo').eq('id', id!).single();
         if (data) setItemName(`${(data as any).patrimonio} - ${(data as any).modelo}`);
@@ -43,15 +43,9 @@ export default function MovementHistory() {
         const { data } = await supabase.from('materials').select('patrimonio, nome').eq('id', id!).single();
         if (data) setItemName(`${(data as any).patrimonio} - ${(data as any).nome}`);
       }
-
-      // Fetch movements
       const { data: movs } = await supabase
-        .from('movements')
-        .select('*')
-        .eq('item_id', id!)
-        .eq('item_tipo', itemTipo)
+        .from('movements').select('*').eq('item_id', id!).eq('item_tipo', itemTipo)
         .order('data_hora', { ascending: false });
-
       setMovements((movs as Movement[]) || []);
       setLoading(false);
     };
@@ -71,58 +65,59 @@ export default function MovementHistory() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-4xl">
-        <Button variant="ghost" onClick={() => navigate(backPath)} className="mb-4">
+      <main className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
+        <Button variant="ghost" onClick={() => navigate(backPath)} className="mb-4 transition-hover">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="animate-in-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl">
               <History className="h-5 w-5 text-primary" />
               Histórico de Movimentações
             </CardTitle>
-            {itemName && <p className="text-sm text-muted-foreground mt-1">{itemName}</p>}
+            {itemName && <p className="text-sm text-muted-foreground mt-1 font-mono">{itemName}</p>}
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+              <div className="space-y-3">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}
               </div>
             ) : movements.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <History className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <div className="text-center py-16 text-muted-foreground animate-in-card">
+                <History className="h-14 w-14 mx-auto mb-4 opacity-20" />
                 <p className="text-lg font-medium">Nenhuma movimentação registrada</p>
+                <p className="text-sm mt-1">Alterações de seção, responsável ou status aparecerão aqui.</p>
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-lg border overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
                       <TableHead className="font-semibold">Data/Hora</TableHead>
                       <TableHead className="font-semibold">Evento</TableHead>
-                      <TableHead className="font-semibold">Seção Origem</TableHead>
-                      <TableHead className="font-semibold">Seção Destino</TableHead>
-                      <TableHead className="font-semibold">Resp. Anterior</TableHead>
-                      <TableHead className="font-semibold">Resp. Novo</TableHead>
-                      <TableHead className="font-semibold">Observação</TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell">Seção Origem</TableHead>
+                      <TableHead className="font-semibold hidden md:table-cell">Seção Destino</TableHead>
+                      <TableHead className="font-semibold hidden lg:table-cell">Resp. Anterior</TableHead>
+                      <TableHead className="font-semibold hidden lg:table-cell">Resp. Novo</TableHead>
+                      <TableHead className="font-semibold hidden sm:table-cell">Observação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {movements.map((m) => (
-                      <TableRow key={m.id}>
+                      <TableRow key={m.id} className="hover:bg-muted/20 transition-hover">
                         <TableCell className="text-xs whitespace-nowrap">
                           {new Date(m.data_hora).toLocaleString('pt-BR')}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={eventColor(m.tipo_evento) as any}>{m.tipo_evento}</Badge>
+                          <Badge variant={eventColor(m.tipo_evento) as any} className="text-xs">{m.tipo_evento}</Badge>
                         </TableCell>
-                        <TableCell>{m.secao_origem || '—'}</TableCell>
-                        <TableCell>{m.secao_destino || '—'}</TableCell>
-                        <TableCell>{m.responsavel_anterior || '—'}</TableCell>
-                        <TableCell>{m.responsavel_novo || '—'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{m.observacao || '—'}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">{m.secao_origem || '—'}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">{m.secao_destino || '—'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{m.responsavel_anterior || '—'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{m.responsavel_novo || '—'}</TableCell>
+                        <TableCell className="max-w-[180px] truncate text-sm hidden sm:table-cell">{m.observacao || '—'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
