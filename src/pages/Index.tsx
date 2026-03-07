@@ -37,8 +37,9 @@ const statusColor = (s: string) => {
 };
 
 export default function Index() {
+  const [searchParams] = useSearchParams();
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-  const [filterSecao, setFilterSecao] = useState('all');
+  const [filterSecao, setFilterSecao] = useState(searchParams.get('secao') || 'all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchPatrimonio, setSearchPatrimonio] = useState('');
   const [loading, setLoading] = useState(true);
