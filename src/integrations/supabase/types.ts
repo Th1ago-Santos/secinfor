@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          item_patrimonio: string | null
+          item_tipo: string | null
+          mensagem: string
+          nivel: string
+          resolvido_em: string | null
+          resolvido_por: string | null
+          secao: string | null
+          status: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_patrimonio?: string | null
+          item_tipo?: string | null
+          mensagem: string
+          nivel?: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          secao?: string | null
+          status?: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_patrimonio?: string | null
+          item_tipo?: string | null
+          mensagem?: string
+          nivel?: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          secao?: string | null
+          status?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           conferido_em: string
