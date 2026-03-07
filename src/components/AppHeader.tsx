@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogOut, Monitor, Settings, Printer, Package, Search, ClipboardCheck, Laptop, Menu, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LogOut, Monitor, Settings, Printer, Package, Search, ClipboardCheck, Laptop, Menu, X, BarChart3, ArrowRightLeft, Bell, Map } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -12,6 +14,12 @@ export default function AppHeader() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
+
+  useEffect(() => {
+    supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
+      .then(({ count }) => setAlertCount(count || 0));
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await signOut();
@@ -27,9 +35,12 @@ export default function AppHeader() {
   };
 
   const navItems = [
-    { label: 'Notebooks', path: '/', icon: Laptop },
+    { label: 'Dashboard', path: '/', icon: BarChart3 },
+    { label: 'Notebooks', path: '/notebooks', icon: Laptop },
     { label: 'Material Carga', path: '/materiais', icon: Package },
+    { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft },
     { label: 'Inventário', path: '/inventario', icon: ClipboardCheck },
+    { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map },
     { label: 'Seções', path: '/secoes', icon: Settings },
     { label: 'Impressão', path: '/impressao', icon: Printer },
   ];
@@ -73,21 +84,39 @@ export default function AppHeader() {
               variant="ghost"
               size="sm"
               onClick={() => navigate(item.path)}
-              className={`text-primary-foreground hover:bg-primary-foreground/10 transition-hover relative h-8 px-3 text-[13px] ${
+              className={`text-primary-foreground hover:bg-primary-foreground/10 transition-hover relative h-8 px-2.5 text-[12px] ${
                 isActive(item.path) ? 'bg-primary-foreground/15 font-semibold' : 'font-normal'
               }`}
             >
-              <item.icon className="h-4 w-4 mr-1.5" />
+              <item.icon className="h-3.5 w-3.5 mr-1" />
               {item.label}
               {isActive(item.path) && (
                 <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-foreground/60 rounded-full" />
               )}
             </Button>
           ))}
+
+          {/* Alerts bell */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/alertas')}
+            className={`text-primary-foreground hover:bg-primary-foreground/10 transition-hover h-8 w-8 relative ${
+              isActive('/alertas') ? 'bg-primary-foreground/15' : ''
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            {alertCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[9px] flex items-center justify-center">
+                {alertCount}
+              </Badge>
+            )}
+          </Button>
+
           <div className="w-px h-6 bg-primary-foreground/15 mx-1" />
           <ThemeToggle />
           {user?.email && (
-            <span className="text-[11px] text-primary-foreground/50 mx-1.5 max-w-[120px] truncate hidden xl:inline">
+            <span className="text-[11px] text-primary-foreground/50 mx-1.5 max-w-[100px] truncate hidden xl:inline">
               {user.email}
             </span>
           )}
@@ -103,6 +132,19 @@ export default function AppHeader() {
 
         {/* Mobile menu button */}
         <div className="flex items-center gap-1 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/alertas')}
+            className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8 relative"
+          >
+            <Bell className="h-4 w-4" />
+            {alertCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[9px] flex items-center justify-center">
+                {alertCount}
+              </Badge>
+            )}
+          </Button>
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -119,7 +161,6 @@ export default function AppHeader() {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-primary-foreground/10 animate-in-page">
           <div className="container mx-auto px-4 py-3 space-y-1">
-            {/* Mobile search */}
             <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }} className="mb-2 md:hidden">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
