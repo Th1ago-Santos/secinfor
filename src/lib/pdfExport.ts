@@ -66,7 +66,7 @@ export function generatePDFReport({ title, subtitle, columns, rows, filename, or
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total: ${rows.length} registro(s)`, 14, pageHeight - 10);
-    doc.text('Sistema de Controle de Patrimônio', pageWidth / 2, pageHeight - 10, { align: 'center' });
+    doc.text('Seção de Informática - 14° B Log', pageWidth / 2, pageHeight - 10, { align: 'center' });
     doc.text(`Página ${i} de ${pageCount}`, pageWidth - 14, pageHeight - 10, { align: 'right' });
   }
 

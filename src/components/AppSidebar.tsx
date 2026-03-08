@@ -96,7 +96,7 @@ export default function AppSidebar() {
           {!collapsed && (
             <div className="overflow-hidden">
               <h1 className="text-sm font-bold tracking-tight leading-tight truncate">Seção de Informática</h1>
-              <p className="text-[10px] text-sidebar-foreground/40 leading-tight">Sistema de Gestão</p>
+              <p className="text-[10px] text-sidebar-foreground/40 leading-tight">14° B Log</p>
             </div>
           )}
         </div>

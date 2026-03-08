@@ -191,7 +191,7 @@ export default function PrintView() {
 
           <div className="hidden print:block mt-8 text-center text-xs border-t pt-4">
             <p>Total de registros: {tab === 'notebooks' ? notebooks.length : materials.length}</p>
-            <p className="mt-1">Documento gerado pelo Sistema de Controle de Patrimônio</p>
+            <p className="mt-1">Documento gerado pela Seção de Informática - 14° B Log</p>
           </div>
         </div>
     </div>

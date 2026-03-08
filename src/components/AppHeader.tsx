@@ -58,8 +58,8 @@ export default function AppHeader() {
             <Monitor className="h-5 w-5 text-primary" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-sm font-bold tracking-tight leading-tight">Controle de Patrimônio</h1>
-            <p className="text-[10px] text-sidebar-foreground/50 leading-tight">Sistema de Gestão</p>
+            <h1 className="text-sm font-bold tracking-tight leading-tight">Seção de Informática</h1>
+            <p className="text-[10px] text-sidebar-foreground/50 leading-tight">14° B Log</p>
           </div>
         </div>
 
