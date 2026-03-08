@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Map, Laptop, Package, Wrench, Archive, Eye, ArrowRightLeft } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
+
 
 type SectionData = {
   name: string;
