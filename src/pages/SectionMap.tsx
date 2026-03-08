@@ -104,7 +104,7 @@ export default function SectionMap() {
                       <StatItem icon={ArrowRightLeft} value={sec.recentMovs} label="movs (30d)" colorClass="text-muted-foreground bg-muted" />
                     </div>
 
-                  {sec.notebooks > 0 && (filterTipo === 'all' || filterTipo === 'notebooks') && (
+                  {sec.notebooks > 0 && (
                     <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">
                       {sec.emUso > 0 && <div className="bg-success transition-all duration-300" style={{ width: `${(sec.emUso / sec.notebooks) * 100}%` }} />}
                       {sec.emManutencao > 0 && <div className="bg-warning transition-all duration-300" style={{ width: `${(sec.emManutencao / sec.notebooks) * 100}%` }} />}
