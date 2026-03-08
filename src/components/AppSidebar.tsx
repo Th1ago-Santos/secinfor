@@ -43,7 +43,6 @@ export default function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchAlertCount = () => {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
