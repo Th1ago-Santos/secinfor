@@ -48,17 +48,15 @@ export default function NotebookForm() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(isEdit);
-
   const [origSecao, setOrigSecao] = useState('');
   const [origMilitar, setOrigMilitar] = useState('');
   const [origStatus, setOrigStatus] = useState('');
-
   const { sections, loading: loadingSections } = useSections();
 
   useEffect(() => {
     if (isEdit) {
       supabase.from('notebooks').select('*').eq('id', id).single().then(({ data, error }) => {
-        if (error || !data) { toast.error('Item não encontrado.'); navigate('/'); }
+        if (error || !data) { toast.error('Item não encontrado.'); navigate('/notebooks'); }
         else {
           const d = data as any;
           setModelo(d.modelo); setPatrimonio(d.patrimonio); setSecao(d.secao); setMilitar(d.militar);
@@ -135,14 +133,14 @@ export default function NotebookForm() {
           if (status === 'Em manutenção' && origStatus !== 'Em manutenção') await registerMovement(id!, 'Manutenção iniciada', { observacao: motivoManutencao });
           if (origStatus === 'Em manutenção' && status !== 'Em manutenção') await registerMovement(id!, 'Manutenção finalizada');
           if (status === 'Baixado' && origStatus !== 'Baixado') await registerMovement(id!, 'Baixa');
-          toast.success('Item atualizado com sucesso.'); navigate('/');
+          toast.success('Item atualizado com sucesso.'); navigate('/notebooks');
         }
       } else {
         const { data: inserted, error } = await supabase.from('notebooks').insert([{ ...values, ...maintenanceFields }] as any).select().single();
         if (error) { setError(error.code === '23505' ? 'Já existe um item com este número de patrimônio.' : 'Erro ao cadastrar item.'); }
         else if (inserted) {
           if (fotoFile) { const fotoUrl = await uploadPhoto((inserted as any).id); if (fotoUrl) await supabase.from('notebooks').update({ foto_url: fotoUrl } as any).eq('id', (inserted as any).id); }
-          toast.success('Item cadastrado com sucesso.'); navigate('/');
+          toast.success('Item cadastrado com sucesso.'); navigate('/notebooks');
         }
       }
     } catch { setError('Erro inesperado ao salvar.'); }
@@ -166,15 +164,17 @@ export default function NotebookForm() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
-        <Button variant="ghost" onClick={() => navigate('/')} className="mb-4 transition-hover">
+        <Button variant="ghost" onClick={() => navigate('/notebooks')} className="mb-4 transition-all duration-200 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
 
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Laptop className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Laptop className="h-4 w-4 text-primary" />
+              </div>
               {isEdit ? 'Editar Notebook' : 'Novo Notebook'}
             </CardTitle>
           </CardHeader>
@@ -189,77 +189,77 @@ export default function NotebookForm() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="patrimonio">Número de Patrimônio *</Label>
-                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-9 font-mono" required />
+                  <Label htmlFor="patrimonio" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Número de Patrimônio *</Label>
+                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="modelo">Modelo *</Label>
-                  <Input id="modelo" placeholder="Ex: Dell Latitude 5540" value={modelo} onChange={(e) => setModelo(e.target.value)} className="h-9" required />
+                  <Label htmlFor="modelo" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Modelo *</Label>
+                  <Input id="modelo" placeholder="Ex: Dell Latitude 5540" value={modelo} onChange={(e) => setModelo(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="secao">Seção *</Label>
+                  <Label htmlFor="secao" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Seção *</Label>
                   <Select value={secao} onValueChange={setSecao}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Selecione a seção" /></SelectTrigger>
+                    <SelectTrigger className="h-10 bg-muted/30 border-border/60"><SelectValue placeholder="Selecione a seção" /></SelectTrigger>
                     <SelectContent>
                       {loadingSections ? (<SelectItem value="_loading" disabled>Carregando...</SelectItem>) : sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="militar">Militar *</Label>
-                  <Input id="militar" placeholder="Ex: Sgt Silva" value={militar} onChange={(e) => setMilitar(e.target.value)} className="h-9" required />
+                  <Label htmlFor="militar" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Militar *</Label>
+                  <Input id="militar" placeholder="Ex: Sgt Silva" value={militar} onChange={(e) => setMilitar(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Status *</Label>
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status *</Label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-10 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
                   <SelectContent>{STATUS_OPTIONS.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
 
               {status === 'Em manutenção' && (
-                <div className="space-y-3 p-4 rounded-lg border border-destructive/20 bg-destructive/5 animate-in-card">
+                <div className="space-y-3 p-4 rounded-xl border border-warning/20 bg-warning/5 animate-in-card">
                   <div className="space-y-2">
-                    <Label htmlFor="motivo">Motivo da Manutenção</Label>
-                    <Input id="motivo" placeholder="Ex: Tela quebrada" value={motivoManutencao} onChange={(e) => setMotivoManutencao(e.target.value)} className="h-9" />
+                    <Label htmlFor="motivo" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Motivo da Manutenção</Label>
+                    <Input id="motivo" placeholder="Ex: Tela quebrada" value={motivoManutencao} onChange={(e) => setMotivoManutencao(e.target.value)} className="h-10 bg-background border-border/60" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="obs-manutencao">Observações</Label>
-                    <Textarea id="obs-manutencao" placeholder="Detalhes adicionais..." value={observacoesManutencao} onChange={(e) => setObservacoesManutencao(e.target.value)} rows={3} />
+                    <Label htmlFor="obs-manutencao" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Observações</Label>
+                    <Textarea id="obs-manutencao" placeholder="Detalhes adicionais..." value={observacoesManutencao} onChange={(e) => setObservacoesManutencao(e.target.value)} rows={3} className="bg-background border-border/60" />
                   </div>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label>Foto do Notebook (opcional)</Label>
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Foto do Notebook (opcional)</Label>
                 <div className="flex items-center gap-3">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="transition-hover">
-                    <Upload className="h-4 w-4 mr-1.5" />
+                  <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="transition-all duration-200">
+                    <Upload className="h-3.5 w-3.5 mr-1.5" />
                     {currentPreview ? 'Trocar foto' : 'Anexar foto'}
                   </Button>
                   {currentPreview && (
-                    <Button type="button" variant="ghost" size="sm" onClick={clearFoto} className="text-destructive transition-hover">
-                      <X className="h-4 w-4 mr-1" />Remover
+                    <Button type="button" variant="ghost" size="sm" onClick={clearFoto} className="text-destructive transition-all duration-200">
+                      <X className="h-3.5 w-3.5 mr-1" />Remover
                     </Button>
                   )}
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
-                <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Máximo 5 MB.</p>
+                <p className="text-[10px] text-muted-foreground">JPG, PNG ou WebP. Máximo 5 MB.</p>
                 {currentPreview && (
-                  <div className="mt-2 rounded-lg border overflow-hidden w-48 animate-in-card">
+                  <div className="mt-2 rounded-xl border overflow-hidden w-48 animate-in-card shadow-sm">
                     <img src={currentPreview} alt="Preview" className="w-full h-auto object-cover" />
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" disabled={saving} className="transition-hover">
+              <div className="flex gap-3 pt-3">
+                <Button type="submit" disabled={saving} className="shadow-sm transition-all duration-200">
                   <Save className="h-4 w-4 mr-1.5" />
                   {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/')} className="transition-hover">Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => navigate('/notebooks')} className="transition-all duration-200">Cancelar</Button>
               </div>
             </form>
           </CardContent>

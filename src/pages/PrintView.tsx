@@ -59,35 +59,37 @@ export default function PrintView() {
       <AppHeader />
       <main className="container mx-auto py-6 px-4 animate-in-page">
         <div className="no-print mb-6">
-          <Card className="animate-in-card">
+          <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Printer className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2.5 text-lg">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Printer className="h-4 w-4 text-primary" />
+                </div>
                 Impressão de Relatórios
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs value={tab} onValueChange={setTab}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="notebooks" className="transition-hover"><Laptop className="h-4 w-4 mr-1.5" />Notebooks</TabsTrigger>
-                  <TabsTrigger value="materials" className="transition-hover"><Package className="h-4 w-4 mr-1.5" />Material Carga</TabsTrigger>
+                  <TabsTrigger value="notebooks" className="transition-all duration-200"><Laptop className="h-3.5 w-3.5 mr-1.5" />Notebooks</TabsTrigger>
+                  <TabsTrigger value="materials" className="transition-all duration-200"><Package className="h-3.5 w-3.5 mr-1.5" />Material Carga</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="notebooks" className="animate-in-card">
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Buscar por patrimônio..." value={nbSearch} onChange={(e) => setNbSearch(e.target.value)} className="pl-9 h-9" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input placeholder="Buscar por patrimônio..." value={nbSearch} onChange={(e) => setNbSearch(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" />
                     </div>
                     <Select value={nbFilterSecao} onValueChange={setNbFilterSecao}>
-                      <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue placeholder="Seção" /></SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Seção" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as seções</SelectItem>
                         {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                     <Select value={nbFilterStatus} onValueChange={setNbFilterStatus}>
-                      <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+                      <SelectTrigger className="w-full sm:w-[180px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos os status</SelectItem>
                         <SelectItem value="Em uso">Em uso</SelectItem>
@@ -102,23 +104,23 @@ export default function PrintView() {
                       <Checkbox id="include-qr" checked={nbIncludeQR} onCheckedChange={(v) => setNbIncludeQR(!!v)} />
                       <label htmlFor="include-qr" className="text-sm cursor-pointer">Incluir QR Code</label>
                     </div>
-                    <Button onClick={handlePrint} disabled={nbLoading || notebooks.length === 0} className="transition-hover">
-                      <Printer className="h-4 w-4 mr-1.5" />Imprimir
+                    <Button onClick={handlePrint} disabled={nbLoading || notebooks.length === 0} className="shadow-sm transition-all duration-200">
+                      <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
                     </Button>
-                    <span className="text-sm text-muted-foreground">{nbLoading ? 'Carregando...' : `${notebooks.length} registro(s)`}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{nbLoading ? 'Carregando...' : `${notebooks.length} registro(s)`}</span>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="materials" className="animate-in-card">
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Buscar por nome, patrimônio ou código..." value={matSearch} onChange={(e) => setMatSearch(e.target.value)} className="pl-9 h-9" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input placeholder="Buscar por nome, patrimônio ou código..." value={matSearch} onChange={(e) => setMatSearch(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" />
                     </div>
-                    <Button onClick={handlePrint} disabled={matLoading || materials.length === 0} className="transition-hover">
-                      <Printer className="h-4 w-4 mr-1.5" />Imprimir
+                    <Button onClick={handlePrint} disabled={matLoading || materials.length === 0} className="shadow-sm transition-all duration-200">
+                      <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
                     </Button>
-                    <span className="text-sm text-muted-foreground">{matLoading ? 'Carregando...' : `${materials.length} registro(s)`}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{matLoading ? 'Carregando...' : `${materials.length} registro(s)`}</span>
                   </div>
                 </TabsContent>
               </Tabs>

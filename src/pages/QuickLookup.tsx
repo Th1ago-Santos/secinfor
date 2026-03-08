@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Monitor, History, Printer, ArrowLeft, CheckCircle, Wrench, Archive, Package as PackageIcon, XCircle, Laptop, QrCode } from 'lucide-react';
+import { History, Printer, ArrowLeft, CheckCircle, Wrench, Archive, Package as PackageIcon, XCircle, Laptop, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 type ItemData = {
@@ -23,11 +23,11 @@ type ItemData = {
   updated_at?: string;
 };
 
-const statusConfig: Record<string, { icon: React.ElementType; color: string; variant: string }> = {
-  'Em uso': { icon: CheckCircle, color: 'text-emerald-500', variant: 'default' },
-  'Em manutenção': { icon: Wrench, color: 'text-amber-500', variant: 'destructive' },
-  'Baixado': { icon: Archive, color: 'text-red-400', variant: 'secondary' },
-  'Em estoque': { icon: PackageIcon, color: 'text-blue-400', variant: 'outline' },
+const statusConfig: Record<string, { icon: React.ElementType; bgClass: string; textClass: string }> = {
+  'Em uso': { icon: CheckCircle, bgClass: 'bg-success/10', textClass: 'text-success' },
+  'Em manutenção': { icon: Wrench, bgClass: 'bg-warning/10', textClass: 'text-warning' },
+  'Baixado': { icon: Archive, bgClass: 'bg-destructive/10', textClass: 'text-destructive' },
+  'Em estoque': { icon: PackageIcon, bgClass: 'bg-info/10', textClass: 'text-info' },
 };
 
 export default function QuickLookup() {
@@ -42,7 +42,6 @@ export default function QuickLookup() {
       setLoading(true);
       setNotFound(false);
 
-      // Search notebooks first
       const { data: nb } = await supabase
         .from('notebooks')
         .select('*')
@@ -52,22 +51,15 @@ export default function QuickLookup() {
       if (nb) {
         const d = nb as any;
         setItem({
-          id: d.id,
-          patrimonio: d.patrimonio,
-          tipo: 'notebook',
-          modelo: d.modelo,
-          secao: d.secao,
-          militar: d.militar,
-          status: d.status,
-          foto_url: d.foto_url,
-          created_at: d.created_at,
-          updated_at: d.updated_at,
+          id: d.id, patrimonio: d.patrimonio, tipo: 'notebook',
+          modelo: d.modelo, secao: d.secao, militar: d.militar,
+          status: d.status, foto_url: d.foto_url,
+          created_at: d.created_at, updated_at: d.updated_at,
         });
         setLoading(false);
         return;
       }
 
-      // Search materials
       const { data: mat } = await supabase
         .from('materials')
         .select('*')
@@ -77,14 +69,10 @@ export default function QuickLookup() {
       if (mat) {
         const d = mat as any;
         setItem({
-          id: d.id,
-          patrimonio: d.patrimonio,
-          tipo: 'material',
-          nome: d.nome,
-          codigo_material: d.codigo_material,
+          id: d.id, patrimonio: d.patrimonio, tipo: 'material',
+          nome: d.nome, codigo_material: d.codigo_material,
           numero_ficha: d.numero_ficha,
-          created_at: d.created_at,
-          updated_at: d.updated_at,
+          created_at: d.created_at, updated_at: d.updated_at,
         });
         setLoading(false);
         return;
@@ -105,33 +93,35 @@ export default function QuickLookup() {
       <div className="w-full max-w-md animate-in-page">
         {loading ? (
           <Card>
-            <CardContent className="flex justify-center py-16">
+            <CardContent className="flex justify-center py-20">
               <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
             </CardContent>
           </Card>
         ) : notFound ? (
-          <Card className="border-destructive/30">
-            <CardContent className="text-center py-12">
-              <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+          <Card className="border-destructive/30 shadow-lg">
+            <CardContent className="text-center py-14">
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-5">
                 <XCircle className="h-8 w-8 text-destructive" />
               </div>
-              <p className="text-xl font-semibold mb-1">Item não encontrado</p>
-              <p className="text-sm text-muted-foreground mb-1">Patrimônio: <span className="font-mono font-medium">{patrimonio}</span></p>
+              <p className="text-xl font-bold mb-1">Item não encontrado</p>
+              <p className="text-sm text-muted-foreground mb-1">Patrimônio: <span className="font-mono font-semibold">{patrimonio}</span></p>
               <p className="text-xs text-muted-foreground">Este patrimônio não está cadastrado no sistema.</p>
             </CardContent>
           </Card>
         ) : item && (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden shadow-lg">
             {/* Status banner */}
-            {item.tipo === 'notebook' && item.status && (
-              <div className={`px-4 py-2.5 flex items-center justify-center gap-2 text-sm font-medium ${
-                item.status === 'Em uso' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                item.status === 'Em manutenção' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                item.status === 'Baixado' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-              }`}>
+            {item.tipo === 'notebook' && item.status && statusInfo && (
+              <div className={`px-4 py-3 flex items-center justify-center gap-2 text-sm font-semibold ${statusInfo.bgClass} ${statusInfo.textClass}`}>
                 <StatusIcon className="h-4 w-4" />
                 {item.status}
+              </div>
+            )}
+
+            {item.tipo === 'material' && (
+              <div className="px-4 py-3 flex items-center justify-center gap-2 text-sm font-semibold bg-success/10 text-success">
+                <CheckCircle className="h-4 w-4" />
+                Item Encontrado
               </div>
             )}
 
@@ -142,16 +132,14 @@ export default function QuickLookup() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-              {/* Photo */}
+            <CardContent className="space-y-5">
               {item.foto_url && (
-                <div className="rounded-lg overflow-hidden border bg-muted">
+                <div className="rounded-xl overflow-hidden border bg-muted">
                   <img src={item.foto_url} alt="Foto" className="w-full h-auto max-h-56 object-contain" />
                 </div>
               )}
 
-              {/* Details grid */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <InfoField label="Patrimônio" value={item.patrimonio} mono />
                 {item.tipo === 'notebook' && (
                   <>
@@ -175,22 +163,20 @@ export default function QuickLookup() {
                 )}
               </div>
 
-              {/* QR Code */}
               <div className="flex justify-center pt-1">
-                <div className="p-3 bg-white rounded-lg">
+                <div className="p-3 bg-white rounded-xl shadow-sm">
                   <QRCodeSVG value={`${baseUrl}/consulta/${item.patrimonio}`} size={100} />
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-2 pt-1">
                 {item.tipo === 'notebook' && (
-                  <Button size="sm" variant="outline" className="flex-1 transition-hover" onClick={() => navigate(`/notebooks/${item.id}/historico`)}>
+                  <Button size="sm" variant="outline" className="flex-1 transition-all duration-200" onClick={() => navigate(`/notebooks/${item.id}/historico`)}>
                     <History className="h-4 w-4 mr-1.5" />
                     Histórico
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="flex-1 transition-hover" onClick={() => window.print()}>
+                <Button size="sm" variant="outline" className="flex-1 transition-all duration-200" onClick={() => window.print()}>
                   <Printer className="h-4 w-4 mr-1.5" />
                   Imprimir
                 </Button>
@@ -200,7 +186,7 @@ export default function QuickLookup() {
         )}
 
         <div className="mt-4 text-center">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-hover">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-all duration-200">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Ir para o sistema
           </Button>
@@ -213,7 +199,7 @@ export default function QuickLookup() {
 function InfoField({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5 font-medium">{label}</p>
       <p className={`text-sm font-semibold ${mono ? 'font-mono' : ''}`}>{value || '—'}</p>
     </div>
   );

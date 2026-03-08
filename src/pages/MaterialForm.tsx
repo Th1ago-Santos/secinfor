@@ -77,15 +77,17 @@ export default function MaterialForm() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
-        <Button variant="ghost" onClick={() => navigate('/materiais')} className="mb-4 transition-hover">
+        <Button variant="ghost" onClick={() => navigate('/materiais')} className="mb-4 transition-all duration-200 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
 
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Package className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Package className="h-4 w-4 text-primary" />
+              </div>
               {isEdit ? 'Editar Material' : 'Novo Material'}
             </CardTitle>
           </CardHeader>
@@ -100,29 +102,29 @@ export default function MaterialForm() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="patrimonio">Número do Patrimônio *</Label>
-                  <Input id="patrimonio" placeholder="Ex: 123456" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-9 font-mono" required />
+                  <Label htmlFor="patrimonio" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Número do Patrimônio *</Label>
+                  <Input id="patrimonio" placeholder="Ex: 123456" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="codigo_material">Código do Material *</Label>
-                  <Input id="codigo_material" placeholder="Ex: MAT-001" value={codigoMaterial} onChange={(e) => setCodigoMaterial(e.target.value)} className="h-9 font-mono" required />
+                  <Label htmlFor="codigo_material" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Código do Material *</Label>
+                  <Input id="codigo_material" placeholder="Ex: MAT-001" value={codigoMaterial} onChange={(e) => setCodigoMaterial(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="numero_ficha">Número da Ficha *</Label>
-                  <Input id="numero_ficha" placeholder="Ex: F-0001" value={numeroFicha} onChange={(e) => setNumeroFicha(e.target.value)} className="h-9 font-mono" required />
+                  <Label htmlFor="numero_ficha" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Número da Ficha *</Label>
+                  <Input id="numero_ficha" placeholder="Ex: F-0001" value={numeroFicha} onChange={(e) => setNumeroFicha(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome *</Label>
-                  <Input id="nome" placeholder="Ex: Mesa de escritório" value={nome} onChange={(e) => setNome(e.target.value)} className="h-9" required />
+                  <Label htmlFor="nome" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome *</Label>
+                  <Input id="nome" placeholder="Ex: Mesa de escritório" value={nome} onChange={(e) => setNome(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" disabled={saving} className="transition-hover">
+              <div className="flex gap-3 pt-3">
+                <Button type="submit" disabled={saving} className="shadow-sm transition-all duration-200">
                   <Save className="h-4 w-4 mr-1.5" />
                   {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/materiais')} className="transition-hover">Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => navigate('/materiais')} className="transition-all duration-200">Cancelar</Button>
               </div>
             </form>
           </CardContent>

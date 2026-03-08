@@ -46,7 +46,7 @@ const PIE_COLORS = [
   'hsl(142, 71%, 45%)',
   'hsl(38, 92%, 50%)',
   'hsl(0, 72%, 51%)',
-  'hsl(215, 50%, 50%)',
+  'hsl(217, 91%, 60%)',
 ];
 
 export default function Dashboard() {
@@ -58,13 +58,10 @@ export default function Dashboard() {
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
-
     const [
       { count: totalNb },
       { count: totalMat },
@@ -73,7 +70,7 @@ export default function Dashboard() {
       { count: baixados },
       { count: emEstoque },
       { data: sections },
-      { data: alertsData, count: alertCount },
+      { count: alertCount },
     ] = await Promise.all([
       supabase.from('notebooks').select('*', { count: 'exact', head: true }),
       supabase.from('materials').select('*', { count: 'exact', head: true }),
@@ -85,14 +82,11 @@ export default function Dashboard() {
       supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
     ]);
 
-    // Movements this month
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     const { count: movsMes } = await supabase.from('movements').select('*', { count: 'exact', head: true })
       .gte('data_hora', startOfMonth.toISOString());
-
-    // Inventory sessions this month
     const { count: invMes } = await supabase.from('inventory_sessions').select('*', { count: 'exact', head: true })
       .gte('data_inicio', startOfMonth.toISOString());
 
@@ -109,7 +103,6 @@ export default function Dashboard() {
       alertasAtivos: alertCount || 0,
     });
 
-    // Notebooks by section
     const { data: allNbs } = await supabase.from('notebooks').select('secao');
     if (allNbs) {
       const map: Record<string, number> = {};
@@ -117,7 +110,6 @@ export default function Dashboard() {
       setNbBySection(Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count));
     }
 
-    // Movements by month (last 6 months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
     sixMonthsAgo.setDate(1);
@@ -143,11 +135,9 @@ export default function Dashboard() {
       })));
     }
 
-    // Recent movements
     const { data: recentM } = await supabase.from('movements').select('*').order('data_hora', { ascending: false }).limit(5);
     setRecentMovs((recentM as Movement[]) || []);
 
-    // Recent items
     const { data: recentNb } = await supabase.from('notebooks').select('id, patrimonio, modelo, created_at').order('created_at', { ascending: false }).limit(3);
     const { data: recentMat } = await supabase.from('materials').select('id, patrimonio, nome, created_at').order('created_at', { ascending: false }).limit(3);
     const combined = [
@@ -167,50 +157,67 @@ export default function Dashboard() {
   ].filter(d => d.value > 0) : [];
 
   const indicators = stats ? [
-    { label: 'Total Notebooks', value: stats.totalNotebooks, icon: Laptop, color: 'text-primary' },
-    { label: 'Total Materiais', value: stats.totalMaterials, icon: Package, color: 'text-accent' },
-    { label: 'Patrimônios', value: stats.totalNotebooks + stats.totalMaterials, icon: Layers, color: 'text-muted-foreground' },
-    { label: 'Em Uso', value: stats.emUso, icon: CheckCircle, color: 'text-success' },
-    { label: 'Em Manutenção', value: stats.emManutencao, icon: Wrench, color: 'text-warning' },
-    { label: 'Baixados', value: stats.baixados, icon: Archive, color: 'text-destructive' },
-    { label: 'Seções', value: stats.totalSections, icon: BarChart3, color: 'text-primary' },
-    { label: 'Movimentações (mês)', value: stats.movimentacoesMes, icon: ArrowRightLeft, color: 'text-accent' },
-    { label: 'Inventários (mês)', value: stats.inventariosMes, icon: ClipboardCheck, color: 'text-success' },
-    { label: 'Alertas Ativos', value: stats.alertasAtivos, icon: Bell, color: 'text-destructive', onClick: () => navigate('/alertas') },
+    { label: 'Notebooks', value: stats.totalNotebooks, icon: Laptop, variant: 'primary' as const },
+    { label: 'Materiais', value: stats.totalMaterials, icon: Package, variant: 'info' as const },
+    { label: 'Patrimônios', value: stats.totalNotebooks + stats.totalMaterials, icon: Layers, variant: 'default' as const },
+    { label: 'Em Uso', value: stats.emUso, icon: CheckCircle, variant: 'success' as const },
+    { label: 'Em Manutenção', value: stats.emManutencao, icon: Wrench, variant: 'warning' as const },
+    { label: 'Baixados', value: stats.baixados, icon: Archive, variant: 'destructive' as const },
+    { label: 'Seções', value: stats.totalSections, icon: BarChart3, variant: 'primary' as const },
+    { label: 'Movimentações', value: stats.movimentacoesMes, icon: ArrowRightLeft, variant: 'info' as const },
+    { label: 'Inventários', value: stats.inventariosMes, icon: ClipboardCheck, variant: 'success' as const },
+    { label: 'Alertas', value: stats.alertasAtivos, icon: Bell, variant: 'destructive' as const, onClick: () => navigate('/alertas') },
   ] : [];
+
+  const variantColors: Record<string, string> = {
+    primary: 'text-primary bg-primary/10',
+    info: 'text-info bg-info/10',
+    success: 'text-success bg-success/10',
+    warning: 'text-warning bg-warning/10',
+    destructive: 'text-destructive bg-destructive/10',
+    default: 'text-muted-foreground bg-muted',
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 animate-in-page">
-        <h2 className="text-xl font-bold mb-5 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          Painel de Controle
-        </h2>
+        <div className="flex items-center gap-2 mb-6">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <TrendingUp className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Painel de Controle</h2>
+            <p className="text-xs text-muted-foreground">Visão geral do patrimônio</p>
+          </div>
+        </div>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+            {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)}
           </div>
         ) : (
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-              {indicators.map((ind) => (
+              {indicators.map((ind, idx) => (
                 <Card
                   key={ind.label}
-                  className={`animate-in-card ${ind.onClick ? 'cursor-pointer hover:border-primary/40' : ''}`}
+                  className={`group transition-all duration-200 hover:shadow-md ${ind.onClick ? 'cursor-pointer hover:border-primary/40' : 'hover:border-border/80'}`}
                   onClick={ind.onClick}
+                  style={{ animationDelay: `${idx * 40}ms` }}
                 >
                   <CardContent className="pt-4 pb-3 px-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <ind.icon className={`h-5 w-5 ${ind.color}`} />
-                      {ind.label === 'Alertas Ativos' && ind.value > 0 && (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">{ind.value}</Badge>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`p-2 rounded-lg ${variantColors[ind.variant]}`}>
+                        <ind.icon className="h-4 w-4" />
+                      </div>
+                      {ind.label === 'Alertas' && ind.value > 0 && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-scale-in">{ind.value}</Badge>
                       )}
                     </div>
-                    <p className="text-2xl font-bold">{ind.value}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{ind.label}</p>
+                    <p className="text-2xl font-bold tracking-tight animate-count-up">{ind.value}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">{ind.label}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -218,7 +225,6 @@ export default function Dashboard() {
 
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              {/* Notebooks by section */}
               <Card className="lg:col-span-2 animate-in-card">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -228,47 +234,62 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {nbBySection.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <BarChart data={nbBySection}>
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                        <Tooltip />
-                        <Bar dataKey="count" name="Notebooks" fill="hsl(215, 50%, 40%)" radius={[4, 4, 0, 0]} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                        <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            color: 'hsl(var(--foreground))',
+                            fontSize: '12px',
+                          }}
+                        />
+                        <Bar dataKey="count" name="Notebooks" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
+                    <p className="text-sm text-muted-foreground text-center py-16">Sem dados disponíveis</p>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Status pie */}
               <Card className="animate-in-card">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold">Status dos Notebooks</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {statusPieData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
-                        <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                        <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
                           {statusPieData.map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            color: 'hsl(var(--foreground))',
+                            fontSize: '12px',
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
+                    <p className="text-sm text-muted-foreground text-center py-16">Sem dados disponíveis</p>
                   )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Movements chart + recent panels */}
+            {/* Bottom row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Movements by month */}
               <Card className="animate-in-card">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -277,19 +298,26 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={180}>
+                  <ResponsiveContainer width="100%" height={200}>
                     <LineChart data={movsByMonth}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(215, 15%, 25%)" />
-                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="count" name="Movimentações" stroke="hsl(45, 85%, 50%)" strokeWidth={2} dot={{ r: 3 }} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                      <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          color: 'hsl(var(--foreground))',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Line type="monotone" dataKey="count" name="Movimentações" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              {/* Recent movements */}
               <Card className="animate-in-card">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -297,14 +325,16 @@ export default function Dashboard() {
                     Últimas Movimentações
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-2.5">
                   {recentMovs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">Nenhuma movimentação</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma movimentação</p>
                   ) : recentMovs.map(m => (
-                    <div key={m.id} className="flex items-start gap-2 text-sm border-b border-border/50 pb-2 last:border-0">
-                      <ArrowRightLeft className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-medium text-xs truncate">{m.tipo_evento}</p>
+                    <div key={m.id} className="flex items-start gap-2.5 text-sm border-b border-border/50 pb-2.5 last:border-0 last:pb-0 group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-md transition-colors duration-150">
+                      <div className="p-1 rounded bg-primary/10 mt-0.5">
+                        <ArrowRightLeft className="h-3 w-3 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-xs">{m.tipo_evento}</p>
                         <p className="text-[11px] text-muted-foreground">
                           {m.item_tipo} • {new Date(m.data_hora).toLocaleDateString('pt-BR')}
                         </p>
@@ -314,7 +344,6 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Recent items */}
               <Card className="animate-in-card">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -322,13 +351,15 @@ export default function Dashboard() {
                     Últimos Cadastros
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-2.5">
                   {recentItems.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">Nenhum item</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhum item</p>
                   ) : recentItems.map(item => (
-                    <div key={item.id} className="flex items-start gap-2 text-sm border-b border-border/50 pb-2 last:border-0">
-                      {item.tipo === 'Notebook' ? <Laptop className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" /> : <Package className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />}
-                      <div className="min-w-0">
+                    <div key={item.id} className="flex items-start gap-2.5 text-sm border-b border-border/50 pb-2.5 last:border-0 last:pb-0 group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-md transition-colors duration-150">
+                      <div className="p-1 rounded bg-primary/10 mt-0.5">
+                        {item.tipo === 'Notebook' ? <Laptop className="h-3 w-3 text-primary" /> : <Package className="h-3 w-3 text-primary" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-xs truncate">{item.nome}</p>
                         <p className="text-[11px] text-muted-foreground">
                           <span className="font-mono">{item.patrimonio}</span> • {item.tipo} • {new Date(item.created_at).toLocaleDateString('pt-BR')}

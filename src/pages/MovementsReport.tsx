@@ -46,17 +46,11 @@ export default function MovementsReport() {
   const fetchMovements = async () => {
     setLoading(true);
     let query = supabase.from('movements').select('*').order('data_hora', { ascending: false });
-
     if (dateFrom) query = query.gte('data_hora', dateFrom.toISOString());
-    if (dateTo) {
-      const end = new Date(dateTo);
-      end.setHours(23, 59, 59, 999);
-      query = query.lte('data_hora', end.toISOString());
-    }
+    if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); query = query.lte('data_hora', end.toISOString()); }
     if (filterTipo !== 'all') query = query.eq('item_tipo', filterTipo);
     if (filterEvento !== 'all') query = query.eq('tipo_evento', filterEvento);
     if (filterSecao !== 'all') query = query.or(`secao_origem.eq.${filterSecao},secao_destino.eq.${filterSecao}`);
-
     const { data, error } = await query.limit(500);
     if (error) toast.error('Erro ao carregar movimentações.');
     setMovements((data as Movement[]) || []);
@@ -82,9 +76,7 @@ export default function MovementsReport() {
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `movimentacoes_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+    a.href = url; a.download = `movimentacoes_${format(new Date(), 'yyyy-MM-dd')}.csv`; a.click();
     URL.revokeObjectURL(url);
     toast.success('CSV exportado com sucesso.');
   };
@@ -101,31 +93,32 @@ export default function MovementsReport() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 animate-in-page">
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <ArrowRightLeft className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <ArrowRightLeft className="h-4 w-4 text-primary" />
+              </div>
               Relatório de Movimentações
             </CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0} className="transition-hover">
-                <Download className="h-4 w-4 mr-1.5" />CSV
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0} className="transition-all duration-200">
+                <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0} className="transition-hover">
-                <Printer className="h-4 w-4 mr-1.5" />Imprimir
+              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0} className="transition-all duration-200">
+                <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filters */}
             <div className="flex flex-col gap-3 mb-5 no-print">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Buscar por evento, responsável, observação..." value={searchText} onChange={e => setSearchText(e.target.value)} className="pl-9 h-9" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                  <Input placeholder="Buscar por evento, responsável, observação..." value={searchText} onChange={e => setSearchText(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" />
                 </div>
                 <Select value={filterTipo} onValueChange={setFilterTipo}>
-                  <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="notebook">Notebook</SelectItem>
@@ -133,7 +126,7 @@ export default function MovementsReport() {
                   </SelectContent>
                 </Select>
                 <Select value={filterEvento} onValueChange={setFilterEvento}>
-                  <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue placeholder="Evento" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Evento" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os eventos</SelectItem>
                     {EVENT_TYPES.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
@@ -142,7 +135,7 @@ export default function MovementsReport() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select value={filterSecao} onValueChange={setFilterSecao}>
-                  <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue placeholder="Seção" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Seção" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as seções</SelectItem>
                     {sections.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
@@ -150,8 +143,8 @@ export default function MovementsReport() {
                 </Select>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
-                      <CalendarIcon className="h-4 w-4 mr-1.5" />
+                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/60", !dateFrom && "text-muted-foreground")}>
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
                       {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Data inicial'}
                     </Button>
                   </PopoverTrigger>
@@ -161,8 +154,8 @@ export default function MovementsReport() {
                 </Popover>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
-                      <CalendarIcon className="h-4 w-4 mr-1.5" />
+                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/60", !dateTo && "text-muted-foreground")}>
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
                       {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Data final'}
                     </Button>
                   </PopoverTrigger>
@@ -171,54 +164,56 @@ export default function MovementsReport() {
                   </PopoverContent>
                 </Popover>
                 {(dateFrom || dateTo || filterTipo !== 'all' || filterEvento !== 'all' || filterSecao !== 'all' || searchText) && (
-                  <Button variant="ghost" size="sm" className="h-9" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setFilterTipo('all'); setFilterEvento('all'); setFilterSecao('all'); setSearchText(''); }}>
-                    <Filter className="h-4 w-4 mr-1" />Limpar filtros
+                  <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setFilterTipo('all'); setFilterEvento('all'); setFilterSecao('all'); setSearchText(''); }}>
+                    <Filter className="h-3.5 w-3.5 mr-1" />Limpar
                   </Button>
                 )}
               </div>
             </div>
 
             {loading ? (
-              <div className="space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}</div>
+              <div className="space-y-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground animate-in-card">
-                <ArrowRightLeft className="h-14 w-14 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-medium">Nenhuma movimentação encontrada</p>
+              <div className="text-center py-20 text-muted-foreground animate-in-card">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                  <ArrowRightLeft className="h-7 w-7 text-muted-foreground/40" />
+                </div>
+                <p className="text-base font-semibold">Nenhuma movimentação encontrada</p>
                 <p className="text-sm mt-1">Ajuste os filtros ou aguarde novas movimentações.</p>
               </div>
             ) : (
               <>
-                <div className="rounded-lg border overflow-x-auto">
+                <div className="rounded-xl border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/40 hover:bg-muted/40">
-                        <TableHead className="font-semibold whitespace-nowrap">Data/Hora</TableHead>
-                        <TableHead className="font-semibold">Tipo</TableHead>
-                        <TableHead className="font-semibold">Evento</TableHead>
-                        <TableHead className="font-semibold hidden md:table-cell">Seção Origem</TableHead>
-                        <TableHead className="font-semibold hidden md:table-cell">Seção Destino</TableHead>
-                        <TableHead className="font-semibold hidden lg:table-cell">Resp. Anterior</TableHead>
-                        <TableHead className="font-semibold hidden lg:table-cell">Resp. Novo</TableHead>
-                        <TableHead className="font-semibold hidden sm:table-cell">Observação</TableHead>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider whitespace-nowrap">Data/Hora</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Evento</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Origem</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Destino</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell">Resp. Ant.</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell">Resp. Novo</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Obs.</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map(m => (
-                        <TableRow key={m.id} className="hover:bg-muted/20 transition-hover">
-                          <TableCell className="text-xs whitespace-nowrap">{new Date(m.data_hora).toLocaleString('pt-BR')}</TableCell>
-                          <TableCell><Badge variant="outline" className="text-[10px] capitalize">{m.item_tipo}</Badge></TableCell>
-                          <TableCell><Badge variant={eventColor(m.tipo_evento) as any} className="text-xs">{m.tipo_evento}</Badge></TableCell>
-                          <TableCell className="text-sm hidden md:table-cell">{m.secao_origem || '—'}</TableCell>
-                          <TableCell className="text-sm hidden md:table-cell">{m.secao_destino || '—'}</TableCell>
-                          <TableCell className="text-sm hidden lg:table-cell">{m.responsavel_anterior || '—'}</TableCell>
-                          <TableCell className="text-sm hidden lg:table-cell">{m.responsavel_novo || '—'}</TableCell>
-                          <TableCell className="max-w-[180px] truncate text-sm hidden sm:table-cell">{m.observacao || '—'}</TableCell>
+                        <TableRow key={m.id} className="hover:bg-muted/30 transition-colors duration-150">
+                          <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{new Date(m.data_hora).toLocaleString('pt-BR')}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-[10px] capitalize font-medium">{m.item_tipo}</Badge></TableCell>
+                          <TableCell><Badge variant={eventColor(m.tipo_evento) as any} className="text-[10px] font-medium">{m.tipo_evento}</Badge></TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{m.secao_origem || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{m.secao_destino || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{m.responsavel_anterior || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{m.responsavel_novo || '—'}</TableCell>
+                          <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground hidden sm:table-cell">{m.observacao || '—'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{filtered.length} registro(s)</p>
+                <p className="text-xs text-muted-foreground mt-3 font-medium">{filtered.length} registro(s)</p>
               </>
             )}
           </CardContent>
