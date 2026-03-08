@@ -3,17 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Map, Laptop, Package, Wrench, Archive, Eye, ArrowRightLeft } from 'lucide-react';
+import { Map, Laptop, Wrench, Archive, Eye, ArrowRightLeft } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 
 type SectionData = {
   name: string;
   notebooks: number;
-  materials: number;
+  
   emManutencao: number;
   baixados: number;
   emUso: number;
@@ -26,7 +25,6 @@ export default function SectionMap() {
   const navigate = useNavigate();
   const [sectionsData, setSectionsData] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTipo, setFilterTipo] = useState('all');
 
   useEffect(() => { fetchData(); }, []);
 
@@ -51,7 +49,6 @@ export default function SectionMap() {
       return {
         name: s.name,
         notebooks: sNbs.length,
-        materials: 0, // Materials aren't section-specific
         emManutencao: sNbs.filter(n => n.status === 'Em manutenção').length,
         baixados: sNbs.filter(n => n.status === 'Baixado').length,
         emUso: sNbs.filter(n => n.status === 'Em uso').length,
@@ -72,16 +69,6 @@ export default function SectionMap() {
           icon={Map}
           title="Mapa das Seções"
           description="Distribuição de itens por seção"
-          actions={
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Notebooks + Materiais</SelectItem>
-                <SelectItem value="notebooks">Apenas Notebooks</SelectItem>
-                <SelectItem value="materials">Apenas Materiais</SelectItem>
-              </SelectContent>
-            </Select>
-          }
         />
 
         {loading ? (
@@ -110,20 +97,14 @@ export default function SectionMap() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(filterTipo === 'all' || filterTipo === 'notebooks') && (
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                       <StatItem icon={Laptop} value={sec.notebooks} label="notebooks" colorClass="text-primary bg-primary/10" />
                       <StatItem icon={Wrench} value={sec.emManutencao} label="manut." colorClass="text-warning bg-warning/10" />
                       <StatItem icon={Archive} value={sec.baixados} label="baixados" colorClass="text-destructive bg-destructive/10" />
                       <StatItem icon={ArrowRightLeft} value={sec.recentMovs} label="movs (30d)" colorClass="text-muted-foreground bg-muted" />
                     </div>
-                  )}
 
-                  {(filterTipo === 'all' || filterTipo === 'materials') && (
-                    <StatItem icon={Package} value={sec.materials} label="materiais" colorClass="text-info bg-info/10" />
-                  )}
-
-                  {sec.notebooks > 0 && (filterTipo === 'all' || filterTipo === 'notebooks') && (
+                  {sec.notebooks > 0 && (
                     <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">
                       {sec.emUso > 0 && <div className="bg-success transition-all duration-300" style={{ width: `${(sec.emUso / sec.notebooks) * 100}%` }} />}
                       {sec.emManutencao > 0 && <div className="bg-warning transition-all duration-300" style={{ width: `${(sec.emManutencao / sec.notebooks) * 100}%` }} />}

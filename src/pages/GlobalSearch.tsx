@@ -8,17 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Laptop, Package, Search, Pencil } from 'lucide-react';
-
-
-type Notebook = { id: string; patrimonio: string; modelo: string; secao: string; militar: string; status: string };
-type Material = { id: string; patrimonio: string; codigo_material: string; numero_ficha: string; nome: string };
-
-const statusColor = (s: string) => {
-  if (s === 'Em uso') return 'default';
-  if (s === 'Em manutenção') return 'destructive';
-  if (s === 'Baixado') return 'secondary';
-  return 'outline';
-};
+import { type Notebook, type Material, statusColor } from '@/types';
 
 export default function GlobalSearch() {
   const [searchParams] = useSearchParams();
