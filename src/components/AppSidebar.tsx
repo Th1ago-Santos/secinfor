@@ -69,14 +69,6 @@ export default function AppSidebar() {
     return location.pathname.startsWith(path);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/pesquisa?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
-  };
-
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
