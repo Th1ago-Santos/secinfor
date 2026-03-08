@@ -71,16 +71,6 @@ export default function SectionMap() {
           icon={Map}
           title="Mapa das Seções"
           description="Distribuição de itens por seção"
-          actions={
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Notebooks + Materiais</SelectItem>
-                <SelectItem value="notebooks">Apenas Notebooks</SelectItem>
-                <SelectItem value="materials">Apenas Materiais</SelectItem>
-              </SelectContent>
-            </Select>
-          }
         />
 
         {loading ? (
