@@ -182,7 +182,7 @@ export default function Priorities() {
     const idx = activePriorities.findIndex(p => p.id === id);
     if (idx < 0) return;
     const target = position === 'top' ? 0 : activePriorities.length - 1;
-    const reordered = arrayMove(activePriorities, idx, target);
+    const reordered = arrayMove(activePriorities, idx, target).map((p, i) => ({ ...p, ordem: i }));
     setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
