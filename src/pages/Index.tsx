@@ -10,32 +10,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
+import { generatePDFReport } from '@/lib/pdfExport';
+import { format } from 'date-fns';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
-
-type Notebook = {
-  id: string;
-  patrimonio: string;
-  modelo: string;
-  secao: string;
-  militar: string;
-  status: string;
-  foto_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-const statusColor = (s: string) => {
-  if (s === 'Em uso') return 'default';
-  if (s === 'Em manutenção') return 'destructive';
-  if (s === 'Baixado') return 'secondary';
-  if (s === 'Em estoque') return 'outline';
-  return 'default';
-};
+import { Notebook, statusColor } from '@/types';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
