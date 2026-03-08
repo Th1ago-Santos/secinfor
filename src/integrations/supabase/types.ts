@@ -303,7 +303,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
