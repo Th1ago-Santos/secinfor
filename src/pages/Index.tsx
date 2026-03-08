@@ -123,7 +123,7 @@ export default function Index() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
                 <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => { setSearchPatrimonio(e.target.value); resetPage(); }} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
               </div>
-              <Select value={filterSecao} onValueChange={setFilterSecao}>
+              <Select value={filterSecao} onValueChange={v => { setFilterSecao(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50">
                   <SelectValue placeholder="Filtrar por seção" />
                 </SelectTrigger>
