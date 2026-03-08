@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, forwardRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSections } from '@/hooks/useSections';
@@ -37,26 +37,16 @@ import {
   verticalListSortingStrategy, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-interface Priority {
-  id: string;
-  secao: string;
-  responsavel: string;
-  motivo: string;
-  observacoes: string | null;
-  data_solicitacao: string | null;
-  ordem: number;
-  status: string;
-  data_encerramento: string | null;
-  created_at: string;
-}
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Priority } from '@/types';
 
 const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', data_solicitacao: '' };
 
-function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total }: {
+// Fix forwardRef warning by wrapping SortableItem with forwardRef
+const SortableItem = forwardRef<HTMLDivElement, {
   item: Priority; index: number; onEdit: () => void; onDelete: () => void;
   onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
-}) {
+}>(function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -101,7 +91,8 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+      {/* Always visible on mobile, hover on desktop */}
+      <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
         {index > 0 && (
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
             <ArrowUpToLine className="h-3 w-3" />
@@ -124,11 +115,10 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
       </div>
     </div>
   );
-}
+});
 
 export default function Priorities() {
-  const [allPriorities, setAllPriorities] = useState<Priority[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -146,21 +136,21 @@ export default function Priorities() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const { data: allPriorities = [], isLoading: loading } = useQuery({
+    queryKey: ['priorities'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('computer_priorities')
+        .select('*')
+        .order('ordem', { ascending: true });
+      return (data as Priority[]) || [];
+    },
+    staleTime: 10_000,
+  });
+
   const activePriorities = allPriorities.filter(p => p.status === 'aberta').sort((a, b) => a.ordem - b.ordem);
   const completedPriorities = allPriorities.filter(p => p.status === 'concluida')
     .sort((a, b) => new Date(b.data_encerramento || b.created_at).getTime() - new Date(a.data_encerramento || a.created_at).getTime());
-
-  const fetchPriorities = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from('computer_priorities')
-      .select('*')
-      .order('ordem', { ascending: true });
-    setAllPriorities((data as Priority[]) || []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchPriorities(); }, [fetchPriorities]);
 
   const persistOrder = async (items: Priority[]) => {
     const ids = items.map(p => p.id);
@@ -174,7 +164,8 @@ export default function Priorities() {
     const oldIndex = activePriorities.findIndex(p => p.id === active.id);
     const newIndex = activePriorities.findIndex(p => p.id === over.id);
     const reordered = arrayMove(activePriorities, oldIndex, newIndex).map((p, i) => ({ ...p, ordem: i }));
-    setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
+    // Optimistic update
+    queryClient.setQueryData(['priorities'], [...reordered, ...allPriorities.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
 
@@ -183,7 +174,7 @@ export default function Priorities() {
     if (idx < 0) return;
     const target = position === 'top' ? 0 : activePriorities.length - 1;
     const reordered = arrayMove(activePriorities, idx, target).map((p, i) => ({ ...p, ordem: i }));
-    setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
+    queryClient.setQueryData(['priorities'], [...reordered, ...allPriorities.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
 
@@ -199,10 +190,7 @@ export default function Priorities() {
   };
 
   const handleSave = async () => {
-    if (!form.secao) {
-      toast({ title: 'Selecione a seção', variant: 'destructive' });
-      return;
-    }
+    if (!form.secao) { toast({ title: 'Selecione a seção', variant: 'destructive' }); return; }
     setSaving(true);
     const payload = {
       secao: form.secao, responsavel: form.responsavel || null, motivo: form.motivo || null,
@@ -219,14 +207,14 @@ export default function Priorities() {
     }
     setSaving(false);
     setDialogOpen(false);
-    fetchPriorities();
+    queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('computer_priorities').delete().eq('id', id);
     toast({ title: 'Prioridade removida' });
     const remaining = activePriorities.filter(p => p.id !== id);
-    setAllPriorities(prev => [...remaining, ...prev.filter(p => p.status !== 'aberta')]);
+    queryClient.setQueryData(['priorities'], [...remaining, ...allPriorities.filter(p => p.status !== 'aberta')]);
     await persistOrder(remaining);
   };
 
@@ -236,32 +224,25 @@ export default function Priorities() {
     const now = new Date().toISOString();
 
     await supabase.from('computer_priorities').update({
-      status: 'concluida',
-      data_encerramento: now,
+      status: 'concluida', data_encerramento: now,
     }).eq('id', deliverTarget.id);
 
-    // Register in movements history
     await supabase.from('movements').insert({
-      item_id: deliverTarget.id,
-      item_tipo: 'prioridade',
-      tipo_evento: 'entrega_computador',
-      secao_destino: deliverTarget.secao,
-      responsavel_novo: deliverTarget.responsavel,
+      item_id: deliverTarget.id, item_tipo: 'prioridade', tipo_evento: 'entrega_computador',
+      secao_destino: deliverTarget.secao, responsavel_novo: deliverTarget.responsavel,
       observacao: deliverObs || `Prioridade atendida — ${deliverTarget.motivo}`,
-      usuario_sistema: user?.id || null,
-      data_hora: now,
+      usuario_sistema: user?.id || null, data_hora: now,
     });
 
     toast({ title: 'Computador entregue!', description: `Prioridade da seção ${deliverTarget.secao} concluída.` });
 
-    // Reorder remaining active
     const remaining = activePriorities.filter(p => p.id !== deliverTarget.id);
     await persistOrder(remaining);
 
     setSaving(false);
     setDeliverTarget(null);
     setDeliverObs('');
-    fetchPriorities();
+    queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
   const handlePrint = () => {
@@ -273,11 +254,9 @@ export default function Priorities() {
       title: 'Ranking de Prioridades de Computadores',
       subtitle: `Filtro: ${filterLabel} — Total: ${items.length} prioridade(s)`,
       columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Abertura', 'Encerramento', 'Status'],
-      rows: items.map((p, i) => [
+      rows: items.map((p) => [
         p.status === 'aberta' ? String(activePriorities.indexOf(p) + 1) : '—',
-        p.secao,
-        p.responsavel,
-        p.motivo,
+        p.secao, p.responsavel, p.motivo,
         p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
         p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
         p.status === 'aberta' ? 'Aberta' : 'Concluída',
@@ -299,9 +278,7 @@ export default function Priorities() {
           actions={
             <div className="flex gap-2 flex-wrap">
               <Select value={printFilter} onValueChange={v => setPrintFilter(v as typeof printFilter)}>
-                <SelectTrigger className="w-[130px] h-9 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas</SelectItem>
                   <SelectItem value="abertas">Abertas</SelectItem>
@@ -319,7 +296,7 @@ export default function Priorities() {
         />
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="shadow-card">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10"><Hash className="h-5 w-5 text-primary" /></div>
@@ -416,36 +393,56 @@ export default function Priorities() {
 
             {showCompleted && (
               <Card className="shadow-card overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10"></TableHead>
-                      <TableHead>Seção</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead className="hidden md:table-cell">Motivo</TableHead>
-                      <TableHead>Abertura</TableHead>
-                      <TableHead>Encerramento</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {completedPriorities.map(p => (
-                      <TableRow key={p.id} className="text-muted-foreground">
-                        <TableCell>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
-                        <TableCell>{p.responsavel}</TableCell>
-                        <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
-                        <TableCell className="text-xs">
-                          {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
-                        </TableCell>
-                        <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                          {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
-                        </TableCell>
+                {/* Desktop table */}
+                <div className="hidden sm:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10"></TableHead>
+                        <TableHead>Seção</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead className="hidden md:table-cell">Motivo</TableHead>
+                        <TableHead>Abertura</TableHead>
+                        <TableHead>Encerramento</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {completedPriorities.map(p => (
+                        <TableRow key={p.id} className="text-muted-foreground">
+                          <TableCell><CheckCircle2 className="h-4 w-4 text-emerald-500" /></TableCell>
+                          <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
+                          <TableCell>{p.responsavel}</TableCell>
+                          <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
+                          <TableCell className="text-xs">
+                            {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                            {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile card view */}
+                <div className="space-y-0 sm:hidden divide-y divide-border/30">
+                  {completedPriorities.map(p => (
+                    <div key={p.id} className="p-4 flex items-start gap-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{p.secao}</p>
+                        <p className="text-xs text-muted-foreground">{p.responsavel}</p>
+                        <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
+                          <span>Aberta: {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yy') : format(new Date(p.created_at), 'dd/MM/yy')}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                            Entregue: {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yy') : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </Card>
             )}
           </div>

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter, FileText } from 'lucide-react';
+import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -17,49 +18,41 @@ import { generatePDFReport } from '@/lib/pdfExport';
 import { useSections } from '@/hooks/useSections';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
-
-type Movement = {
-  id: string;
-  item_tipo: string;
-  item_id: string;
-  data_hora: string;
-  tipo_evento: string;
-  secao_origem: string | null;
-  secao_destino: string | null;
-  responsavel_anterior: string | null;
-  responsavel_novo: string | null;
-  observacao: string | null;
-  usuario_sistema: string | null;
-};
+import type { Movement } from '@/types';
 
 const EVENT_TYPES = ['Transferência de seção', 'Alteração de responsável', 'Manutenção iniciada', 'Manutenção finalizada', 'Baixa', 'Cadastro', 'Edição'];
 
 export default function MovementsReport() {
   const { sections } = useSections();
-  const [movements, setMovements] = useState<Movement[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [filterTipo, setFilterTipo] = useState('all');
   const [filterEvento, setFilterEvento] = useState('all');
   const [filterSecao, setFilterSecao] = useState('all');
   const [searchText, setSearchText] = useState('');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 100;
 
-  const fetchMovements = async () => {
-    setLoading(true);
-    let query = supabase.from('movements').select('*').order('data_hora', { ascending: false });
-    if (dateFrom) query = query.gte('data_hora', dateFrom.toISOString());
-    if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); query = query.lte('data_hora', end.toISOString()); }
-    if (filterTipo !== 'all') query = query.eq('item_tipo', filterTipo);
-    if (filterEvento !== 'all') query = query.eq('tipo_evento', filterEvento);
-    if (filterSecao !== 'all') query = query.or(`secao_origem.eq.${filterSecao},secao_destino.eq.${filterSecao}`);
-    const { data, error } = await query.limit(500);
-    if (error) toast.error('Erro ao carregar movimentações.');
-    setMovements((data as Movement[]) || []);
-    setLoading(false);
-  };
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['movements', dateFrom?.toISOString(), dateTo?.toISOString(), filterTipo, filterEvento, filterSecao, page],
+    queryFn: async () => {
+      let query = supabase.from('movements').select('*', { count: 'exact' }).order('data_hora', { ascending: false });
+      if (dateFrom) query = query.gte('data_hora', dateFrom.toISOString());
+      if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); query = query.lte('data_hora', end.toISOString()); }
+      if (filterTipo !== 'all') query = query.eq('item_tipo', filterTipo);
+      if (filterEvento !== 'all') query = query.eq('tipo_evento', filterEvento);
+      if (filterSecao !== 'all') query = query.or(`secao_origem.eq.${filterSecao},secao_destino.eq.${filterSecao}`);
+      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      const { data, error, count } = await query;
+      if (error) { toast.error('Erro ao carregar movimentações.'); throw error; }
+      return { movements: (data as Movement[]) || [], totalCount: count || 0 };
+    },
+    staleTime: 15_000,
+  });
 
-  useEffect(() => { fetchMovements(); }, [dateFrom, dateTo, filterTipo, filterEvento, filterSecao]);
+  const movements = data?.movements || [];
+  const totalCount = data?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const filtered = searchText.trim()
     ? movements.filter(m =>
@@ -89,14 +82,9 @@ export default function MovementsReport() {
       subtitle: `${filtered.length} registro(s) — Filtros aplicados`,
       columns: ['Data/Hora', 'Tipo', 'Evento', 'Origem', 'Destino', 'Resp. Ant.', 'Resp. Novo', 'Obs.'],
       rows: filtered.map(m => [
-        new Date(m.data_hora).toLocaleString('pt-BR'),
-        m.item_tipo,
-        m.tipo_evento,
-        m.secao_origem || '—',
-        m.secao_destino || '—',
-        m.responsavel_anterior || '—',
-        m.responsavel_novo || '—',
-        m.observacao || '—',
+        new Date(m.data_hora).toLocaleString('pt-BR'), m.item_tipo, m.tipo_evento,
+        m.secao_origem || '—', m.secao_destino || '—', m.responsavel_anterior || '—',
+        m.responsavel_novo || '—', m.observacao || '—',
       ]),
       filename: 'movimentacoes',
       orientation: 'landscape',
@@ -112,24 +100,23 @@ export default function MovementsReport() {
     return 'outline';
   };
 
+  const clearFilters = () => {
+    setDateFrom(undefined); setDateTo(undefined); setFilterTipo('all');
+    setFilterEvento('all'); setFilterSecao('all'); setSearchText(''); setPage(0);
+  };
+
   return (
     <PageTransition>
       <div className="container mx-auto py-6 px-4">
         <PageHeader
           icon={ArrowRightLeft}
           title="Relatório de Movimentações"
-          description={`${filtered.length} registro(s)`}
+          description={`${totalCount} registro(s)`}
           actions={
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0} className="transition-all duration-200">
-                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0} className="transition-all duration-200">
-                <Download className="h-3.5 w-3.5 mr-1.5" />CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0} className="transition-all duration-200">
-                <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
-              </Button>
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
+              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
             </div>
           }
         />
@@ -142,7 +129,7 @@ export default function MovementsReport() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
                   <Input placeholder="Buscar por evento, responsável, observação..." value={searchText} onChange={e => setSearchText(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
                 </div>
-                <Select value={filterTipo} onValueChange={setFilterTipo}>
+                <Select value={filterTipo} onValueChange={v => { setFilterTipo(v); setPage(0); }}>
                   <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
@@ -150,7 +137,7 @@ export default function MovementsReport() {
                     <SelectItem value="material">Material</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={filterEvento} onValueChange={setFilterEvento}>
+                <Select value={filterEvento} onValueChange={v => { setFilterEvento(v); setPage(0); }}>
                   <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Evento" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os eventos</SelectItem>
@@ -159,7 +146,7 @@ export default function MovementsReport() {
                 </Select>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Select value={filterSecao} onValueChange={setFilterSecao}>
+                <Select value={filterSecao} onValueChange={v => { setFilterSecao(v); setPage(0); }}>
                   <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Seção" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as seções</SelectItem>
@@ -174,7 +161,7 @@ export default function MovementsReport() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} className="p-3 pointer-events-auto" />
+                    <Calendar mode="single" selected={dateFrom} onSelect={d => { setDateFrom(d); setPage(0); }} className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
                 <Popover>
@@ -185,11 +172,11 @@ export default function MovementsReport() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} className="p-3 pointer-events-auto" />
+                    <Calendar mode="single" selected={dateTo} onSelect={d => { setDateTo(d); setPage(0); }} className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
                 {(dateFrom || dateTo || filterTipo !== 'all' || filterEvento !== 'all' || filterSecao !== 'all' || searchText) && (
-                  <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setFilterTipo('all'); setFilterEvento('all'); setFilterSecao('all'); setSearchText(''); }}>
+                  <Button variant="ghost" size="sm" className="h-9 text-muted-foreground hover:text-foreground" onClick={clearFilters}>
                     <Filter className="h-3.5 w-3.5 mr-1" />Limpar
                   </Button>
                 )}
@@ -208,18 +195,19 @@ export default function MovementsReport() {
               </div>
             ) : (
               <>
-                <div className="rounded-xl border border-border/50 overflow-x-auto">
+                {/* Desktop table */}
+                <div className="rounded-xl border border-border/50 overflow-x-auto hidden md:block">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Data/Hora</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Evento</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Origem</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Destino</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Resp. Ant.</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Resp. Novo</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Obs.</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Origem</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Destino</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Resp. Ant.</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Resp. Novo</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Obs.</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -228,17 +216,58 @@ export default function MovementsReport() {
                           <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{new Date(m.data_hora).toLocaleString('pt-BR')}</TableCell>
                           <TableCell><Badge variant="outline" className="text-[10px] capitalize font-medium">{m.item_tipo}</Badge></TableCell>
                           <TableCell><Badge variant={eventColor(m.tipo_evento) as any} className="text-[10px] font-medium">{m.tipo_evento}</Badge></TableCell>
-                          <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{m.secao_origem || '—'}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{m.secao_destino || '—'}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{m.responsavel_anterior || '—'}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{m.responsavel_novo || '—'}</TableCell>
-                          <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground hidden sm:table-cell">{m.observacao || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{m.secao_origem || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{m.secao_destino || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{m.responsavel_anterior || '—'}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{m.responsavel_novo || '—'}</TableCell>
+                          <TableCell className="max-w-[180px] truncate text-sm text-muted-foreground">{m.observacao || '—'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Mobile card view */}
+                <div className="space-y-3 md:hidden">
+                  {filtered.map(m => (
+                    <Card key={m.id} className="border-border/50 shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant={eventColor(m.tipo_evento) as any} className="text-[10px] font-medium">{m.tipo_evento}</Badge>
+                          <span className="text-[10px] text-muted-foreground">{new Date(m.data_hora).toLocaleString('pt-BR')}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Tipo: </span>
+                            <span className="capitalize font-medium">{m.item_tipo}</span>
+                          </div>
+                          {m.secao_origem && <div><span className="text-muted-foreground">Origem: </span><span>{m.secao_origem}</span></div>}
+                          {m.secao_destino && <div><span className="text-muted-foreground">Destino: </span><span>{m.secao_destino}</span></div>}
+                          {m.responsavel_novo && <div><span className="text-muted-foreground">Resp: </span><span>{m.responsavel_novo}</span></div>}
+                        </div>
+                        {m.observacao && <p className="text-xs text-muted-foreground mt-2 truncate">{m.observacao}</p>}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Página {page + 1} de {totalPages} ({totalCount} registros)
+                </p>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -251,7 +280,7 @@ export default function MovementsReport() {
           </div>
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="bg-gray-200">
+              <tr className="bg-muted/50 print:bg-neutral-200">
                 <th className="border px-2 py-1 text-left">Data/Hora</th>
                 <th className="border px-2 py-1 text-left">Tipo</th>
                 <th className="border px-2 py-1 text-left">Evento</th>
@@ -264,7 +293,7 @@ export default function MovementsReport() {
             </thead>
             <tbody>
               {filtered.map((m, i) => (
-                <tr key={m.id} className={i % 2 === 0 ? '' : 'bg-gray-50'}>
+                <tr key={m.id} className={i % 2 === 0 ? '' : 'bg-muted/20 print:bg-neutral-50'}>
                   <td className="border px-2 py-1">{new Date(m.data_hora).toLocaleString('pt-BR')}</td>
                   <td className="border px-2 py-1 capitalize">{m.item_tipo}</td>
                   <td className="border px-2 py-1">{m.tipo_evento}</td>
