@@ -53,7 +53,6 @@ export default function AppSidebar() {
     fetchAlertCount();
   }, [location.pathname]);
 
-  // Realtime subscription for alerts
   useEffect(() => {
     const channel = supabase
       .channel('alerts-realtime')
@@ -84,35 +83,35 @@ export default function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
+      <SidebarHeader className="border-b border-sidebar-border/60 px-3 py-3.5">
         <div
           className="flex items-center gap-2.5 cursor-pointer group"
           onClick={() => navigate('/')}
         >
-          <div className="p-1.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-all duration-200 shrink-0">
-            <Monitor className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg gradient-primary shadow-glow shrink-0 group-hover:scale-105 transition-transform duration-200">
+            <Monitor className="h-5 w-5 text-primary-foreground" />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
               <h1 className="text-sm font-bold tracking-tight leading-tight truncate">Controle de Patrimônio</h1>
-              <p className="text-[10px] text-sidebar-foreground/50 leading-tight">Sistema de Gestão</p>
+              <p className="text-[10px] text-sidebar-foreground/40 leading-tight">Sistema de Gestão</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-2">
+      <SidebarContent className="px-2 py-2.5">
         {/* Search */}
         {!collapsed && (
-          <form onSubmit={handleSearch} className="px-1 mb-2">
+          <form onSubmit={handleSearch} className="px-1 mb-3">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/30" />
               <Input
                 placeholder="Pesquisar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 bg-sidebar-accent/50 border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-foreground/30 text-xs focus:bg-sidebar-accent focus:ring-primary/50 transition-all duration-200"
+                className="pl-8 h-8 bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground placeholder:text-sidebar-foreground/25 text-xs focus:bg-sidebar-accent focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all duration-300 rounded-lg"
               />
             </div>
           </form>
@@ -128,19 +127,19 @@ export default function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive(item.path)}
-                        className="transition-all duration-200"
+                        className="transition-all duration-200 rounded-lg"
                       >
                         <button
                           onClick={() => navigate(item.path)}
                           className="flex items-center gap-2.5 w-full"
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
-                          {!collapsed && <span className="truncate">{item.label}</span>}
+                          {!collapsed && <span className="truncate text-[13px]">{item.label}</span>}
                         </button>
                       </SidebarMenuButton>
                     </TooltipTrigger>
                     {collapsed && (
-                      <TooltipContent side="right">
+                      <TooltipContent side="right" className="font-medium">
                         {item.label}
                       </TooltipContent>
                     )}
@@ -155,7 +154,7 @@ export default function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive('/alertas')}
-                      className="transition-all duration-200"
+                      className="transition-all duration-200 rounded-lg"
                     >
                       <button
                         onClick={() => navigate('/alertas')}
@@ -164,16 +163,16 @@ export default function AppSidebar() {
                         <div className="relative shrink-0">
                           <Bell className="h-4 w-4" />
                           {alertCount > 0 && (
-                            <Badge variant="destructive" className="absolute -top-1.5 -right-1.5 h-4 min-w-4 px-1 text-[9px] flex items-center justify-center">
+                            <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center ring-2 ring-sidebar-background">
                               {alertCount}
-                            </Badge>
+                            </span>
                           )}
                         </div>
                         {!collapsed && (
-                          <span className="truncate flex items-center gap-2">
+                          <span className="truncate flex items-center gap-2 text-[13px]">
                             Alertas
                             {alertCount > 0 && (
-                              <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
+                              <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-semibold">
                                 {alertCount}
                               </Badge>
                             )}
@@ -183,7 +182,7 @@ export default function AppSidebar() {
                     </SidebarMenuButton>
                   </TooltipTrigger>
                   {collapsed && (
-                    <TooltipContent side="right">
+                    <TooltipContent side="right" className="font-medium">
                       Alertas {alertCount > 0 ? `(${alertCount})` : ''}
                     </TooltipContent>
                   )}
@@ -194,11 +193,11 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+      <SidebarFooter className="border-t border-sidebar-border/60 px-3 py-3">
         <div className={`flex ${collapsed ? 'flex-col' : 'flex-row'} items-center gap-1`}>
           <ThemeToggle />
           {!collapsed && user?.email && (
-            <span className="text-[10px] text-sidebar-foreground/40 truncate flex-1 mx-1">
+            <span className="text-[10px] text-sidebar-foreground/35 truncate flex-1 mx-1 font-mono">
               {user.email}
             </span>
           )}
@@ -208,13 +207,13 @@ export default function AppSidebar() {
                 variant="ghost"
                 size="icon"
                 onClick={handleLogout}
-                className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8 shrink-0 transition-all duration-200"
+                className="text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-destructive/10 h-8 w-8 shrink-0 transition-all duration-200 rounded-lg"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             {collapsed && (
-              <TooltipContent side="right">Sair</TooltipContent>
+              <TooltipContent side="right" className="font-medium">Sair</TooltipContent>
             )}
           </Tooltip>
         </div>
