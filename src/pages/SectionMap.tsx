@@ -97,14 +97,12 @@ export default function SectionMap() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {(filterTipo === 'all' || filterTipo === 'notebooks') && (
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                       <StatItem icon={Laptop} value={sec.notebooks} label="notebooks" colorClass="text-primary bg-primary/10" />
                       <StatItem icon={Wrench} value={sec.emManutencao} label="manut." colorClass="text-warning bg-warning/10" />
                       <StatItem icon={Archive} value={sec.baixados} label="baixados" colorClass="text-destructive bg-destructive/10" />
                       <StatItem icon={ArrowRightLeft} value={sec.recentMovs} label="movs (30d)" colorClass="text-muted-foreground bg-muted" />
                     </div>
-                  )}
 
                   {sec.notebooks > 0 && (filterTipo === 'all' || filterTipo === 'notebooks') && (
                     <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">
