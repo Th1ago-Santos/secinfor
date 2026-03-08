@@ -124,7 +124,6 @@ export default function MaterialForm() {
             </form>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

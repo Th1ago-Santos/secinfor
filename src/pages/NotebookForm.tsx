@@ -259,7 +259,6 @@ export default function NotebookForm() {
             </form>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }
