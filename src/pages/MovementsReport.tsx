@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter } from 'lucide-react';
+import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
