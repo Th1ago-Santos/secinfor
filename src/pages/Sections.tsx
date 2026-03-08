@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 
 export default function Sections() {
