@@ -42,43 +42,32 @@ export default function QuickLookup() {
       setLoading(true);
       setNotFound(false);
 
-      const { data: nb } = await supabase
-        .from('notebooks')
-        .select('*')
-        .eq('patrimonio', patrimonio!)
-        .single();
+      const { data, error } = await supabase.rpc('lookup_patrimonio', {
+        p_patrimonio: patrimonio!,
+      });
 
-      if (nb) {
-        const d = nb as any;
-        setItem({
-          id: d.id, patrimonio: d.patrimonio, tipo: 'notebook',
-          modelo: d.modelo, secao: d.secao, militar: d.militar,
-          status: d.status, foto_url: d.foto_url,
-          created_at: d.created_at, updated_at: d.updated_at,
-        });
+      if (error || !data) {
+        setNotFound(true);
         setLoading(false);
         return;
       }
 
-      const { data: mat } = await supabase
-        .from('materials')
-        .select('*')
-        .eq('patrimonio', patrimonio!)
-        .single();
-
-      if (mat) {
-        const d = mat as any;
-        setItem({
-          id: d.id, patrimonio: d.patrimonio, tipo: 'material',
-          nome: d.nome, codigo_material: d.codigo_material,
-          numero_ficha: d.numero_ficha,
-          created_at: d.created_at, updated_at: d.updated_at,
-        });
-        setLoading(false);
-        return;
-      }
-
-      setNotFound(true);
+      const d = data as any;
+      setItem({
+        id: d.id,
+        patrimonio: d.patrimonio,
+        tipo: d.tipo,
+        modelo: d.modelo,
+        nome: d.nome,
+        secao: d.secao,
+        militar: d.militar,
+        status: d.status,
+        foto_url: d.foto_url,
+        codigo_material: d.codigo_material,
+        numero_ficha: d.numero_ficha,
+        created_at: d.created_at,
+        updated_at: d.updated_at,
+      });
       setLoading(false);
     };
     fetchItem();
