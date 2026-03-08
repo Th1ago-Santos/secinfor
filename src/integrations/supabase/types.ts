@@ -345,6 +345,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      batch_update_priority_order: {
+        Args: { ids: string[]; orders: number[] }
+        Returns: undefined
+      }
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
     }
     Enums: {
