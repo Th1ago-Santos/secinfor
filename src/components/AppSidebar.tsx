@@ -94,20 +94,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2.5">
-        {/* Search */}
-        {!collapsed && (
-          <form onSubmit={handleSearch} className="px-1 mb-3">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/30" />
-              <Input
-                placeholder="Pesquisar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground placeholder:text-sidebar-foreground/25 text-xs focus:bg-sidebar-accent focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all duration-300 rounded-lg"
-              />
-            </div>
-          </form>
-        )}
+        {!collapsed && <SidebarSearch />}
 
         <SidebarGroup>
           <SidebarGroupContent>
