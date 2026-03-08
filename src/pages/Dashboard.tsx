@@ -43,10 +43,10 @@ type RecentItem = {
 };
 
 const PIE_COLORS = [
-  'hsl(142, 71%, 45%)',
+  'hsl(152, 60%, 45%)',
   'hsl(38, 92%, 50%)',
   'hsl(0, 72%, 51%)',
-  'hsl(217, 91%, 60%)',
+  'hsl(220, 85%, 60%)',
 ];
 
 export default function Dashboard() {
@@ -169,30 +169,30 @@ export default function Dashboard() {
     { label: 'Alertas', value: stats.alertasAtivos, icon: Bell, variant: 'destructive' as const, onClick: () => navigate('/alertas') },
   ] : [];
 
-  const variantColors: Record<string, string> = {
-    primary: 'text-primary bg-primary/10',
-    info: 'text-info bg-info/10',
-    success: 'text-success bg-success/10',
-    warning: 'text-warning bg-warning/10',
-    destructive: 'text-destructive bg-destructive/10',
-    default: 'text-muted-foreground bg-muted',
+  const variantColors: Record<string, { icon: string; border: string }> = {
+    primary: { icon: 'text-primary bg-primary/10', border: 'hover:border-primary/30' },
+    info: { icon: 'text-info bg-info/10', border: 'hover:border-info/30' },
+    success: { icon: 'text-success bg-success/10', border: 'hover:border-success/30' },
+    warning: { icon: 'text-warning bg-warning/10', border: 'hover:border-warning/30' },
+    destructive: { icon: 'text-destructive bg-destructive/10', border: 'hover:border-destructive/30' },
+    default: { icon: 'text-muted-foreground bg-muted', border: 'hover:border-border' },
   };
 
   return (
     <div className="container mx-auto py-6 px-4 animate-in-page">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <TrendingUp className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-3 mb-7">
+          <div className="p-2.5 rounded-xl gradient-primary shadow-glow">
+            <TrendingUp className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">Painel de Controle</h2>
-            <p className="text-xs text-muted-foreground">Visão geral do patrimônio</p>
+            <h2 className="text-xl font-bold tracking-tight">Painel de Controle</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Visão geral do patrimônio</p>
           </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)}
+            {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-[110px] rounded-xl" />)}
           </div>
         ) : (
           <>
@@ -201,13 +201,13 @@ export default function Dashboard() {
               {indicators.map((ind, idx) => (
                 <Card
                   key={ind.label}
-                  className={`group transition-all duration-200 hover:shadow-md ${ind.onClick ? 'cursor-pointer hover:border-primary/40' : 'hover:border-border/80'}`}
+                  className={`kpi-card group border-border/50 ${variantColors[ind.variant].border} ${ind.onClick ? 'cursor-pointer' : ''}`}
                   onClick={ind.onClick}
                   style={{ animationDelay: `${idx * 40}ms` }}
                 >
                   <CardContent className="pt-4 pb-3 px-4">
                     <div className="flex items-center justify-between mb-3">
-                      <div className={`p-2 rounded-lg ${variantColors[ind.variant]}`}>
+                      <div className={`p-2 rounded-lg ${variantColors[ind.variant].icon} transition-transform duration-300 group-hover:scale-110`}>
                         <ind.icon className="h-4 w-4" />
                       </div>
                       {ind.label === 'Alertas' && ind.value > 0 && (
@@ -223,10 +223,12 @@ export default function Dashboard() {
 
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <Card className="lg:col-span-2 animate-in-card">
+              <Card className="lg:col-span-2 animate-in-card shadow-card border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-primary" />
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Notebooks por Seção
                   </CardTitle>
                 </CardHeader>
@@ -241,9 +243,10 @@ export default function Dashboard() {
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
+                            borderRadius: '10px',
                             color: 'hsl(var(--foreground))',
                             fontSize: '12px',
+                            boxShadow: '0 4px 12px hsl(var(--foreground) / 0.05)',
                           }}
                         />
                         <Bar dataKey="count" name="Notebooks" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
@@ -255,7 +258,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="animate-in-card">
+              <Card className="animate-in-card shadow-card border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold">Status dos Notebooks</CardTitle>
                 </CardHeader>
@@ -263,7 +266,7 @@ export default function Dashboard() {
                   {statusPieData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
-                        <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                        <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} label={({ name, value }) => `${name}: ${value}`} labelLine={false} strokeWidth={2} stroke="hsl(var(--card))">
                           {statusPieData.map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
@@ -272,7 +275,7 @@ export default function Dashboard() {
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
+                            borderRadius: '10px',
                             color: 'hsl(var(--foreground))',
                             fontSize: '12px',
                           }}
@@ -288,10 +291,12 @@ export default function Dashboard() {
 
             {/* Bottom row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <Card className="animate-in-card">
+              <Card className="animate-in-card shadow-card border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <ArrowRightLeft className="h-4 w-4 text-primary" />
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <ArrowRightLeft className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Movimentações por Mês
                   </CardTitle>
                 </CardHeader>
@@ -305,35 +310,37 @@ export default function Dashboard() {
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
+                          borderRadius: '10px',
                           color: 'hsl(var(--foreground))',
                           fontSize: '12px',
                         }}
                       />
-                      <Line type="monotone" dataKey="count" name="Movimentações" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} />
+                      <Line type="monotone" dataKey="count" name="Movimentações" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--card))' }} activeDot={{ r: 6, strokeWidth: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card className="animate-in-card">
+              <Card className="animate-in-card shadow-card border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Últimas Movimentações
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2.5">
+                <CardContent className="space-y-1">
                   {recentMovs.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">Nenhuma movimentação</p>
                   ) : recentMovs.map(m => (
-                    <div key={m.id} className="flex items-start gap-2.5 text-sm border-b border-border/50 pb-2.5 last:border-0 last:pb-0 group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-md transition-colors duration-150">
-                      <div className="p-1 rounded bg-primary/10 mt-0.5">
+                    <div key={m.id} className="flex items-start gap-2.5 text-sm py-2.5 border-b border-border/40 last:border-0 group hover:bg-muted/40 -mx-3 px-3 rounded-lg transition-colors duration-200">
+                      <div className="p-1.5 rounded-md bg-primary/10 mt-0.5 group-hover:bg-primary/15 transition-colors">
                         <ArrowRightLeft className="h-3 w-3 text-primary" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-xs">{m.tipo_evento}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
                           {m.item_tipo} • {new Date(m.data_hora).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
@@ -342,25 +349,27 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="animate-in-card">
+              <Card className="animate-in-card shadow-card border-border/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-primary" />
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Layers className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Últimos Cadastros
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2.5">
+                <CardContent className="space-y-1">
                   {recentItems.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">Nenhum item</p>
                   ) : recentItems.map(item => (
-                    <div key={item.id} className="flex items-start gap-2.5 text-sm border-b border-border/50 pb-2.5 last:border-0 last:pb-0 group hover:bg-muted/30 -mx-2 px-2 py-1 rounded-md transition-colors duration-150">
-                      <div className="p-1 rounded bg-primary/10 mt-0.5">
+                    <div key={item.id} className="flex items-start gap-2.5 text-sm py-2.5 border-b border-border/40 last:border-0 group hover:bg-muted/40 -mx-3 px-3 rounded-lg transition-colors duration-200">
+                      <div className="p-1.5 rounded-md bg-primary/10 mt-0.5 group-hover:bg-primary/15 transition-colors">
                         {item.tipo === 'Notebook' ? <Laptop className="h-3 w-3 text-primary" /> : <Package className="h-3 w-3 text-primary" />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-xs truncate">{item.nome}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          <span className="font-mono">{item.patrimonio}</span> • {item.tipo} • {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          <span className="font-mono text-[10px]">{item.patrimonio}</span> • {item.tipo} • {new Date(item.created_at).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                     </div>
