@@ -52,42 +52,44 @@ export default function Sections() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 max-w-3xl animate-in-page">
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Settings className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Settings className="h-4 w-4 text-primary" />
+              </div>
               Gerenciar Seções
             </CardTitle>
-            <Button size="sm" onClick={() => setShowAdd(true)} className="transition-hover">
+            <Button size="sm" onClick={() => setShowAdd(true)} className="shadow-sm transition-all duration-200">
               <Plus className="h-4 w-4 mr-1.5" />
               Nova Seção
             </Button>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-3">
-                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-md" />)}
+              <div className="space-y-2">
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
               </div>
             ) : (
-              <div className="rounded-lg border">
+              <div className="rounded-xl border">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/40 hover:bg-muted/40">
-                      <TableHead className="font-semibold">Nome</TableHead>
-                      <TableHead className="font-semibold text-right w-28">Ações</TableHead>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider">Nome</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wider text-right w-28">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sections.map((s) => (
-                      <TableRow key={s.id} className="hover:bg-muted/20 transition-hover">
+                      <TableRow key={s.id} className="hover:bg-muted/30 transition-colors duration-150 group">
                         <TableCell className="font-medium text-sm">{s.name}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-0.5">
-                            <Button variant="ghost" size="icon" onClick={() => { setEditId(s.id); setEditName(s.name); }} className="h-8 w-8 transition-hover hover:text-primary">
-                              <Pencil className="h-4 w-4" />
+                          <div className="flex justify-end gap-0.5 opacity-70 group-hover:opacity-100 transition-opacity duration-150">
+                            <Button variant="ghost" size="icon" onClick={() => { setEditId(s.id); setEditName(s.name); }} className="h-8 w-8 hover:text-primary hover:bg-primary/10 transition-all duration-200">
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(s.id)} className="h-8 w-8 text-destructive hover:text-destructive transition-hover">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(s.id)} className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10 transition-all duration-200">
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -97,7 +99,7 @@ export default function Sections() {
                 </Table>
               </div>
             )}
-            {!loading && <p className="text-xs text-muted-foreground mt-3">{sections.length} seção(ões) cadastrada(s)</p>}
+            {!loading && <p className="text-xs text-muted-foreground mt-3 font-medium">{sections.length} seção(ões) cadastrada(s)</p>}
           </CardContent>
         </Card>
       </main>
@@ -106,12 +108,12 @@ export default function Sections() {
         <DialogContent>
           <DialogHeader><DialogTitle>Nova Seção</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Label htmlFor="new-section">Nome da Seção</Label>
-            <Input id="new-section" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ex: S5" className="h-9" />
+            <Label htmlFor="new-section" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome da Seção</Label>
+            <Input id="new-section" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ex: S5" className="h-10 bg-muted/30 border-border/60 focus:bg-background" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancelar</Button>
-            <Button onClick={handleAdd} disabled={saving || !newName.trim()} className="transition-hover">{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button onClick={handleAdd} disabled={saving || !newName.trim()} className="transition-all duration-200">{saving ? 'Salvando...' : 'Salvar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -120,12 +122,12 @@ export default function Sections() {
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Seção</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Label htmlFor="edit-section">Nome da Seção</Label>
-            <Input id="edit-section" value={editName} onChange={(e) => setEditName(e.target.value)} className="h-9" />
+            <Label htmlFor="edit-section" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome da Seção</Label>
+            <Input id="edit-section" value={editName} onChange={(e) => setEditName(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditId(null)}>Cancelar</Button>
-            <Button onClick={handleEdit} disabled={saving || !editName.trim()} className="transition-hover">{saving ? 'Salvando...' : 'Salvar'}</Button>
+            <Button onClick={handleEdit} disabled={saving || !editName.trim()} className="transition-all duration-200">{saving ? 'Salvando...' : 'Salvar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

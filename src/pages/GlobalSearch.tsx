@@ -54,62 +54,66 @@ export default function GlobalSearch() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 animate-in-page">
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Search className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Search className="h-4 w-4 text-primary" />
+              </div>
               Resultados para "{q}"
             </CardTitle>
-            {!loading && <p className="text-sm text-muted-foreground mt-1">{total} resultado(s) encontrado(s)</p>}
+            {!loading && <p className="text-sm text-muted-foreground mt-1 font-medium">{total} resultado(s) encontrado(s)</p>}
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}
+              <div className="space-y-2">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
               </div>
             ) : (
               <Tabs defaultValue="notebooks">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="notebooks" className="transition-hover">
-                    <Laptop className="h-4 w-4 mr-1.5" />
+                  <TabsTrigger value="notebooks" className="transition-all duration-200">
+                    <Laptop className="h-3.5 w-3.5 mr-1.5" />
                     Notebooks ({notebooks.length})
                   </TabsTrigger>
-                  <TabsTrigger value="materials" className="transition-hover">
-                    <Package className="h-4 w-4 mr-1.5" />
+                  <TabsTrigger value="materials" className="transition-all duration-200">
+                    <Package className="h-3.5 w-3.5 mr-1.5" />
                     Material Carga ({materials.length})
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="notebooks" className="mt-0 animate-in-card">
                   {notebooks.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Laptop className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p>Nenhum notebook encontrado.</p>
+                    <div className="text-center py-16 text-muted-foreground">
+                      <div className="mx-auto w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                        <Laptop className="h-6 w-6 text-muted-foreground/40" />
+                      </div>
+                      <p className="font-medium">Nenhum notebook encontrado.</p>
                     </div>
                   ) : (
-                    <div className="rounded-lg border overflow-x-auto">
+                    <div className="rounded-xl border overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-muted/40 hover:bg-muted/40">
-                            <TableHead className="font-semibold">Patrimônio</TableHead>
-                            <TableHead className="font-semibold">Modelo</TableHead>
-                            <TableHead className="font-semibold hidden md:table-cell">Seção</TableHead>
-                            <TableHead className="font-semibold hidden md:table-cell">Militar</TableHead>
-                            <TableHead className="font-semibold">Status</TableHead>
-                            <TableHead className="font-semibold text-right">Ações</TableHead>
+                          <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Patrimônio</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Modelo</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Seção</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Militar</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Status</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider text-right">Ações</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {notebooks.map((nb) => (
-                            <TableRow key={nb.id} className="hover:bg-muted/20 transition-hover">
-                              <TableCell className="font-mono font-medium text-sm">{nb.patrimonio}</TableCell>
+                            <TableRow key={nb.id} className="hover:bg-muted/30 transition-colors duration-150 group">
+                              <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio}</TableCell>
                               <TableCell className="text-sm">{nb.modelo}</TableCell>
-                              <TableCell className="text-sm hidden md:table-cell">{nb.secao}</TableCell>
-                              <TableCell className="text-sm hidden md:table-cell">{nb.militar}</TableCell>
-                              <TableCell><Badge variant={statusColor(nb.status) as any} className="text-xs">{nb.status}</Badge></TableCell>
+                              <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{nb.secao}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{nb.militar}</TableCell>
+                              <TableCell><Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge></TableCell>
                               <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} className="h-8 w-8 transition-hover hover:text-primary">
-                                  <Pencil className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} className="h-8 w-8 opacity-70 group-hover:opacity-100 hover:text-primary hover:bg-primary/10 transition-all duration-200">
+                                  <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -122,32 +126,34 @@ export default function GlobalSearch() {
 
                 <TabsContent value="materials" className="mt-0 animate-in-card">
                   {materials.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Package className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p>Nenhum material encontrado.</p>
+                    <div className="text-center py-16 text-muted-foreground">
+                      <div className="mx-auto w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                        <Package className="h-6 w-6 text-muted-foreground/40" />
+                      </div>
+                      <p className="font-medium">Nenhum material encontrado.</p>
                     </div>
                   ) : (
-                    <div className="rounded-lg border overflow-x-auto">
+                    <div className="rounded-xl border overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-muted/40 hover:bg-muted/40">
-                            <TableHead className="font-semibold">Patrimônio</TableHead>
-                            <TableHead className="font-semibold">Código</TableHead>
-                            <TableHead className="font-semibold hidden sm:table-cell">Nº Ficha</TableHead>
-                            <TableHead className="font-semibold">Nome</TableHead>
-                            <TableHead className="font-semibold text-right">Ações</TableHead>
+                          <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Patrimônio</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Código</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Nº Ficha</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider">Nome</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase tracking-wider text-right">Ações</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {materials.map((m) => (
-                            <TableRow key={m.id} className="hover:bg-muted/20 transition-hover">
-                              <TableCell className="font-mono font-medium text-sm">{m.patrimonio}</TableCell>
-                              <TableCell className="font-mono text-sm">{m.codigo_material}</TableCell>
-                              <TableCell className="font-mono text-sm hidden sm:table-cell">{m.numero_ficha}</TableCell>
+                            <TableRow key={m.id} className="hover:bg-muted/30 transition-colors duration-150 group">
+                              <TableCell className="font-mono font-semibold text-sm">{m.patrimonio}</TableCell>
+                              <TableCell className="font-mono text-sm text-muted-foreground">{m.codigo_material}</TableCell>
+                              <TableCell className="font-mono text-sm text-muted-foreground hidden sm:table-cell">{m.numero_ficha}</TableCell>
                               <TableCell className="text-sm">{m.nome}</TableCell>
                               <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => navigate(`/materiais/${m.id}/editar`)} className="h-8 w-8 transition-hover hover:text-primary">
-                                  <Pencil className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/materiais/${m.id}/editar`)} className="h-8 w-8 opacity-70 group-hover:opacity-100 hover:text-primary hover:bg-primary/10 transition-all duration-200">
+                                  <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                               </TableCell>
                             </TableRow>
