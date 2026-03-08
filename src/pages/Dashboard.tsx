@@ -9,7 +9,7 @@ import {
   ClipboardCheck, Bell, TrendingUp, BarChart3, Clock
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
-import AppHeader from '@/components/AppHeader';
+
 
 type Stats = {
   totalNotebooks: number;
