@@ -39,7 +39,6 @@ export default function SectionMap() {
     ] = await Promise.all([
       supabase.from('sections').select('name').order('name'),
       supabase.from('notebooks').select('secao, status'),
-      supabase.from('materials').select('patrimonio'),
       supabase.from('alerts').select('secao').eq('status', 'ativo'),
     ]);
 
