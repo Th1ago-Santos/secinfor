@@ -119,10 +119,6 @@ export default function SectionMap() {
                     </div>
                   )}
 
-                  {(filterTipo === 'all' || filterTipo === 'materials') && (
-                    <StatItem icon={Package} value={sec.materials} label="materiais" colorClass="text-info bg-info/10" />
-                  )}
-
                   {sec.notebooks > 0 && (filterTipo === 'all' || filterTipo === 'notebooks') && (
                     <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">
                       {sec.emUso > 0 && <div className="bg-success transition-all duration-300" style={{ width: `${(sec.emUso / sec.notebooks) * 100}%` }} />}
