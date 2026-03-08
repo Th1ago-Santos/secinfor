@@ -24,7 +24,6 @@ export default function SectionMap() {
   const navigate = useNavigate();
   const [sectionsData, setSectionsData] = useState<SectionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTipo, setFilterTipo] = useState('all');
 
   useEffect(() => { fetchData(); }, []);
 
