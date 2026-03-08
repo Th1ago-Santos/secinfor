@@ -1,0 +1,1 @@
+CREATE POLICY "Auth users can delete alerts" ON public.alerts FOR DELETE TO authenticated USING (true);

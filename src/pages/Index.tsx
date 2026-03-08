@@ -35,6 +35,9 @@ export default function Index() {
   const { sections } = useSections();
   const queryClient = useQueryClient();
 
+  // Reset page when filters change
+  const resetPage = () => setPage(0);
+
   const { data, isLoading: loading } = useQuery({
     queryKey: ['notebooks', filterSecao, filterStatus, searchPatrimonio, page],
     queryFn: async () => {
@@ -118,9 +121,9 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => setSearchPatrimonio(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
+                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => { setSearchPatrimonio(e.target.value); resetPage(); }} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
               </div>
-              <Select value={filterSecao} onValueChange={setFilterSecao}>
+              <Select value={filterSecao} onValueChange={v => { setFilterSecao(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50">
                   <SelectValue placeholder="Filtrar por seção" />
                 </SelectTrigger>
@@ -129,7 +132,7 @@ export default function Index() {
                   {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 bg-muted/30 border-border/50">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
