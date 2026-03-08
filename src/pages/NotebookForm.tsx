@@ -158,9 +158,7 @@ export default function NotebookForm() {
   const currentPreview = fotoPreview || (!removeFoto ? existingFotoUrl : null);
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
         <Button variant="ghost" onClick={() => navigate('/notebooks')} className="mb-4 transition-all duration-200 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
