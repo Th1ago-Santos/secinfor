@@ -200,13 +200,13 @@ export default function Priorities() {
   };
 
   const handleSave = async () => {
-    if (!form.secao || !form.responsavel || !form.motivo) {
-      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' });
+    if (!form.secao) {
+      toast({ title: 'Selecione a seção', variant: 'destructive' });
       return;
     }
     setSaving(true);
     const payload = {
-      secao: form.secao, responsavel: form.responsavel, motivo: form.motivo,
+      secao: form.secao, responsavel: form.responsavel || null, motivo: form.motivo || null,
       observacoes: form.observacoes || null, data_solicitacao: form.data_solicitacao || null,
     };
 
