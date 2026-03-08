@@ -51,7 +51,6 @@ export default function SectionMap() {
       return {
         name: s.name,
         notebooks: sNbs.length,
-        materials: 0, // Materials aren't section-specific
         emManutencao: sNbs.filter(n => n.status === 'Em manutenção').length,
         baixados: sNbs.filter(n => n.status === 'Baixado').length,
         emUso: sNbs.filter(n => n.status === 'Em uso').length,
