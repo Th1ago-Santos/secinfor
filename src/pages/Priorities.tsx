@@ -64,62 +64,56 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-stretch gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 ${isDragging ? 'z-50 shadow-xl ring-2 ring-primary/40 scale-[1.02]' : 'hover:shadow-md'}`}
+      className={`group flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2 shadow-sm transition-all duration-200 ${isDragging ? 'z-50 shadow-xl ring-2 ring-primary/40 scale-[1.01]' : 'hover:shadow-md'}`}
     >
       <div
         {...attributes}
         {...listeners}
-        className="flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        className="flex items-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors"
       >
-        <GripVertical className="h-5 w-5" />
+        <GripVertical className="h-4 w-4" />
       </div>
 
-      <div className="flex items-center justify-center">
-        <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
-          index === 0 ? 'gradient-primary text-primary-foreground shadow-glow' :
-          index === 1 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-          index === 2 ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400' :
-          'bg-muted text-muted-foreground'
-        }`}>
-          {index + 1}
-        </div>
+      <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+        index === 0 ? 'gradient-primary text-primary-foreground shadow-glow' :
+        index === 1 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+        index === 2 ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400' :
+        'bg-muted text-muted-foreground'
+      }`}>
+        {index + 1}
       </div>
 
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-foreground">{item.secao}</span>
-          <Badge variant="outline" className="text-[10px]">{item.responsavel}</Badge>
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-2">{item.motivo}</p>
-        {item.observacoes && (
-          <p className="text-xs text-muted-foreground/60 italic line-clamp-1">{item.observacoes}</p>
-        )}
+      <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-sm text-foreground">{item.secao}</span>
+        {item.responsavel && <Badge variant="outline" className="text-[9px] h-4">{item.responsavel}</Badge>}
+        {item.motivo && <span className="text-xs text-muted-foreground truncate hidden sm:inline max-w-[200px]">{item.motivo}</span>}
+        {item.observacoes && <span className="text-[10px] text-muted-foreground/50 italic truncate hidden md:inline max-w-[150px]">{item.observacoes}</span>}
         {item.data_solicitacao && (
-          <p className="text-[10px] text-muted-foreground/40 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+          <span className="text-[10px] text-muted-foreground/40 flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5" />
             {format(new Date(item.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy')}
-          </p>
+          </span>
         )}
       </div>
 
-      <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {index > 0 && (
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onMoveTop} title="Mover ao topo">
-            <ArrowUpToLine className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
+            <ArrowUpToLine className="h-3 w-3" />
           </Button>
         )}
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} title="Editar">
-          <Pencil className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit} title="Editar">
+          <Pencil className="h-3 w-3" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
-          <PackageCheck className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
+          <PackageCheck className="h-3 w-3" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
-          <Trash2 className="h-3.5 w-3.5" />
+        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
+          <Trash2 className="h-3 w-3" />
         </Button>
         {index < total - 1 && (
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onMoveBottom} title="Mover ao final">
-            <ArrowDownToLine className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveBottom} title="Mover ao final">
+            <ArrowDownToLine className="h-3 w-3" />
           </Button>
         )}
       </div>
