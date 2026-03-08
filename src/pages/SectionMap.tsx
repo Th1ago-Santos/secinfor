@@ -35,7 +35,6 @@ export default function SectionMap() {
     const [
       { data: sections },
       { data: allNbs },
-      { data: allMats },
       { data: alertsData },
     ] = await Promise.all([
       supabase.from('sections').select('name').order('name'),
