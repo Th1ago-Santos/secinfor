@@ -200,8 +200,8 @@ export default function Priorities() {
   };
 
   const handleSave = async () => {
-    if (!form.secao || !form.responsavel || !form.motivo) {
-      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' });
+    if (!form.secao) {
+      toast({ title: 'Selecione a seção', variant: 'destructive' });
       return;
     }
     setSaving(true);
