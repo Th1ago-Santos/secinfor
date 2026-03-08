@@ -101,7 +101,7 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         {index > 0 && (
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
             <ArrowUpToLine className="h-3 w-3" />
