@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,35 +23,35 @@ import { Notebook, statusColor } from '@/types';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
-  const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [filterSecao, setFilterSecao] = useState(searchParams.get('secao') || 'all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchPatrimonio, setSearchPatrimonio] = useState('');
-  const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const [qrItem, setQrItem] = useState<Notebook | null>(null);
   const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const PAGE_SIZE = 50;
   const navigate = useNavigate();
   const { sections } = useSections();
+  const queryClient = useQueryClient();
 
-  const fetchNotebooks = async () => {
-    setLoading(true);
-    let query = supabase.from('notebooks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-    if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
-    if (filterStatus !== 'all') query = query.eq('status', filterStatus);
-    if (searchPatrimonio.trim()) query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
-    query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-    const { data, error, count } = await query;
-    if (error) toast.error('Erro ao carregar dados.');
-    else { setNotebooks((data as Notebook[]) || []); setTotalCount(count || 0); }
-    setLoading(false);
-  };
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['notebooks', filterSecao, filterStatus, searchPatrimonio, page],
+    queryFn: async () => {
+      let query = supabase.from('notebooks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+      if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
+      if (filterStatus !== 'all') query = query.eq('status', filterStatus);
+      if (searchPatrimonio.trim()) query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
+      query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      const { data, error, count } = await query;
+      if (error) { toast.error('Erro ao carregar dados.'); throw error; }
+      return { notebooks: (data as Notebook[]) || [], totalCount: count || 0 };
+    },
+    staleTime: 15_000,
+  });
 
-  useEffect(() => { fetchNotebooks(); }, [filterSecao, filterStatus, searchPatrimonio, page]);
-
+  const notebooks = data?.notebooks || [];
+  const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const exportCSV = () => {
@@ -79,7 +80,10 @@ export default function Index() {
     if (!deleteId) return;
     const { error } = await supabase.from('notebooks').delete().eq('id', deleteId);
     if (error) toast.error('Erro ao excluir item.');
-    else { toast.success('Item excluído com sucesso.'); fetchNotebooks(); }
+    else {
+      toast.success('Item excluído com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['notebooks'] });
+    }
     setDeleteId(null);
   };
 
@@ -152,62 +156,89 @@ export default function Index() {
                 <p className="text-sm mt-1 text-muted-foreground/70">Cadastre um novo notebook ou altere os filtros.</p>
               </div>
             ) : (
-              <div className="rounded-xl border border-border/50 overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground w-12">Foto</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Modelo</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Seção</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Militar</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
-                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {notebooks.map((nb) => (
-                      <TableRow key={nb.id} className="hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0">
-                        <TableCell>
+              <>
+                {/* Desktop table */}
+                <div className="rounded-xl border border-border/50 overflow-x-auto hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground w-12">Foto</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Modelo</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Seção</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Militar</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {notebooks.map((nb) => (
+                        <TableRow key={nb.id} className="hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0">
+                          <TableCell>
+                            {nb.foto_url ? (
+                              <img src={nb.foto_url} alt="Foto" className="h-9 w-9 rounded-lg object-cover cursor-pointer border border-border/50 hover:scale-110 transition-transform duration-200 shadow-sm" onClick={() => setViewItem(nb)} />
+                            ) : (
+                              <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center">
+                                <Laptop className="h-4 w-4 text-muted-foreground/30" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio}</TableCell>
+                          <TableCell className="text-sm">{nb.modelo}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{nb.secao}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{nb.militar}</TableCell>
+                          <TableCell>
+                            <Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+                              <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile card view */}
+                <div className="space-y-3 md:hidden">
+                  {notebooks.map((nb) => (
+                    <Card key={nb.id} className="border-border/50 shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
                           {nb.foto_url ? (
-                            <img src={nb.foto_url} alt="Foto" className="h-9 w-9 rounded-lg object-cover cursor-pointer border border-border/50 hover:scale-110 transition-transform duration-200 shadow-sm" onClick={() => setViewItem(nb)} />
+                            <img src={nb.foto_url} alt="Foto" className="h-12 w-12 rounded-lg object-cover border border-border/50 shadow-sm shrink-0" onClick={() => setViewItem(nb)} />
                           ) : (
-                            <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center">
-                              <Laptop className="h-4 w-4 text-muted-foreground/30" />
+                            <div className="h-12 w-12 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                              <Laptop className="h-5 w-5 text-muted-foreground/30" />
                             </div>
                           )}
-                        </TableCell>
-                        <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio}</TableCell>
-                        <TableCell className="text-sm">{nb.modelo}</TableCell>
-                        <TableCell className="text-sm hidden md:table-cell text-muted-foreground">{nb.secao}</TableCell>
-                        <TableCell className="text-sm hidden md:table-cell text-muted-foreground">{nb.militar}</TableCell>
-                        <TableCell>
-                          <Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
-                            <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200">
-                              <Eye className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200">
-                              <QrCode className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200 hidden sm:flex">
-                              <History className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-mono font-semibold text-sm">{nb.patrimonio}</span>
+                              <Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge>
+                            </div>
+                            <p className="text-sm truncate">{nb.modelo}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{nb.secao} • {nb.militar}</p>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        </div>
+                        <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-border/30">
+                          <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} className="h-8 w-8"><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} className="h-8 w-8 text-destructive/60"><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
             )}
 
             {/* Pagination */}

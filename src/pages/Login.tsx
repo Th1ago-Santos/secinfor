@@ -51,8 +51,8 @@ export default function Login() {
         {/* Logo above card */}
         <div className="flex flex-col items-center mb-8">
           <div className="relative mb-4">
-            <div className="p-4 rounded-2xl gradient-primary shadow-glow">
-              <Monitor className="h-8 w-8 text-primary-foreground" />
+            <div className="rounded-2xl shadow-glow overflow-hidden">
+              <img src="/favicon.png" alt="14º B Log" className="h-16 w-16 object-contain" />
             </div>
             <div className="absolute -inset-1 rounded-2xl gradient-primary opacity-20 blur-lg -z-10" />
           </div>
