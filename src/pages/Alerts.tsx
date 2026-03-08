@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import AppHeader from '@/components/AppHeader';
+
 
 type Alert = {
   id: string;
