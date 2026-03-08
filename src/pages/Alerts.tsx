@@ -112,6 +112,25 @@ export default function Alerts() {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = () => {
+    generatePDFReport({
+      title: 'Relatório de Alertas',
+      subtitle: `${alerts.length} alerta(s) — Status: ${filterStatus === 'all' ? 'Todos' : filterStatus}`,
+      columns: ['Data', 'Nível', 'Tipo', 'Mensagem', 'Patrimônio', 'Seção', 'Status'],
+      rows: alerts.map(a => [
+        new Date(a.created_at).toLocaleString('pt-BR'),
+        a.nivel,
+        a.tipo,
+        a.mensagem,
+        a.item_patrimonio || '—',
+        a.secao || '—',
+        a.status,
+      ]),
+      filename: 'alertas',
+    });
+    toast.success('PDF exportado com sucesso.');
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
