@@ -13,7 +13,7 @@ import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter } from 
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 
 type Movement = {
