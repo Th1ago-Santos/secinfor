@@ -47,6 +47,7 @@ function AnimatedRoutes() {
         <Route path="/inventario" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
         <Route path="/alertas" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
         <Route path="/mapa-secoes" element={<ProtectedRoute><SectionMap /></ProtectedRoute>} />
+        <Route path="/prioridades" element={<ProtectedRoute><Priorities /></ProtectedRoute>} />
         <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
         <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
