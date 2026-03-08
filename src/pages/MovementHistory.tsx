@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, History } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
+
 
 type Movement = {
   id: string;
