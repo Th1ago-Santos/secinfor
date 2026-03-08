@@ -206,7 +206,7 @@ export default function Priorities() {
     }
     setSaving(true);
     const payload = {
-      secao: form.secao, responsavel: form.responsavel, motivo: form.motivo,
+      secao: form.secao, responsavel: form.responsavel || null, motivo: form.motivo || null,
       observacoes: form.observacoes || null, data_solicitacao: form.data_solicitacao || null,
     };
 
