@@ -13,6 +13,7 @@ import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter, FileTe
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { generatePDFReport } from '@/lib/pdfExport';
 
 import { useSections } from '@/hooks/useSections';
 
