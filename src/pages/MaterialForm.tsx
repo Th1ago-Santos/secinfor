@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Save, AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { z } from 'zod';
 
 const materialSchema = z.object({
