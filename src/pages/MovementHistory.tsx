@@ -128,7 +128,6 @@ export default function MovementHistory() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

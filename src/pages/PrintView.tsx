@@ -194,7 +194,6 @@ export default function PrintView() {
             <p className="mt-1">Documento gerado pelo Sistema de Controle de Patrimônio</p>
           </div>
         </div>
-      </main>
     </div>
   );
 }

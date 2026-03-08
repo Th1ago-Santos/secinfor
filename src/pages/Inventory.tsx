@@ -301,7 +301,6 @@ export default function Inventory() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

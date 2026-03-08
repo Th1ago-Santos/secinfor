@@ -165,7 +165,6 @@ export default function GlobalSearch() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

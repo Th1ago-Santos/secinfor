@@ -137,7 +137,6 @@ export default function SectionMap() {
             ))}
           </div>
         )}
-      </main>
     </div>
   );
 }

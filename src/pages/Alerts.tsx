@@ -220,7 +220,6 @@ export default function Alerts() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

@@ -256,7 +256,6 @@ export default function MovementsReport() {
             <p className="mt-1">Sistema de Controle de Patrimônio</p>
           </div>
         </div>
-      </main>
     </div>
   );
 }

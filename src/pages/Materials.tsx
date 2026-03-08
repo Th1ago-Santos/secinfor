@@ -124,7 +124,7 @@ export default function Materials() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
