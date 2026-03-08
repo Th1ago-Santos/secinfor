@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Monitor, Settings, Printer, Package, Search, ClipboardCheck, Laptop, Menu, X, BarChart3, ArrowRightLeft, Bell, Map } from 'lucide-react';
+import { LogOut, Monitor, Printer, Package, Search, ClipboardCheck, Laptop, Menu, X, BarChart3, ArrowRightLeft, Bell, Map, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -51,27 +51,27 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="bg-primary text-primary-foreground shadow-lg no-print sticky top-0 z-50">
-      <div className="container mx-auto flex items-center justify-between py-2.5 px-4">
+    <header className="bg-sidebar text-sidebar-foreground shadow-xl no-print sticky top-0 z-50 border-b border-sidebar-border">
+      <div className="container mx-auto flex items-center justify-between py-2 px-4">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
-          <div className="p-1.5 rounded-lg bg-primary-foreground/10 group-hover:bg-primary-foreground/15 transition-hover">
-            <Monitor className="h-6 w-6" />
+          <div className="p-1.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-all duration-200">
+            <Monitor className="h-5 w-5 text-primary" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-base font-bold tracking-tight leading-tight">Controle de Patrimônio</h1>
-            <p className="text-[11px] text-primary-foreground/60 leading-tight">Sistema de Gestão</p>
+            <h1 className="text-sm font-bold tracking-tight leading-tight">Controle de Patrimônio</h1>
+            <p className="text-[10px] text-sidebar-foreground/50 leading-tight">Sistema de Gestão</p>
           </div>
         </div>
 
         {/* Global search */}
         <form onSubmit={handleSearch} className="hidden md:flex items-center mx-4 flex-1 max-w-xs">
           <div className="relative w-full">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40" />
             <Input
               placeholder="Pesquisa global..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 bg-primary-foreground/10 border-primary-foreground/15 text-primary-foreground placeholder:text-primary-foreground/35 text-sm focus:bg-primary-foreground/15 transition-hover"
+              className="pl-8 h-8 bg-sidebar-accent/50 border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-foreground/30 text-xs focus:bg-sidebar-accent focus:ring-primary/50 transition-all duration-200"
             />
           </div>
         </form>
@@ -84,14 +84,16 @@ export default function AppHeader() {
               variant="ghost"
               size="sm"
               onClick={() => navigate(item.path)}
-              className={`text-primary-foreground hover:bg-primary-foreground/10 transition-hover relative h-8 px-2.5 text-[12px] ${
-                isActive(item.path) ? 'bg-primary-foreground/15 font-semibold' : 'font-normal'
+              className={`text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 relative h-8 px-2 text-[11px] font-medium ${
+                isActive(item.path)
+                  ? 'bg-sidebar-accent text-sidebar-foreground font-semibold'
+                  : ''
               }`}
             >
               <item.icon className="h-3.5 w-3.5 mr-1" />
               {item.label}
               {isActive(item.path) && (
-                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-foreground/60 rounded-full" />
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
               )}
             </Button>
           ))}
@@ -101,22 +103,22 @@ export default function AppHeader() {
             variant="ghost"
             size="icon"
             onClick={() => navigate('/alertas')}
-            className={`text-primary-foreground hover:bg-primary-foreground/10 transition-hover h-8 w-8 relative ${
-              isActive('/alertas') ? 'bg-primary-foreground/15' : ''
+            className={`text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 h-8 w-8 relative ${
+              isActive('/alertas') ? 'bg-sidebar-accent text-sidebar-foreground' : ''
             }`}
           >
             <Bell className="h-4 w-4" />
             {alertCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[9px] flex items-center justify-center">
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[9px] flex items-center justify-center animate-scale-in">
                 {alertCount}
               </Badge>
             )}
           </Button>
 
-          <div className="w-px h-6 bg-primary-foreground/15 mx-1" />
+          <div className="w-px h-5 bg-sidebar-border mx-1" />
           <ThemeToggle />
           {user?.email && (
-            <span className="text-[11px] text-primary-foreground/50 mx-1.5 max-w-[100px] truncate hidden xl:inline">
+            <span className="text-[10px] text-sidebar-foreground/40 mx-1.5 max-w-[90px] truncate hidden xl:inline">
               {user.email}
             </span>
           )}
@@ -124,9 +126,9 @@ export default function AppHeader() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="text-primary-foreground hover:bg-primary-foreground/10 transition-hover h-8 px-2.5"
+            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 h-8 px-2"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
           </Button>
         </nav>
 
@@ -136,7 +138,7 @@ export default function AppHeader() {
             variant="ghost"
             size="icon"
             onClick={() => navigate('/alertas')}
-            className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8 relative"
+            className="text-sidebar-foreground/70 hover:bg-sidebar-accent h-8 w-8 relative"
           >
             <Bell className="h-4 w-4" />
             {alertCount > 0 && (
@@ -150,7 +152,7 @@ export default function AppHeader() {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-primary-foreground hover:bg-primary-foreground/10 h-8 w-8"
+            className="text-sidebar-foreground/70 hover:bg-sidebar-accent h-8 w-8"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -159,16 +161,16 @@ export default function AppHeader() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-primary-foreground/10 animate-in-page">
+        <div className="lg:hidden border-t border-sidebar-border animate-in-page">
           <div className="container mx-auto px-4 py-3 space-y-1">
-            <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }} className="mb-2 md:hidden">
+            <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }} className="mb-3 md:hidden">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40" />
                 <Input
                   placeholder="Pesquisa global..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 h-9 bg-primary-foreground/10 border-primary-foreground/15 text-primary-foreground placeholder:text-primary-foreground/35 text-sm"
+                  className="pl-8 h-9 bg-sidebar-accent/50 border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-foreground/30 text-sm"
                 />
               </div>
             </form>
@@ -178,25 +180,25 @@ export default function AppHeader() {
                 variant="ghost"
                 size="sm"
                 onClick={() => { navigate(item.path); setMobileMenuOpen(false); }}
-                className={`w-full justify-start text-primary-foreground hover:bg-primary-foreground/10 transition-hover h-10 ${
-                  isActive(item.path) ? 'bg-primary-foreground/15 font-semibold' : ''
+                className={`w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 h-10 ${
+                  isActive(item.path) ? 'bg-sidebar-accent text-sidebar-foreground font-semibold' : ''
                 }`}
               >
-                <item.icon className="h-4 w-4 mr-2" />
+                <item.icon className="h-4 w-4 mr-2.5" />
                 {item.label}
               </Button>
             ))}
-            <div className="border-t border-primary-foreground/10 pt-2 mt-2">
+            <div className="border-t border-sidebar-border pt-2 mt-2">
               {user?.email && (
-                <p className="text-[11px] text-primary-foreground/50 px-3 mb-1.5">{user.email}</p>
+                <p className="text-[10px] text-sidebar-foreground/40 px-3 mb-1.5">{user.email}</p>
               )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="w-full justify-start text-primary-foreground hover:bg-primary-foreground/10 h-10"
+                className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-10"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-4 w-4 mr-2.5" />
                 Sair
               </Button>
             </div>

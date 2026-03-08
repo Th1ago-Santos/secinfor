@@ -15,7 +15,6 @@ export default function ThemeToggle() {
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   }, [dark]);
 
-  // Initialize on mount
   useEffect(() => {
     const saved = localStorage.getItem('theme');
     const isDark = saved !== 'light';
@@ -28,7 +27,7 @@ export default function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setDark(!dark)}
-      className="text-primary-foreground hover:bg-primary-foreground/10"
+      className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8 transition-all duration-200"
       title={dark ? 'Modo claro' : 'Modo escuro'}
     >
       {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
