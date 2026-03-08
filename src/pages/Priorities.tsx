@@ -163,9 +163,9 @@ export default function Priorities() {
   useEffect(() => { fetchPriorities(); }, [fetchPriorities]);
 
   const persistOrder = async (items: Priority[]) => {
-    for (let i = 0; i < items.length; i++) {
-      await supabase.from('computer_priorities').update({ ordem: i }).eq('id', items[i].id);
-    }
+    const ids = items.map(p => p.id);
+    const orders = items.map((_, i) => i);
+    await supabase.rpc('batch_update_priority_order', { ids, orders });
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
