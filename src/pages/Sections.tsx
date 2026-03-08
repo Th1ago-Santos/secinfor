@@ -100,7 +100,7 @@ export default function Sections() {
             {!loading && <p className="text-xs text-muted-foreground mt-3 font-medium">{sections.length} seção(ões) cadastrada(s)</p>}
           </CardContent>
         </Card>
-      </main>
+      
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent>

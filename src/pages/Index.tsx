@@ -194,7 +194,6 @@ export default function Index() {
             )}
           </CardContent>
         </Card>
-      </Card>
 
       {/* View modal */}
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
