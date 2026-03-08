@@ -35,6 +35,9 @@ export default function Index() {
   const { sections } = useSections();
   const queryClient = useQueryClient();
 
+  // Reset page when filters change
+  const resetPage = () => setPage(0);
+
   const { data, isLoading: loading } = useQuery({
     queryKey: ['notebooks', filterSecao, filterStatus, searchPatrimonio, page],
     queryFn: async () => {
