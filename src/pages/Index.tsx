@@ -91,12 +91,20 @@ export default function Index() {
         <PageHeader
           icon={Laptop}
           title="Notebooks Cadastrados"
-          description={`${notebooks.length} registro(s)`}
+          description={`${totalCount} registro(s)`}
           actions={
-            <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
-              <Plus className="h-4 w-4 mr-1.5" />
-              Novo Notebook
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={notebooks.length === 0}>
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={notebooks.length === 0}>
+                <Download className="h-3.5 w-3.5 mr-1.5" />CSV
+              </Button>
+              <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Novo Notebook
+              </Button>
+            </div>
           }
         />
 
