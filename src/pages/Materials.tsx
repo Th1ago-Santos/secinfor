@@ -7,20 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Package, History } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Package, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
-
-type Material = {
-  id: string;
-  patrimonio: string;
-  codigo_material: string;
-  numero_ficha: string;
-  nome: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Material } from '@/types';
 
 export default function Materials() {
   const [materials, setMaterials] = useState<Material[]>([]);
