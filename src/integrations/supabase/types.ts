@@ -59,6 +59,42 @@ export type Database = {
         }
         Relationships: []
       }
+      computer_priorities: {
+        Row: {
+          created_at: string
+          data_solicitacao: string | null
+          id: string
+          motivo: string
+          observacoes: string | null
+          ordem: number
+          responsavel: string
+          secao: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_solicitacao?: string | null
+          id?: string
+          motivo: string
+          observacoes?: string | null
+          ordem?: number
+          responsavel: string
+          secao: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_solicitacao?: string | null
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+          ordem?: number
+          responsavel?: string
+          secao?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           conferido_em: string

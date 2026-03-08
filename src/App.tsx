@@ -21,6 +21,7 @@ import GlobalSearch from "./pages/GlobalSearch";
 import Inventory from "./pages/Inventory";
 import Alerts from "./pages/Alerts";
 import SectionMap from "./pages/SectionMap";
+import Priorities from "./pages/Priorities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
         <Route path="/inventario" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
         <Route path="/alertas" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
         <Route path="/mapa-secoes" element={<ProtectedRoute><SectionMap /></ProtectedRoute>} />
+        <Route path="/prioridades" element={<ProtectedRoute><Priorities /></ProtectedRoute>} />
         <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
         <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />

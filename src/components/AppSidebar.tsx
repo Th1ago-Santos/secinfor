@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import {
   LogOut, Monitor, Printer, Package, Search, ClipboardCheck,
-  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings,
+  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -30,6 +30,7 @@ const navItems = [
   { label: 'Material Carga', path: '/materiais', icon: Package },
   { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft },
   { label: 'Inventário', path: '/inventario', icon: ClipboardCheck },
+  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered },
   { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map },
   { label: 'Seções', path: '/secoes', icon: Settings },
   { label: 'Impressão', path: '/impressao', icon: Printer },
