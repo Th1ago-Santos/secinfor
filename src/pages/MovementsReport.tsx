@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,8 +14,9 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { generatePDFReport } from '@/lib/pdfExport';
-
 import { useSections } from '@/hooks/useSections';
+import PageTransition from '@/components/PageTransition';
+import PageHeader from '@/components/PageHeader';
 
 type Movement = {
   id: string;
@@ -112,15 +113,13 @@ export default function MovementsReport() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 animate-in-page">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
-            <CardTitle className="flex items-center gap-2.5 text-lg">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <ArrowRightLeft className="h-4 w-4 text-primary" />
-              </div>
-              Relatório de Movimentações
-            </CardTitle>
+    <PageTransition>
+      <div className="container mx-auto py-6 px-4">
+        <PageHeader
+          icon={ArrowRightLeft}
+          title="Relatório de Movimentações"
+          description={`${filtered.length} registro(s)`}
+          actions={
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0} className="transition-all duration-200">
                 <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
@@ -132,16 +131,19 @@ export default function MovementsReport() {
                 <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          }
+        />
+
+        <Card className="shadow-card border-border/50">
+          <CardContent className="pt-5">
             <div className="flex flex-col gap-3 mb-5 no-print">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-                  <Input placeholder="Buscar por evento, responsável, observação..." value={searchText} onChange={e => setSearchText(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                  <Input placeholder="Buscar por evento, responsável, observação..." value={searchText} onChange={e => setSearchText(e.target.value)} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
                 </div>
                 <Select value={filterTipo} onValueChange={setFilterTipo}>
-                  <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Tipo" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="notebook">Notebook</SelectItem>
@@ -149,7 +151,7 @@ export default function MovementsReport() {
                   </SelectContent>
                 </Select>
                 <Select value={filterEvento} onValueChange={setFilterEvento}>
-                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Evento" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Evento" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os eventos</SelectItem>
                     {EVENT_TYPES.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
@@ -158,7 +160,7 @@ export default function MovementsReport() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select value={filterSecao} onValueChange={setFilterSecao}>
-                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Seção" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Seção" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as seções</SelectItem>
                     {sections.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
@@ -166,7 +168,7 @@ export default function MovementsReport() {
                 </Select>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/60", !dateFrom && "text-muted-foreground")}>
+                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/50", !dateFrom && "text-muted-foreground")}>
                       <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
                       {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Data inicial'}
                     </Button>
@@ -177,7 +179,7 @@ export default function MovementsReport() {
                 </Popover>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/60", !dateTo && "text-muted-foreground")}>
+                    <Button variant="outline" size="sm" className={cn("h-9 w-full sm:w-[160px] justify-start text-left font-normal bg-muted/30 border-border/50", !dateTo && "text-muted-foreground")}>
                       <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
                       {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Data final'}
                     </Button>
@@ -195,34 +197,34 @@ export default function MovementsReport() {
             </div>
 
             {loading ? (
-              <div className="space-y-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
+              <div className="space-y-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground animate-in-card">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                  <ArrowRightLeft className="h-7 w-7 text-muted-foreground/40" />
+              <div className="text-center py-20 text-muted-foreground">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+                  <ArrowRightLeft className="h-7 w-7 text-muted-foreground/30" />
                 </div>
                 <p className="text-base font-semibold">Nenhuma movimentação encontrada</p>
-                <p className="text-sm mt-1">Ajuste os filtros ou aguarde novas movimentações.</p>
+                <p className="text-sm mt-1 text-muted-foreground/70">Ajuste os filtros ou aguarde novas movimentações.</p>
               </div>
             ) : (
               <>
-                <div className="rounded-xl border overflow-x-auto">
+                <div className="rounded-xl border border-border/50 overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider whitespace-nowrap">Data/Hora</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Evento</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Origem</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Destino</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell">Resp. Ant.</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden lg:table-cell">Resp. Novo</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Obs.</TableHead>
+                      <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">Data/Hora</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Evento</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Origem</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Destino</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Resp. Ant.</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Resp. Novo</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Obs.</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filtered.map(m => (
-                        <TableRow key={m.id} className="hover:bg-muted/30 transition-colors duration-150">
+                        <TableRow key={m.id} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0">
                           <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{new Date(m.data_hora).toLocaleString('pt-BR')}</TableCell>
                           <TableCell><Badge variant="outline" className="text-[10px] capitalize font-medium">{m.item_tipo}</Badge></TableCell>
                           <TableCell><Badge variant={eventColor(m.tipo_evento) as any} className="text-[10px] font-medium">{m.tipo_evento}</Badge></TableCell>
@@ -236,7 +238,6 @@ export default function MovementsReport() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 font-medium">{filtered.length} registro(s)</p>
               </>
             )}
           </CardContent>
@@ -281,6 +282,7 @@ export default function MovementsReport() {
             <p className="mt-1">Sistema de Controle de Patrimônio</p>
           </div>
         </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

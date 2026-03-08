@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Map, Laptop, Package, Wrench, Archive, Eye, ArrowRightLeft } from 'lucide-react';
-
+import PageTransition from '@/components/PageTransition';
+import PageHeader from '@/components/PageHeader';
 
 type SectionData = {
   name: string;
@@ -59,26 +60,23 @@ export default function SectionMap() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 animate-in-page">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Map className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold">Mapa das Seções</h2>
-              <p className="text-xs text-muted-foreground">Distribuição de itens por seção</p>
-            </div>
-          </div>
-          <Select value={filterTipo} onValueChange={setFilterTipo}>
-            <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Notebooks + Materiais</SelectItem>
-              <SelectItem value="notebooks">Apenas Notebooks</SelectItem>
-              <SelectItem value="materials">Apenas Materiais</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <PageTransition>
+      <div className="container mx-auto py-6 px-4">
+        <PageHeader
+          icon={Map}
+          title="Mapa das Seções"
+          description="Distribuição de itens por seção"
+          actions={
+            <Select value={filterTipo} onValueChange={setFilterTipo}>
+              <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Notebooks + Materiais</SelectItem>
+                <SelectItem value="notebooks">Apenas Notebooks</SelectItem>
+                <SelectItem value="materials">Apenas Materiais</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -86,8 +84,8 @@ export default function SectionMap() {
           </div>
         ) : sectionsData.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Map className="h-7 w-7 text-muted-foreground/40" />
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+              <Map className="h-7 w-7 text-muted-foreground/30" />
             </div>
             <p className="text-base font-semibold">Nenhuma seção cadastrada</p>
           </div>
@@ -96,7 +94,7 @@ export default function SectionMap() {
             {sectionsData.map((sec, idx) => (
               <Card
                 key={sec.name}
-                className={`group transition-all duration-200 hover:shadow-md animate-in-card ${sec.emManutencao > 0 ? 'border-warning/30' : ''} ${sec.alertas > 0 ? 'border-destructive/30' : ''}`}
+                className={`kpi-card group border-border/50 ${sec.emManutencao > 0 ? 'hover:border-warning/40' : ''} ${sec.alertas > 0 ? 'hover:border-destructive/40' : 'hover:border-primary/30'}`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
                 <CardHeader className="pb-2">
@@ -120,7 +118,7 @@ export default function SectionMap() {
                   )}
 
                   {sec.notebooks > 0 && (filterTipo === 'all' || filterTipo === 'notebooks') && (
-                    <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+                    <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">
                       {sec.emUso > 0 && <div className="bg-success transition-all duration-300" style={{ width: `${(sec.emUso / sec.notebooks) * 100}%` }} />}
                       {sec.emManutencao > 0 && <div className="bg-warning transition-all duration-300" style={{ width: `${(sec.emManutencao / sec.notebooks) * 100}%` }} />}
                       {sec.baixados > 0 && <div className="bg-destructive transition-all duration-300" style={{ width: `${(sec.baixados / sec.notebooks) * 100}%` }} />}
@@ -128,7 +126,7 @@ export default function SectionMap() {
                     </div>
                   )}
 
-                  <Button variant="outline" size="sm" className="w-full transition-all duration-200 hover:bg-primary/5" onClick={() => navigate(`/notebooks?secao=${encodeURIComponent(sec.name)}`)}>
+                  <Button variant="outline" size="sm" className="w-full transition-all duration-200 hover:bg-primary/5 hover:border-primary/30" onClick={() => navigate(`/notebooks?secao=${encodeURIComponent(sec.name)}`)}>
                     <Eye className="h-3.5 w-3.5 mr-1.5" />
                     Ver itens
                   </Button>
@@ -137,14 +135,15 @@ export default function SectionMap() {
             ))}
           </div>
         )}
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 
 function StatItem({ icon: Icon, value, label, colorClass }: { icon: React.ElementType; value: number; label: string; colorClass: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className={`p-1 rounded ${colorClass}`}>
+      <div className={`p-1.5 rounded-md ${colorClass} transition-transform duration-200 group-hover:scale-105`}>
         <Icon className="h-3 w-3" />
       </div>
       <span className="text-sm font-bold">{value}</span>

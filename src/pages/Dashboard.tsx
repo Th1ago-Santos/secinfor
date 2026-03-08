@@ -9,6 +9,7 @@ import {
   ClipboardCheck, Bell, TrendingUp, BarChart3, Clock
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
+import PageTransition from '@/components/PageTransition';
 
 
 type Stats = {
@@ -179,7 +180,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 animate-in-page">
+    <PageTransition>
+    <div className="container mx-auto py-6 px-4">
         <div className="flex items-center gap-3 mb-7">
           <div className="p-2.5 rounded-xl gradient-primary shadow-glow">
             <TrendingUp className="h-5 w-5 text-primary-foreground" />
@@ -380,5 +382,6 @@ export default function Dashboard() {
           </>
         )}
     </div>
+    </PageTransition>
   );
 }
