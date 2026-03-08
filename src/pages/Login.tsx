@@ -56,8 +56,8 @@ export default function Login() {
             </div>
             <div className="absolute -inset-1 rounded-2xl gradient-primary opacity-20 blur-lg -z-10" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Controle de Patrimônio</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sistema de Gestão Patrimonial</p>
+          <h1 className="text-2xl font-bold tracking-tight">Seção de Informática</h1>
+          <p className="text-sm text-muted-foreground mt-1">14° B Log</p>
         </div>
 
         <Card className="shadow-card-hover border-border/50 backdrop-blur-sm">

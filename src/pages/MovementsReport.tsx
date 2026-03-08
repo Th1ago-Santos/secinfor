@@ -308,7 +308,7 @@ export default function MovementsReport() {
           </table>
           <div className="mt-4 text-center text-xs border-t pt-3">
             <p>Total: {filtered.length} registro(s)</p>
-            <p className="mt-1">Sistema de Controle de Patrimônio</p>
+            <p className="mt-1">Seção de Informática - 14° B Log</p>
           </div>
         </div>
       </div>

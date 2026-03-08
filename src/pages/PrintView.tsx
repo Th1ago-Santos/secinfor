@@ -129,7 +129,7 @@ export default function PrintView() {
         {/* Print area */}
         <div className="print-area">
           <div className="hidden print:block mb-6 text-center border-b-2 border-foreground pb-4">
-            <h1 className="text-xl font-bold">{tab === 'notebooks' ? 'CONTROLE DE PATRIMÔNIO — NOTEBOOKS' : 'MATERIAL CARGA DA SEÇÃO'}</h1>
+            <h1 className="text-xl font-bold">{tab === 'notebooks' ? 'SEÇÃO DE INFORMÁTICA - 14° B LOG — NOTEBOOKS' : 'MATERIAL CARGA DA SEÇÃO'}</h1>
             <p className="text-sm mt-1">Data: {new Date().toLocaleDateString('pt-BR')} — Hora: {new Date().toLocaleTimeString('pt-BR')}</p>
             {tab === 'notebooks' && nbFilterSecao !== 'all' && <p className="text-sm font-semibold mt-1">Seção: {nbFilterSecao}</p>}
             {tab === 'notebooks' && nbFilterStatus !== 'all' && <p className="text-sm font-semibold mt-1">Status: {nbFilterStatus}</p>}
@@ -191,7 +191,7 @@ export default function PrintView() {
 
           <div className="hidden print:block mt-8 text-center text-xs border-t pt-4">
             <p>Total de registros: {tab === 'notebooks' ? notebooks.length : materials.length}</p>
-            <p className="mt-1">Documento gerado pelo Sistema de Controle de Patrimônio</p>
+            <p className="mt-1">Documento gerado pela Seção de Informática - 14° B Log</p>
           </div>
         </div>
     </div>
