@@ -90,8 +90,8 @@ export default function AppSidebar() {
           className="flex items-center gap-2.5 cursor-pointer group"
           onClick={() => navigate('/')}
         >
-          <div className="p-1.5 rounded-lg gradient-primary shadow-glow shrink-0 group-hover:scale-105 transition-transform duration-200">
-            <Monitor className="h-5 w-5 text-primary-foreground" />
+          <div className="rounded-lg shadow-glow shrink-0 group-hover:scale-105 transition-transform duration-200 overflow-hidden">
+            <img src="/favicon.png" alt="14º B Log" className="h-8 w-8 object-contain" />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">

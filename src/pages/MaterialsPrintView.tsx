@@ -6,13 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Printer, Search } from 'lucide-react';
 
 
-type Material = {
-  id: string;
-  patrimonio: string;
-  codigo_material: string;
-  numero_ficha: string;
-  nome: string;
-};
+import type { Material } from '@/types';
 
 export default function MaterialsPrintView() {
   const [materials, setMaterials] = useState<Material[]>([]);
