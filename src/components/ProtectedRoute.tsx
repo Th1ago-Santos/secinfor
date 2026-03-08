@@ -49,9 +49,15 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             {currentTitle && (
               <>
                 <Separator orientation="vertical" className="h-4" />
-                <span className="text-sm font-medium text-foreground/80 truncate">{currentTitle}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-foreground/80 truncate">{currentTitle}</span>
+                  <span className="text-[10px] text-muted-foreground hidden xs:inline sm:hidden">• 14° B Log</span>
+                </div>
               </>
             )}
+            <div className="ml-auto flex items-center sm:hidden">
+              <span className="text-[10px] font-semibold text-muted-foreground tracking-wide">Sç Informática</span>
+            </div>
           </header>
           <main className="flex-1 overflow-auto">
             {children}
