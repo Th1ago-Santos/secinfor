@@ -173,7 +173,7 @@ export default function Priorities() {
     if (!over || active.id === over.id) return;
     const oldIndex = activePriorities.findIndex(p => p.id === active.id);
     const newIndex = activePriorities.findIndex(p => p.id === over.id);
-    const reordered = arrayMove(activePriorities, oldIndex, newIndex);
+    const reordered = arrayMove(activePriorities, oldIndex, newIndex).map((p, i) => ({ ...p, ordem: i }));
     setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
@@ -182,7 +182,7 @@ export default function Priorities() {
     const idx = activePriorities.findIndex(p => p.id === id);
     if (idx < 0) return;
     const target = position === 'top' ? 0 : activePriorities.length - 1;
-    const reordered = arrayMove(activePriorities, idx, target);
+    const reordered = arrayMove(activePriorities, idx, target).map((p, i) => ({ ...p, ordem: i }));
     setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
