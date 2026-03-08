@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,7 +12,8 @@ import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Do
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generatePDFReport } from '@/lib/pdfExport';
-
+import PageTransition from '@/components/PageTransition';
+import PageHeader from '@/components/PageHeader';
 
 type Alert = {
   id: string;
@@ -132,17 +133,15 @@ export default function Alerts() {
   };
 
   return (
-    <div className="container mx-auto py-6 px-4 animate-in-page">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
-            <CardTitle className="flex items-center gap-2.5 text-lg">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Bell className="h-4 w-4 text-primary" />
-              </div>
-              Alertas do Sistema
-            </CardTitle>
+    <PageTransition>
+      <div className="container mx-auto py-6 px-4">
+        <PageHeader
+          icon={Bell}
+          title="Alertas do Sistema"
+          description={`${alerts.length} alerta(s)`}
+          actions={
             <div className="flex gap-2 flex-wrap">
-              <Button size="sm" onClick={generateAlerts} disabled={generating} className="shadow-sm transition-all duration-200">
+              <Button size="sm" onClick={generateAlerts} disabled={generating} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
                 <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
                 {generating ? 'Gerando...' : 'Gerar Alertas'}
               </Button>
@@ -156,11 +155,14 @@ export default function Alerts() {
                 <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          }
+        />
+
+        <Card className="shadow-card border-border/50">
+          <CardContent className="pt-5">
             <div className="flex flex-col sm:flex-row gap-3 mb-5 no-print">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="ativo">Ativos</SelectItem>
@@ -168,7 +170,7 @@ export default function Alerts() {
                 </SelectContent>
               </Select>
               <Select value={filterNivel} onValueChange={setFilterNivel}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os níveis</SelectItem>
                   <SelectItem value="informativo">Informativo</SelectItem>
@@ -179,28 +181,28 @@ export default function Alerts() {
             </div>
 
             {loading ? (
-              <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
+              <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
             ) : alerts.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground animate-in-card">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                  <Bell className="h-7 w-7 text-muted-foreground/40" />
+              <div className="text-center py-20 text-muted-foreground">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+                  <Bell className="h-7 w-7 text-muted-foreground/30" />
                 </div>
                 <p className="text-base font-semibold">Nenhum alerta encontrado</p>
-                <p className="text-sm mt-1">Clique em "Gerar Alertas" para verificar o sistema.</p>
+                <p className="text-sm mt-1 text-muted-foreground/70">Clique em "Gerar Alertas" para verificar o sistema.</p>
               </div>
             ) : (
               <>
-                <div className="rounded-xl border overflow-x-auto">
+                <div className="rounded-xl border border-border/50 overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider w-10">Nível</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Mensagem</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Patrimônio</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Seção</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Data</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-right">Ações</TableHead>
+                      <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground w-10">Nível</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Mensagem</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Patrimônio</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden md:table-cell">Seção</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Data</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -208,7 +210,7 @@ export default function Alerts() {
                         const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
                         const Icon = cfg.icon;
                         return (
-                          <TableRow key={a.id} className="hover:bg-muted/30 transition-colors duration-150 group">
+                          <TableRow key={a.id} className="hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0">
                             <TableCell><Icon className={`h-4 w-4 ${cfg.colorClass}`} /></TableCell>
                             <TableCell><Badge variant={cfg.badge as any} className="text-[10px] font-medium">{a.tipo}</Badge></TableCell>
                             <TableCell className="text-sm max-w-[300px]">{a.mensagem}</TableCell>
@@ -216,9 +218,9 @@ export default function Alerts() {
                             <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{a.secao || '—'}</TableCell>
                             <TableCell className="text-xs text-muted-foreground hidden sm:table-cell whitespace-nowrap">{new Date(a.created_at).toLocaleDateString('pt-BR')}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-150">
+                              <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                                 {a.item_id && a.item_tipo && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary hover:bg-primary/10 transition-all duration-200" onClick={() => {
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary hover:bg-primary/10 rounded-lg transition-all duration-200" onClick={() => {
                                     if (a.item_tipo === 'notebook') navigate(`/itens/${a.item_id}/editar`);
                                     else navigate(`/materiais/${a.item_id}/editar`);
                                   }} title="Abrir item">
@@ -226,7 +228,7 @@ export default function Alerts() {
                                   </Button>
                                 )}
                                 {a.status === 'ativo' && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success hover:bg-success/10 transition-all duration-200" onClick={() => resolveAlert(a.id)} title="Resolver">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success hover:bg-success/10 rounded-lg transition-all duration-200" onClick={() => resolveAlert(a.id)} title="Resolver">
                                     <CheckCircle className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
@@ -238,11 +240,11 @@ export default function Alerts() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 font-medium">{alerts.length} alerta(s)</p>
               </>
             )}
           </CardContent>
         </Card>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

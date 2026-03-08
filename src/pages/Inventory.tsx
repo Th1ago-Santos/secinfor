@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck, CheckCircle, XCircle, AlertTriangle, Printer, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { useSections } from '@/hooks/useSections';
+import PageTransition from '@/components/PageTransition';
+import PageHeader from '@/components/PageHeader';
 
 type InventoryItem = {
   patrimonio: string;
@@ -116,34 +117,33 @@ export default function Inventory() {
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); confirmItem(); } };
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2.5 text-lg">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <ClipboardCheck className="h-4 w-4 text-primary" />
-              </div>
-              Modo Inventário
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+    <PageTransition>
+      <div className="container mx-auto py-6 px-4 max-w-4xl">
+        <PageHeader
+          icon={ClipboardCheck}
+          title="Modo Inventário"
+          description="Conferência de patrimônios por sessão"
+        />
+
+        <Card className="shadow-card border-border/50">
+          <CardContent className="pt-5">
             {!sessionActive && !showReport && (
-              <div className="space-y-5 animate-in-card">
+              <div className="space-y-5">
                 <p className="text-sm text-muted-foreground">
                   Inicie uma sessão de inventário para conferir itens por patrimônio.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 items-end">
                   <div className="flex-1 w-full">
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Seção alvo (opcional)</label>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5 block">Seção alvo (opcional)</label>
                     <Select value={secaoAlvo} onValueChange={setSecaoAlvo}>
-                      <SelectTrigger className="h-9 bg-muted/30 border-border/60"><SelectValue placeholder="Todas" /></SelectTrigger>
+                      <SelectTrigger className="h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Todas" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as seções</SelectItem>
                         {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={startSession} disabled={loading} className="shadow-sm transition-all duration-200">
+                  <Button onClick={startSession} disabled={loading} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
                     <Play className="h-4 w-4 mr-1.5" />
                     Iniciar Sessão
                   </Button>
@@ -152,7 +152,7 @@ export default function Inventory() {
             )}
 
             {sessionActive && (
-              <div className="space-y-4 animate-in-card">
+              <div className="space-y-4">
                 <div className="flex gap-3">
                   <Input
                     ref={inputRef}
@@ -160,10 +160,10 @@ export default function Inventory() {
                     value={patrimonio}
                     onChange={(e) => setPatrimonio(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="flex-1 font-mono text-lg h-12 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200"
+                    className="flex-1 font-mono text-lg h-12 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300"
                     autoFocus
                   />
-                  <Button onClick={confirmItem} disabled={!patrimonio.trim()} className="h-12 px-6 shadow-sm transition-all duration-200">
+                  <Button onClick={confirmItem} disabled={!patrimonio.trim()} className="h-12 px-6 gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
                     <CheckCircle className="h-4 w-4 mr-1.5" />
                     Confirmar
                   </Button>
@@ -182,20 +182,20 @@ export default function Inventory() {
                 </div>
 
                 {items.length > 0 && (
-                  <div className="rounded-xl border overflow-x-auto max-h-80 overflow-y-auto">
+                  <div className="rounded-xl border border-border/50 overflow-x-auto max-h-80 overflow-y-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider">Patrimônio</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Descrição</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider">Status</TableHead>
-                          <TableHead className="font-semibold text-xs uppercase tracking-wider">Hora</TableHead>
+                        <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
+                          <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead>
+                          <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead>
+                          <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Descrição</TableHead>
+                          <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
+                          <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Hora</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {items.map((item, idx) => (
-                          <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-150">
+                          <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0">
                             <TableCell className="font-mono font-semibold text-sm">{item.patrimonio}</TableCell>
                             <TableCell className="text-sm capitalize text-muted-foreground">{item.item_tipo || '—'}</TableCell>
                             <TableCell className="text-sm hidden sm:table-cell text-muted-foreground">{item.found_name || '—'}</TableCell>
@@ -217,21 +217,21 @@ export default function Inventory() {
             )}
 
             {showReport && (
-              <div className="space-y-6 animate-in-card">
+              <div className="space-y-6">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <h3 className="text-lg font-bold">Relatório do Inventário</h3>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => window.print()} className="transition-all duration-200">
                       <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
                     </Button>
-                    <Button size="sm" onClick={() => { setShowReport(false); setSessionId(null); setItems([]); }} className="transition-all duration-200">
+                    <Button size="sm" onClick={() => { setShowReport(false); setSessionId(null); setItems([]); }} className="gradient-primary border-0 transition-all duration-200">
                       Nova Sessão
                     </Button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
-                  <Card className="border-success/20">
+                  <Card className="border-success/20 kpi-card">
                     <CardContent className="pt-5 text-center">
                       <div className="mx-auto w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-2">
                         <CheckCircle className="h-6 w-6 text-success" />
@@ -240,7 +240,7 @@ export default function Inventory() {
                       <p className="text-xs text-muted-foreground font-medium">Conferidos</p>
                     </CardContent>
                   </Card>
-                  <Card className="border-warning/20">
+                  <Card className="border-warning/20 kpi-card">
                     <CardContent className="pt-5 text-center">
                       <div className="mx-auto w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-2">
                         <XCircle className="h-6 w-6 text-warning" />
@@ -249,7 +249,7 @@ export default function Inventory() {
                       <p className="text-xs text-muted-foreground font-medium">Não Conferidos</p>
                     </CardContent>
                   </Card>
-                  <Card className="border-destructive/20">
+                  <Card className="border-destructive/20 kpi-card">
                     <CardContent className="pt-5 text-center">
                       <div className="mx-auto w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
                         <AlertTriangle className="h-6 w-6 text-destructive" />
@@ -266,12 +266,12 @@ export default function Inventory() {
                       <XCircle className="h-4 w-4 text-warning" />
                       Itens Não Conferidos
                     </h4>
-                    <div className="rounded-xl border overflow-x-auto max-h-52 overflow-y-auto">
+                    <div className="rounded-xl border border-border/50 overflow-x-auto max-h-52 overflow-y-auto">
                       <Table>
-                        <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead className="font-semibold text-xs uppercase tracking-wider">Patrimônio</TableHead><TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow className="bg-muted/40 hover:bg-muted/40"><TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead><TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead></TableRow></TableHeader>
                         <TableBody>
                           {naoConferidos.map((item, idx) => (
-                            <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-150"><TableCell className="font-mono text-sm">{item.patrimonio}</TableCell><TableCell className="text-sm text-muted-foreground">{item.tipo}</TableCell></TableRow>
+                            <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0"><TableCell className="font-mono text-sm">{item.patrimonio}</TableCell><TableCell className="text-sm text-muted-foreground">{item.tipo}</TableCell></TableRow>
                           ))}
                         </TableBody>
                       </Table>
@@ -285,12 +285,12 @@ export default function Inventory() {
                       <AlertTriangle className="h-4 w-4 text-destructive" />
                       Divergências (patrimônios não cadastrados)
                     </h4>
-                    <div className="rounded-xl border overflow-x-auto">
+                    <div className="rounded-xl border border-border/50 overflow-x-auto">
                       <Table>
-                        <TableHeader><TableRow className="bg-muted/50 hover:bg-muted/50"><TableHead className="font-semibold text-xs uppercase tracking-wider">Patrimônio</TableHead><TableHead className="font-semibold text-xs uppercase tracking-wider">Hora</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow className="bg-muted/40 hover:bg-muted/40"><TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead><TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Hora</TableHead></TableRow></TableHeader>
                         <TableBody>
                           {divergencias.map((item, idx) => (
-                            <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-150"><TableCell className="font-mono text-sm">{item.patrimonio}</TableCell><TableCell className="text-xs text-muted-foreground">{new Date(item.conferido_em).toLocaleTimeString('pt-BR')}</TableCell></TableRow>
+                            <TableRow key={idx} className="hover:bg-muted/30 transition-colors duration-200 border-b border-border/30 last:border-0"><TableCell className="font-mono text-sm">{item.patrimonio}</TableCell><TableCell className="text-xs text-muted-foreground">{new Date(item.conferido_em).toLocaleTimeString('pt-BR')}</TableCell></TableRow>
                           ))}
                         </TableBody>
                       </Table>
@@ -301,6 +301,7 @@ export default function Inventory() {
             )}
           </CardContent>
         </Card>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
