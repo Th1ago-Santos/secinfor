@@ -4,13 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Laptop, Package, Layers, CheckCircle, Wrench, Archive, ArrowRightLeft,
-  ClipboardCheck, Bell, TrendingUp, BarChart3, Clock
+  ClipboardCheck, Bell, TrendingUp, BarChart3, Clock, Cpu, MemoryStick, Gauge, Zap, RefreshCw, Sparkles
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
 import PageTransition from '@/components/PageTransition';
-
 
 type Stats = {
   totalNotebooks: number;
@@ -43,12 +43,37 @@ type RecentItem = {
   created_at: string;
 };
 
+type NotebookSpec = {
+  modelo: string;
+  processador: string;
+  geracao_processador: number;
+  velocidade_ghz: number;
+  ram_gb: number;
+  armazenamento: string;
+  classificacao: string;
+  quantidade: number;
+};
+
+type HardwareAverages = {
+  ram_media: number;
+  velocidade_media: number;
+  geracao_media: number;
+  total_notebooks: number;
+  por_classificacao: Record<string, number>;
+};
+
 const PIE_COLORS = [
   'hsl(152, 60%, 45%)',
   'hsl(38, 92%, 50%)',
   'hsl(0, 72%, 51%)',
   'hsl(220, 85%, 60%)',
 ];
+
+const TIER_COLORS: Record<string, string> = {
+  'Básico': 'hsl(38, 92%, 50%)',
+  'Intermediário': 'hsl(220, 85%, 60%)',
+  'Avançado': 'hsl(152, 60%, 45%)',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -58,6 +83,13 @@ export default function Dashboard() {
   const [recentMovs, setRecentMovs] = useState<Movement[]>([]);
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Hardware analysis state
+  const [hwSpecs, setHwSpecs] = useState<NotebookSpec[]>([]);
+  const [hwAverages, setHwAverages] = useState<HardwareAverages | null>(null);
+  const [hwLoading, setHwLoading] = useState(false);
+  const [hwError, setHwError] = useState<string | null>(null);
+  const [hwLoaded, setHwLoaded] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -150,12 +182,34 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const fetchHardwareAnalysis = async () => {
+    setHwLoading(true);
+    setHwError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-notebooks');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setHwSpecs(data.specs || []);
+      setHwAverages(data.averages || null);
+      setHwLoaded(true);
+    } catch (e: any) {
+      console.error('Hardware analysis error:', e);
+      setHwError(e.message || 'Erro ao analisar hardware');
+    } finally {
+      setHwLoading(false);
+    }
+  };
+
   const statusPieData = stats ? [
     { name: 'Em uso', value: stats.emUso },
     { name: 'Em manutenção', value: stats.emManutencao },
     { name: 'Baixado', value: stats.baixados },
     { name: 'Em estoque', value: stats.emEstoque },
   ].filter(d => d.value > 0) : [];
+
+  const tierPieData = hwAverages ? Object.entries(hwAverages.por_classificacao)
+    .filter(([_, v]) => v > 0)
+    .map(([name, value]) => ({ name, value })) : [];
 
   const indicators = stats ? [
     { label: 'Notebooks', value: stats.totalNotebooks, icon: Laptop, variant: 'primary' as const },
@@ -223,6 +277,158 @@ export default function Dashboard() {
               ))}
             </div>
 
+            {/* Hardware Analysis Section */}
+            <Card className="mb-6 animate-in-card shadow-card border-border/50 overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <div className="p-1.5 rounded-md gradient-primary">
+                      <Cpu className="h-3.5 w-3.5 text-primary-foreground" />
+                    </div>
+                    Análise de Hardware — IA
+                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      AI
+                    </Badge>
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={fetchHardwareAnalysis}
+                    disabled={hwLoading}
+                    className="text-xs h-7 gap-1.5"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${hwLoading ? 'animate-spin' : ''}`} />
+                    {hwLoaded ? 'Atualizar' : 'Analisar'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!hwLoaded && !hwLoading && !hwError && (
+                  <div className="text-center py-8">
+                    <Cpu className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">Clique em <strong>"Analisar"</strong> para estimar as especificações de hardware dos notebooks cadastrados usando IA.</p>
+                  </div>
+                )}
+
+                {hwLoading && (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+                  </div>
+                )}
+
+                {hwError && (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-destructive">{hwError}</p>
+                  </div>
+                )}
+
+                {hwLoaded && hwAverages && !hwLoading && (
+                  <div className="space-y-4">
+                    {/* Average KPIs */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="rounded-xl border border-border/50 bg-muted/30 p-4 group hover:border-primary/30 transition-colors">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-1.5 rounded-md bg-primary/10">
+                            <MemoryStick className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground font-medium">RAM Média</span>
+                        </div>
+                        <p className="text-2xl font-bold tracking-tight">{hwAverages.ram_media} <span className="text-sm font-normal text-muted-foreground">GB</span></p>
+                      </div>
+
+                      <div className="rounded-xl border border-border/50 bg-muted/30 p-4 group hover:border-primary/30 transition-colors">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-1.5 rounded-md bg-info/10">
+                            <Gauge className="h-3.5 w-3.5 text-info" />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground font-medium">Clock Médio</span>
+                        </div>
+                        <p className="text-2xl font-bold tracking-tight">{hwAverages.velocidade_media} <span className="text-sm font-normal text-muted-foreground">GHz</span></p>
+                      </div>
+
+                      <div className="rounded-xl border border-border/50 bg-muted/30 p-4 group hover:border-primary/30 transition-colors">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-1.5 rounded-md bg-success/10">
+                            <Zap className="h-3.5 w-3.5 text-success" />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground font-medium">Geração Média</span>
+                        </div>
+                        <p className="text-2xl font-bold tracking-tight">{hwAverages.geracao_media}ª <span className="text-sm font-normal text-muted-foreground">gen</span></p>
+                      </div>
+
+                      <div className="rounded-xl border border-border/50 bg-muted/30 p-4 group hover:border-primary/30 transition-colors">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-1.5 rounded-md bg-warning/10">
+                            <Laptop className="h-3.5 w-3.5 text-warning" />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground font-medium">Modelos Únicos</span>
+                        </div>
+                        <p className="text-2xl font-bold tracking-tight">{hwSpecs.length}</p>
+                      </div>
+                    </div>
+
+                    {/* Tier distribution + specs table */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {/* Tier pie chart */}
+                      <div className="rounded-xl border border-border/50 bg-muted/30 p-4">
+                        <p className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Classificação</p>
+                        {tierPieData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height={160}>
+                            <PieChart>
+                              <Pie data={tierPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} innerRadius={35} label={({ name, value }) => `${name}: ${value}`} labelLine={false} strokeWidth={2} stroke="hsl(var(--card))">
+                                {tierPieData.map((entry, i) => (
+                                  <Cell key={i} fill={TIER_COLORS[entry.name] || PIE_COLORS[i % PIE_COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '10px', color: 'hsl(var(--foreground))', fontSize: '12px' }} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+                        )}
+                      </div>
+
+                      {/* Specs table */}
+                      <div className="lg:col-span-2 rounded-xl border border-border/50 bg-muted/30 p-4 overflow-auto max-h-[280px]">
+                        <p className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Detalhamento por Modelo</p>
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-border/50">
+                              <th className="text-left py-1.5 font-semibold text-muted-foreground">Modelo</th>
+                              <th className="text-left py-1.5 font-semibold text-muted-foreground">Processador</th>
+                              <th className="text-center py-1.5 font-semibold text-muted-foreground">RAM</th>
+                              <th className="text-center py-1.5 font-semibold text-muted-foreground">Clock</th>
+                              <th className="text-center py-1.5 font-semibold text-muted-foreground">Geração</th>
+                              <th className="text-center py-1.5 font-semibold text-muted-foreground">Nível</th>
+                              <th className="text-center py-1.5 font-semibold text-muted-foreground">Qtd</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {hwSpecs.map((spec, i) => (
+                              <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-muted/50 transition-colors">
+                                <td className="py-2 font-medium">{spec.modelo}</td>
+                                <td className="py-2 font-mono text-[10px] text-muted-foreground">{spec.processador}</td>
+                                <td className="py-2 text-center">{spec.ram_gb}GB</td>
+                                <td className="py-2 text-center">{spec.velocidade_ghz}GHz</td>
+                                <td className="py-2 text-center">{spec.geracao_processador}ª</td>
+                                <td className="py-2 text-center">
+                                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0" style={{ backgroundColor: TIER_COLORS[spec.classificacao] + '20', color: TIER_COLORS[spec.classificacao] }}>
+                                    {spec.classificacao}
+                                  </Badge>
+                                </td>
+                                <td className="py-2 text-center font-semibold">{spec.quantidade}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
               <Card className="lg:col-span-2 animate-in-card shadow-card border-border/50">
@@ -241,16 +447,7 @@ export default function Dashboard() {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                         <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '10px',
-                            color: 'hsl(var(--foreground))',
-                            fontSize: '12px',
-                            boxShadow: '0 4px 12px hsl(var(--foreground) / 0.05)',
-                          }}
-                        />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '10px', color: 'hsl(var(--foreground))', fontSize: '12px', boxShadow: '0 4px 12px hsl(var(--foreground) / 0.05)' }} />
                         <Bar dataKey="count" name="Notebooks" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -273,15 +470,7 @@ export default function Dashboard() {
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '10px',
-                            color: 'hsl(var(--foreground))',
-                            fontSize: '12px',
-                          }}
-                        />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '10px', color: 'hsl(var(--foreground))', fontSize: '12px' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
@@ -308,15 +497,7 @@ export default function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '10px',
-                          color: 'hsl(var(--foreground))',
-                          fontSize: '12px',
-                        }}
-                      />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '10px', color: 'hsl(var(--foreground))', fontSize: '12px' }} />
                       <Line type="monotone" dataKey="count" name="Movimentações" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--card))' }} activeDot={{ r: 6, strokeWidth: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
