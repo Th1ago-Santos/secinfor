@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download } from 'lucide-react';
+import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { generatePDFReport } from '@/lib/pdfExport';
 
 
 type Alert = {
