@@ -52,7 +52,7 @@ export default function Materials() {
         <PageHeader
           icon={Package}
           title="Material Carga da Seção"
-          description={`${materials.length} registro(s)`}
+          description={`${totalCount} registro(s)`}
           actions={
             <Button onClick={() => navigate('/materiais/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
               <Plus className="h-4 w-4 mr-1.5" />
