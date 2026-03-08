@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useSections } from '@/hooks/useSections';
 import { useToast } from '@/hooks/use-toast';
 import { generatePDFReport } from '@/lib/pdfExport';
@@ -13,11 +14,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   ListOrdered, Plus, GripVertical, Pencil, Trash2, Printer,
   ArrowUpToLine, ArrowDownToLine, Trophy, Clock, Hash,
+  CheckCircle2, PackageCheck, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -37,14 +46,16 @@ interface Priority {
   observacoes: string | null;
   data_solicitacao: string | null;
   ordem: number;
+  status: string;
+  data_encerramento: string | null;
   created_at: string;
 }
 
 const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', data_solicitacao: '' };
 
-function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, total }: {
+function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total }: {
   item: Priority; index: number; onEdit: () => void; onDelete: () => void;
-  onMoveTop: () => void; onMoveBottom: () => void; total: number;
+  onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -55,7 +66,6 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
       style={style}
       className={`group flex items-stretch gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all duration-200 ${isDragging ? 'z-50 shadow-xl ring-2 ring-primary/40 scale-[1.02]' : 'hover:shadow-md'}`}
     >
-      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
@@ -64,7 +74,6 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         <GripVertical className="h-5 w-5" />
       </div>
 
-      {/* Position badge */}
       <div className="flex items-center justify-center">
         <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 ${
           index === 0 ? 'gradient-primary text-primary-foreground shadow-glow' :
@@ -76,7 +85,6 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-foreground">{item.secao}</span>
@@ -94,7 +102,6 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         )}
       </div>
 
-      {/* Actions */}
       <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {index > 0 && (
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onMoveTop} title="Mover ao topo">
@@ -103,6 +110,9 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         )}
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} title="Editar">
           <Pencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
+          <PackageCheck className="h-3.5 w-3.5" />
         </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
           <Trash2 className="h-3.5 w-3.5" />
@@ -118,19 +128,28 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
 }
 
 export default function Priorities() {
-  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [allPriorities, setAllPriorities] = useState<Priority[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deliverTarget, setDeliverTarget] = useState<Priority | null>(null);
+  const [deliverObs, setDeliverObs] = useState('');
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [printFilter, setPrintFilter] = useState<'abertas' | 'concluidas' | 'todas'>('todas');
   const { sections } = useSections();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  const activePriorities = allPriorities.filter(p => p.status === 'aberta').sort((a, b) => a.ordem - b.ordem);
+  const completedPriorities = allPriorities.filter(p => p.status === 'concluida')
+    .sort((a, b) => new Date(b.data_encerramento || b.created_at).getTime() - new Date(a.data_encerramento || a.created_at).getTime());
 
   const fetchPriorities = useCallback(async () => {
     setLoading(true);
@@ -138,52 +157,44 @@ export default function Priorities() {
       .from('computer_priorities')
       .select('*')
       .order('ordem', { ascending: true });
-    setPriorities((data as Priority[]) || []);
+    setAllPriorities((data as Priority[]) || []);
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchPriorities(); }, [fetchPriorities]);
 
   const persistOrder = async (items: Priority[]) => {
-    const updates = items.map((item, i) => ({ id: item.id, ordem: i }));
-    for (const u of updates) {
-      await supabase.from('computer_priorities').update({ ordem: u.ordem }).eq('id', u.id);
+    for (let i = 0; i < items.length; i++) {
+      await supabase.from('computer_priorities').update({ ordem: i }).eq('id', items[i].id);
     }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = priorities.findIndex(p => p.id === active.id);
-    const newIndex = priorities.findIndex(p => p.id === over.id);
-    const reordered = arrayMove(priorities, oldIndex, newIndex);
-    setPriorities(reordered);
+    const oldIndex = activePriorities.findIndex(p => p.id === active.id);
+    const newIndex = activePriorities.findIndex(p => p.id === over.id);
+    const reordered = arrayMove(activePriorities, oldIndex, newIndex);
+    setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
 
   const moveToPosition = async (id: string, position: 'top' | 'bottom') => {
-    const idx = priorities.findIndex(p => p.id === id);
+    const idx = activePriorities.findIndex(p => p.id === id);
     if (idx < 0) return;
-    const target = position === 'top' ? 0 : priorities.length - 1;
-    const reordered = arrayMove(priorities, idx, target);
-    setPriorities(reordered);
+    const target = position === 'top' ? 0 : activePriorities.length - 1;
+    const reordered = arrayMove(activePriorities, idx, target);
+    setAllPriorities(prev => [...reordered, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
 
-  const openNew = () => {
-    setEditingId(null);
-    setForm(emptyForm);
-    setDialogOpen(true);
-  };
+  const openNew = () => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); };
 
   const openEdit = (p: Priority) => {
     setEditingId(p.id);
     setForm({
-      secao: p.secao,
-      responsavel: p.responsavel,
-      motivo: p.motivo,
-      observacoes: p.observacoes || '',
-      data_solicitacao: p.data_solicitacao || '',
+      secao: p.secao, responsavel: p.responsavel, motivo: p.motivo,
+      observacoes: p.observacoes || '', data_solicitacao: p.data_solicitacao || '',
     });
     setDialogOpen(true);
   };
@@ -195,19 +206,16 @@ export default function Priorities() {
     }
     setSaving(true);
     const payload = {
-      secao: form.secao,
-      responsavel: form.responsavel,
-      motivo: form.motivo,
-      observacoes: form.observacoes || null,
-      data_solicitacao: form.data_solicitacao || null,
+      secao: form.secao, responsavel: form.responsavel, motivo: form.motivo,
+      observacoes: form.observacoes || null, data_solicitacao: form.data_solicitacao || null,
     };
 
     if (editingId) {
       await supabase.from('computer_priorities').update(payload).eq('id', editingId);
       toast({ title: 'Prioridade atualizada' });
     } else {
-      const newOrdem = priorities.length;
-      await supabase.from('computer_priorities').insert({ ...payload, ordem: newOrdem });
+      const newOrdem = activePriorities.length;
+      await supabase.from('computer_priorities').insert({ ...payload, ordem: newOrdem, status: 'aberta' });
       toast({ title: 'Prioridade cadastrada' });
     }
     setSaving(false);
@@ -218,29 +226,69 @@ export default function Priorities() {
   const handleDelete = async (id: string) => {
     await supabase.from('computer_priorities').delete().eq('id', id);
     toast({ title: 'Prioridade removida' });
-    const remaining = priorities.filter(p => p.id !== id);
-    setPriorities(remaining);
+    const remaining = activePriorities.filter(p => p.id !== id);
+    setAllPriorities(prev => [...remaining, ...prev.filter(p => p.status !== 'aberta')]);
     await persistOrder(remaining);
   };
 
+  const handleDeliver = async () => {
+    if (!deliverTarget) return;
+    setSaving(true);
+    const now = new Date().toISOString();
+
+    await supabase.from('computer_priorities').update({
+      status: 'concluida',
+      data_encerramento: now,
+    }).eq('id', deliverTarget.id);
+
+    // Register in movements history
+    await supabase.from('movements').insert({
+      item_id: deliverTarget.id,
+      item_tipo: 'prioridade',
+      tipo_evento: 'entrega_computador',
+      secao_destino: deliverTarget.secao,
+      responsavel_novo: deliverTarget.responsavel,
+      observacao: deliverObs || `Prioridade atendida — ${deliverTarget.motivo}`,
+      usuario_sistema: user?.id || null,
+      data_hora: now,
+    });
+
+    toast({ title: 'Computador entregue!', description: `Prioridade da seção ${deliverTarget.secao} concluída.` });
+
+    // Reorder remaining active
+    const remaining = activePriorities.filter(p => p.id !== deliverTarget.id);
+    await persistOrder(remaining);
+
+    setSaving(false);
+    setDeliverTarget(null);
+    setDeliverObs('');
+    fetchPriorities();
+  };
+
   const handlePrint = () => {
+    const items = printFilter === 'abertas' ? activePriorities :
+      printFilter === 'concluidas' ? completedPriorities : [...activePriorities, ...completedPriorities];
+    const filterLabel = printFilter === 'abertas' ? 'Abertas' : printFilter === 'concluidas' ? 'Concluídas' : 'Todas';
+
     generatePDFReport({
       title: 'Ranking de Prioridades de Computadores',
-      subtitle: `Total: ${priorities.length} prioridade(s) cadastrada(s)`,
-      columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Data Solicitação'],
-      rows: priorities.map((p, i) => [
-        String(i + 1),
+      subtitle: `Filtro: ${filterLabel} — Total: ${items.length} prioridade(s)`,
+      columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Abertura', 'Encerramento', 'Status'],
+      rows: items.map((p, i) => [
+        p.status === 'aberta' ? String(activePriorities.indexOf(p) + 1) : '—',
         p.secao,
         p.responsavel,
         p.motivo,
         p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
+        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
+        p.status === 'aberta' ? 'Aberta' : 'Concluída',
       ]),
       filename: 'ranking_prioridades',
     });
   };
 
-  const topPriority = priorities[0];
-  const lastAdded = [...priorities].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  const topPriority = activePriorities[0];
+  const lastAdded = [...allPriorities].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
   return (
     <PageTransition>
@@ -250,8 +298,18 @@ export default function Priorities() {
           title="Prioridades de Computadores"
           description="Ranking de distribuição e substituição por seção"
           actions={
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint} disabled={priorities.length === 0}>
+            <div className="flex gap-2 flex-wrap">
+              <Select value={printFilter} onValueChange={v => setPrintFilter(v as typeof printFilter)}>
+                <SelectTrigger className="w-[130px] h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="abertas">Abertas</SelectItem>
+                  <SelectItem value="concluidas">Concluídas</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={handlePrint} disabled={allPriorities.length === 0}>
                 <Printer className="h-4 w-4 mr-1.5" /> Imprimir
               </Button>
               <Button size="sm" onClick={openNew}>
@@ -262,13 +320,22 @@ export default function Priorities() {
         />
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card className="shadow-card">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10"><Hash className="h-5 w-5 text-primary" /></div>
               <div>
-                <p className="text-xs text-muted-foreground">Total cadastradas</p>
-                <p className="text-xl font-bold">{priorities.length}</p>
+                <p className="text-xs text-muted-foreground">Abertas</p>
+                <p className="text-xl font-bold">{activePriorities.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-card">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10"><CheckCircle2 className="h-5 w-5 text-emerald-500" /></div>
+              <div>
+                <p className="text-xs text-muted-foreground">Concluídas</p>
+                <p className="text-xl font-bold">{completedPriorities.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -292,45 +359,107 @@ export default function Priorities() {
           </Card>
         </div>
 
-        {/* Ranking list */}
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        {/* Active ranking */}
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <ListOrdered className="h-4 w-4 text-primary" />
+            Prioridades Ativas
+            <Badge variant="secondary" className="text-[10px]">{activePriorities.length}</Badge>
+          </h3>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+            </div>
+          ) : activePriorities.length === 0 ? (
+            <Card className="shadow-card">
+              <CardContent className="p-12 text-center text-muted-foreground">
+                <ListOrdered className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">Nenhuma prioridade ativa</p>
+                <p className="text-sm mt-1">Clique em "Nova Prioridade" para começar.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={activePriorities.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {activePriorities.map((item, index) => (
+                    <SortableItem
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      total={activePriorities.length}
+                      onEdit={() => openEdit(item)}
+                      onDelete={() => handleDelete(item.id)}
+                      onMoveTop={() => moveToPosition(item.id, 'top')}
+                      onMoveBottom={() => moveToPosition(item.id, 'bottom')}
+                      onDeliver={() => { setDeliverTarget(item); setDeliverObs(''); }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+
+        {/* Completed priorities */}
+        {completedPriorities.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowCompleted(v => !v)}
+              className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2 hover:text-primary transition-colors"
+            >
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Prioridades Concluídas
+              <Badge variant="secondary" className="text-[10px]">{completedPriorities.length}</Badge>
+              {showCompleted ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
+
+            {showCompleted && (
+              <Card className="shadow-card overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10"></TableHead>
+                      <TableHead>Seção</TableHead>
+                      <TableHead>Responsável</TableHead>
+                      <TableHead className="hidden md:table-cell">Motivo</TableHead>
+                      <TableHead>Abertura</TableHead>
+                      <TableHead>Encerramento</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {completedPriorities.map(p => (
+                      <TableRow key={p.id} className="text-muted-foreground">
+                        <TableCell>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
+                        <TableCell>{p.responsavel}</TableCell>
+                        <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
+                        <TableCell className="text-xs">
+                          {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
           </div>
-        ) : priorities.length === 0 ? (
-          <Card className="shadow-card">
-            <CardContent className="p-12 text-center text-muted-foreground">
-              <ListOrdered className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">Nenhuma prioridade cadastrada</p>
-              <p className="text-sm mt-1">Clique em "Nova Prioridade" para começar.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={priorities.map(p => p.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {priorities.map((item, index) => (
-                  <SortableItem
-                    key={item.id}
-                    item={item}
-                    index={index}
-                    total={priorities.length}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onMoveTop={() => moveToPosition(item.id, 'top')}
-                    onMoveBottom={() => moveToPosition(item.id, 'bottom')}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
         )}
 
-        {/* Dialog */}
+        {/* Edit/New Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar Prioridade' : 'Nova Prioridade'}</DialogTitle>
+              <DialogDescription>
+                {editingId ? 'Atualize os dados da prioridade.' : 'Cadastre uma nova prioridade de computador.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
@@ -388,6 +517,40 @@ export default function Priorities() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Deliver confirmation dialog */}
+        <AlertDialog open={!!deliverTarget} onOpenChange={open => { if (!open) setDeliverTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <PackageCheck className="h-5 w-5 text-emerald-500" />
+                Confirmar entrega de computador
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Confirma que o computador foi entregue para a seção <strong>{deliverTarget?.secao}</strong>?
+                Esta ação irá concluir a prioridade e registrar no histórico de movimentações.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-1.5 py-2">
+              <Label>Observação (opcional)</Label>
+              <Input
+                value={deliverObs}
+                onChange={e => setDeliverObs(e.target.value)}
+                placeholder="Ex: Notebook Dell Latitude entregue..."
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeliver}
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                {saving ? 'Registrando...' : 'Confirmar Entrega'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
