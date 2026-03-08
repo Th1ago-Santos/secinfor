@@ -21,6 +21,7 @@ import GlobalSearch from "./pages/GlobalSearch";
 import Inventory from "./pages/Inventory";
 import Alerts from "./pages/Alerts";
 import SectionMap from "./pages/SectionMap";
+import Priorities from "./pages/Priorities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
