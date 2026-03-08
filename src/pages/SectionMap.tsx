@@ -12,7 +12,6 @@ import PageHeader from '@/components/PageHeader';
 type SectionData = {
   name: string;
   notebooks: number;
-  
   emManutencao: number;
   baixados: number;
   emUso: number;
@@ -20,6 +19,13 @@ type SectionData = {
   alertas: number;
   recentMovs: number;
 };
+
+const legendItems = [
+  { label: 'Em uso', colorClass: 'bg-success' },
+  { label: 'Manutenção', colorClass: 'bg-warning' },
+  { label: 'Baixados', colorClass: 'bg-destructive' },
+  { label: 'Em estoque', colorClass: 'bg-primary' },
+];
 
 export default function SectionMap() {
   const navigate = useNavigate();
@@ -71,6 +77,17 @@ export default function SectionMap() {
           description="Distribuição de itens por seção"
         />
 
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-3 mb-5 p-3 rounded-xl bg-muted/40 border border-border/50">
+          <span className="text-xs font-semibold text-muted-foreground mr-1">Legenda:</span>
+          {legendItems.map((item) => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <div className={`w-3 h-3 rounded-sm ${item.colorClass}`} />
+              <span className="text-xs text-muted-foreground">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-52 rounded-xl" />)}
@@ -98,11 +115,11 @@ export default function SectionMap() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                      <StatItem icon={Laptop} value={sec.notebooks} label="notebooks" colorClass="text-primary bg-primary/10" />
-                      <StatItem icon={Wrench} value={sec.emManutencao} label="manut." colorClass="text-warning bg-warning/10" />
-                      <StatItem icon={Archive} value={sec.baixados} label="baixados" colorClass="text-destructive bg-destructive/10" />
-                      <StatItem icon={ArrowRightLeft} value={sec.recentMovs} label="movs (30d)" colorClass="text-muted-foreground bg-muted" />
-                    </div>
+                    <StatItem icon={Laptop} value={sec.notebooks} label="notebooks" colorClass="text-primary bg-primary/10" />
+                    <StatItem icon={Wrench} value={sec.emManutencao} label="manut." colorClass="text-warning bg-warning/10" />
+                    <StatItem icon={Archive} value={sec.baixados} label="baixados" colorClass="text-destructive bg-destructive/10" />
+                    <StatItem icon={ArrowRightLeft} value={sec.recentMovs} label="movs (30d)" colorClass="text-muted-foreground bg-muted" />
+                  </div>
 
                   {sec.notebooks > 0 && (
                     <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/50">

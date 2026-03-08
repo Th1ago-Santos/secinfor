@@ -3,8 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import SidebarSearch from '@/components/SidebarSearch';
 import {
   Sidebar,
   SidebarContent,
@@ -18,8 +18,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LogOut, Monitor, Printer, Package, Search, ClipboardCheck,
-  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered,
+  LogOut, Monitor, Printer, Package, ClipboardCheck,
+  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -43,7 +43,6 @@ export default function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchAlertCount = () => {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
@@ -68,14 +67,6 @@ export default function AppSidebar() {
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/pesquisa?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
   };
 
   const handleLogout = async () => {
@@ -103,20 +94,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2.5">
-        {/* Search */}
-        {!collapsed && (
-          <form onSubmit={handleSearch} className="px-1 mb-3">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/30" />
-              <Input
-                placeholder="Pesquisar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground placeholder:text-sidebar-foreground/25 text-xs focus:bg-sidebar-accent focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all duration-300 rounded-lg"
-              />
-            </div>
-          </form>
-        )}
+        {!collapsed && <SidebarSearch />}
 
         <SidebarGroup>
           <SidebarGroupContent>
