@@ -122,6 +122,9 @@ export default function MovementsReport() {
               Relatório de Movimentações
             </CardTitle>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0} className="transition-all duration-200">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+              </Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0} className="transition-all duration-200">
                 <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>

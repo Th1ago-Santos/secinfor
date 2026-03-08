@@ -146,6 +146,9 @@ export default function Alerts() {
                 <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
                 {generating ? 'Gerando...' : 'Gerar Alertas'}
               </Button>
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={alerts.length === 0} className="transition-all duration-200">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+              </Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0} className="transition-all duration-200">
                 <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>
