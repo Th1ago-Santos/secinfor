@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck, CheckCircle, XCircle, AlertTriangle, Printer, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 
 type InventoryItem = {
@@ -116,9 +116,7 @@ export default function Inventory() {
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); confirmItem(); } };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">
@@ -303,7 +301,6 @@ export default function Inventory() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

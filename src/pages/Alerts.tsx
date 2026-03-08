@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import AppHeader from '@/components/AppHeader';
+
 
 type Alert = {
   id: string;
@@ -112,9 +112,7 @@ export default function Alerts() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">
@@ -222,7 +220,6 @@ export default function Alerts() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

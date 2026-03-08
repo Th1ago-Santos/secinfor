@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Printer, Search, Laptop, Package } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -55,9 +55,7 @@ export default function PrintView() {
   const baseUrl = window.location.origin;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <div className="no-print mb-6">
           <Card>
             <CardHeader className="pb-4">
@@ -196,7 +194,6 @@ export default function PrintView() {
             <p className="mt-1">Documento gerado pelo Sistema de Controle de Patrimônio</p>
           </div>
         </div>
-      </main>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   ClipboardCheck, Bell, TrendingUp, BarChart3, Clock
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
-import AppHeader from '@/components/AppHeader';
+
 
 type Stats = {
   totalNotebooks: number;
@@ -179,9 +179,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <div className="flex items-center gap-2 mb-6">
           <div className="p-2 rounded-lg bg-primary/10">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -372,7 +370,6 @@ export default function Dashboard() {
             </div>
           </>
         )}
-      </main>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Save, AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { z } from 'zod';
 
 const materialSchema = z.object({
@@ -64,19 +64,14 @@ export default function MaterialForm() {
 
   if (loadingData) {
     return (
-      <div className="min-h-screen bg-background">
-        <AppHeader />
-        <div className="flex justify-center py-20">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-        </div>
+      <div className="flex justify-center py-20">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-2xl animate-in-page">
         <Button variant="ghost" onClick={() => navigate('/materiais')} className="mb-4 transition-all duration-200 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -129,7 +124,6 @@ export default function MaterialForm() {
             </form>
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

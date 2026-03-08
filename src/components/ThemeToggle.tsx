@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(() => {
@@ -9,6 +11,14 @@ export default function ThemeToggle() {
     }
     return true;
   });
+
+  let collapsed = false;
+  try {
+    const sidebar = useSidebar();
+    collapsed = sidebar.state === 'collapsed';
+  } catch {
+    // not inside sidebar provider
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -23,14 +33,23 @@ export default function ThemeToggle() {
   }, []);
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setDark(!dark)}
-      className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8 transition-all duration-200"
-      title={dark ? 'Modo claro' : 'Modo escuro'}
-    >
-      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setDark(!dark)}
+          className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8 shrink-0 transition-all duration-200"
+          title={dark ? 'Modo claro' : 'Modo escuro'}
+        >
+          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      </TooltipTrigger>
+      {collapsed && (
+        <TooltipContent side="right">
+          {dark ? 'Modo claro' : 'Modo escuro'}
+        </TooltipContent>
+      )}
+    </Tooltip>
   );
 }

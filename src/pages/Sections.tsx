@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 
 export default function Sections() {
@@ -49,9 +49,7 @@ export default function Sections() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-3xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-3xl animate-in-page">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">
@@ -102,7 +100,7 @@ export default function Sections() {
             {!loading && <p className="text-xs text-muted-foreground mt-3 font-medium">{sections.length} seção(ões) cadastrada(s)</p>}
           </CardContent>
         </Card>
-      </main>
+      
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent>

@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, Search, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 
 type Material = {
   id: string;
@@ -49,9 +49,7 @@ export default function Materials() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">
@@ -126,7 +124,6 @@ export default function Materials() {
             )}
           </CardContent>
         </Card>
-      </main>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

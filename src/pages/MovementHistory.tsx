@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, History } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
+
 
 type Movement = {
   id: string;
@@ -63,9 +63,7 @@ export default function MovementHistory() {
   const backPath = itemTipo === 'notebook' ? '/notebooks' : '/materiais';
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-4xl animate-in-page">
         <Button variant="ghost" onClick={() => navigate(backPath)} className="mb-4 transition-all duration-200 hover:bg-muted/50">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
@@ -130,7 +128,6 @@ export default function MovementHistory() {
             )}
           </CardContent>
         </Card>
-      </main>
     </div>
   );
 }

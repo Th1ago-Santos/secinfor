@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop } from 'lucide-react';
 import { toast } from 'sonner';
-import AppHeader from '@/components/AppHeader';
+
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -74,9 +74,7 @@ export default function Index() {
   const baseUrl = window.location.origin;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">
@@ -196,7 +194,6 @@ export default function Index() {
             )}
           </CardContent>
         </Card>
-      </main>
 
       {/* View modal */}
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>

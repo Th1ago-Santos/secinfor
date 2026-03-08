@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Printer, Search } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
+
 
 type Material = {
   id: string;
@@ -39,9 +39,7 @@ export default function MaterialsPrintView() {
   const handlePrint = () => window.print();
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4">
         <div className="no-print mb-6">
           <Card>
             <CardHeader>
@@ -111,7 +109,6 @@ export default function MaterialsPrintView() {
             <p className="mt-1">Documento gerado pelo Sistema de Controle de Patrimônio</p>
           </div>
         </div>
-      </main>
     </div>
   );
 }
