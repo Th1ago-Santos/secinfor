@@ -248,7 +248,7 @@ export default function Priorities() {
         <PageHeader
           icon={ListOrdered}
           title="Prioridades de Computadores"
-          subtitle="Ranking de distribuição e substituição por seção"
+          description="Ranking de distribuição e substituição por seção"
           actions={
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint} disabled={priorities.length === 0}>
