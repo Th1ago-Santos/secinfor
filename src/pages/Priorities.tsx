@@ -58,21 +58,26 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
   onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
-  const style = { transform: CSS.Transform.toString(transform), transition };
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2 shadow-sm transition-all duration-200 ${isDragging ? 'z-50 shadow-xl ring-2 ring-primary/40 scale-[1.01]' : 'hover:shadow-md'}`}
+      className={`group flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2 shadow-sm transition-shadow duration-200 ${isDragging ? 'shadow-xl ring-2 ring-primary/40' : 'hover:shadow-md'}`}
     >
-      <div
+      <button
+        type="button"
         {...attributes}
         {...listeners}
-        className="flex items-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        className="flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 -m-1 touch-none"
       >
         <GripVertical className="h-4 w-4" />
-      </div>
+      </button>
 
       <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
         index === 0 ? 'gradient-primary text-primary-foreground shadow-glow' :
