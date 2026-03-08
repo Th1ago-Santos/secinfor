@@ -82,6 +82,27 @@ export default function MovementsReport() {
     toast.success('CSV exportado com sucesso.');
   };
 
+  const exportPDF = () => {
+    generatePDFReport({
+      title: 'Relatório de Movimentações',
+      subtitle: `${filtered.length} registro(s) — Filtros aplicados`,
+      columns: ['Data/Hora', 'Tipo', 'Evento', 'Origem', 'Destino', 'Resp. Ant.', 'Resp. Novo', 'Obs.'],
+      rows: filtered.map(m => [
+        new Date(m.data_hora).toLocaleString('pt-BR'),
+        m.item_tipo,
+        m.tipo_evento,
+        m.secao_origem || '—',
+        m.secao_destino || '—',
+        m.responsavel_anterior || '—',
+        m.responsavel_novo || '—',
+        m.observacao || '—',
+      ]),
+      filename: 'movimentacoes',
+      orientation: 'landscape',
+    });
+    toast.success('PDF exportado com sucesso.');
+  };
+
   const eventColor = (tipo: string) => {
     if (tipo.includes('Manutenção iniciada')) return 'destructive';
     if (tipo.includes('Manutenção finalizada')) return 'default';
