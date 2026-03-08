@@ -65,10 +65,10 @@ export type Database = {
           data_encerramento: string | null
           data_solicitacao: string | null
           id: string
-          motivo: string
+          motivo: string | null
           observacoes: string | null
           ordem: number
-          responsavel: string
+          responsavel: string | null
           secao: string
           status: string
           updated_at: string
@@ -78,10 +78,10 @@ export type Database = {
           data_encerramento?: string | null
           data_solicitacao?: string | null
           id?: string
-          motivo: string
+          motivo?: string | null
           observacoes?: string | null
           ordem?: number
-          responsavel: string
+          responsavel?: string | null
           secao: string
           status?: string
           updated_at?: string
@@ -91,10 +91,10 @@ export type Database = {
           data_encerramento?: string | null
           data_solicitacao?: string | null
           id?: string
-          motivo?: string
+          motivo?: string | null
           observacoes?: string | null
           ordem?: number
-          responsavel?: string
+          responsavel?: string | null
           secao?: string
           status?: string
           updated_at?: string
