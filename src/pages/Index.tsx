@@ -132,7 +132,7 @@ export default function Index() {
                   {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 bg-muted/30 border-border/50">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>

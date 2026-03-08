@@ -26,9 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Redirect to login on session expiry (SIGNED_OUT while not on login page)
-      if (event === 'SIGNED_OUT' && location.pathname !== '/login' && !location.pathname.startsWith('/consulta/')) {
-        navigate('/login');
+      // Redirect to login on session expiry
+      if (event === 'SIGNED_OUT') {
+        const path = window.location.pathname;
+        if (path !== '/login' && !path.startsWith('/consulta/')) {
+          navigate('/login');
+        }
       }
     });
 
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

@@ -8,20 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, History } from 'lucide-react';
 
-
-type Movement = {
-  id: string;
-  item_tipo: string;
-  item_id: string;
-  data_hora: string;
-  tipo_evento: string;
-  secao_origem: string | null;
-  secao_destino: string | null;
-  responsavel_anterior: string | null;
-  responsavel_novo: string | null;
-  observacao: string | null;
-  created_at: string;
-};
+import type { Movement } from '@/types';
 
 export default function MovementHistory() {
   const { id } = useParams<{ id: string }>();

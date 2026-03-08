@@ -48,14 +48,12 @@ export default function SectionMap() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const { data: recentMovs } = await supabase.from('movements').select('secao_destino').gte('data_hora', thirtyDaysAgo.toISOString());
 
-    const totalMaterials = (allMats as any[] || []).length;
-
     const result: SectionData[] = (sections as any[] || []).map(s => {
       const sNbs = (allNbs as any[] || []).filter(n => n.secao === s.name);
       return {
         name: s.name,
         notebooks: sNbs.length,
-        materials: totalMaterials,
+        materials: 0, // Materials aren't section-specific
         emManutencao: sNbs.filter(n => n.status === 'Em manutenção').length,
         baixados: sNbs.filter(n => n.status === 'Baixado').length,
         emUso: sNbs.filter(n => n.status === 'Em uso').length,
