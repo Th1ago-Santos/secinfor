@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter } from 'lucide-react';
+import { ArrowRightLeft, Search, Printer, Download, CalendarIcon, Filter, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { generatePDFReport } from '@/lib/pdfExport';
 
 import { useSections } from '@/hooks/useSections';
 
@@ -81,6 +82,27 @@ export default function MovementsReport() {
     toast.success('CSV exportado com sucesso.');
   };
 
+  const exportPDF = () => {
+    generatePDFReport({
+      title: 'Relatório de Movimentações',
+      subtitle: `${filtered.length} registro(s) — Filtros aplicados`,
+      columns: ['Data/Hora', 'Tipo', 'Evento', 'Origem', 'Destino', 'Resp. Ant.', 'Resp. Novo', 'Obs.'],
+      rows: filtered.map(m => [
+        new Date(m.data_hora).toLocaleString('pt-BR'),
+        m.item_tipo,
+        m.tipo_evento,
+        m.secao_origem || '—',
+        m.secao_destino || '—',
+        m.responsavel_anterior || '—',
+        m.responsavel_novo || '—',
+        m.observacao || '—',
+      ]),
+      filename: 'movimentacoes',
+      orientation: 'landscape',
+    });
+    toast.success('PDF exportado com sucesso.');
+  };
+
   const eventColor = (tipo: string) => {
     if (tipo.includes('Manutenção iniciada')) return 'destructive';
     if (tipo.includes('Manutenção finalizada')) return 'default';
@@ -100,6 +122,9 @@ export default function MovementsReport() {
               Relatório de Movimentações
             </CardTitle>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0} className="transition-all duration-200">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+              </Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0} className="transition-all duration-200">
                 <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>

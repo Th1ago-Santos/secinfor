@@ -44,10 +44,26 @@ export default function AppSidebar() {
   const [alertCount, setAlertCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
+  const fetchAlertCount = () => {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
       .then(({ count }) => setAlertCount(count || 0));
+  };
+
+  useEffect(() => {
+    fetchAlertCount();
   }, [location.pathname]);
+
+  // Realtime subscription for alerts
+  useEffect(() => {
+    const channel = supabase
+      .channel('alerts-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
+        fetchAlertCount();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';

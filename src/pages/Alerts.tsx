@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download } from 'lucide-react';
+import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Printer, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { generatePDFReport } from '@/lib/pdfExport';
 
 
 type Alert = {
@@ -111,6 +112,25 @@ export default function Alerts() {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = () => {
+    generatePDFReport({
+      title: 'Relatório de Alertas',
+      subtitle: `${alerts.length} alerta(s) — Status: ${filterStatus === 'all' ? 'Todos' : filterStatus}`,
+      columns: ['Data', 'Nível', 'Tipo', 'Mensagem', 'Patrimônio', 'Seção', 'Status'],
+      rows: alerts.map(a => [
+        new Date(a.created_at).toLocaleString('pt-BR'),
+        a.nivel,
+        a.tipo,
+        a.mensagem,
+        a.item_patrimonio || '—',
+        a.secao || '—',
+        a.status,
+      ]),
+      filename: 'alertas',
+    });
+    toast.success('PDF exportado com sucesso.');
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
@@ -125,6 +145,9 @@ export default function Alerts() {
               <Button size="sm" onClick={generateAlerts} disabled={generating} className="shadow-sm transition-all duration-200">
                 <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
                 {generating ? 'Gerando...' : 'Gerar Alertas'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={alerts.length === 0} className="transition-all duration-200">
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
               </Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0} className="transition-all duration-200">
                 <Download className="h-3.5 w-3.5 mr-1.5" />CSV
