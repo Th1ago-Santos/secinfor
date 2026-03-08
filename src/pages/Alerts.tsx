@@ -26,10 +26,10 @@ type Alert = {
   created_at: string;
 };
 
-const nivelConfig: Record<string, { icon: React.ElementType; color: string; badge: string }> = {
-  informativo: { icon: Info, color: 'text-blue-400', badge: 'outline' },
-  atencao: { icon: AlertTriangle, color: 'text-warning', badge: 'secondary' },
-  critico: { icon: XCircle, color: 'text-destructive', badge: 'destructive' },
+const nivelConfig: Record<string, { icon: React.ElementType; colorClass: string; badge: string }> = {
+  informativo: { icon: Info, colorClass: 'text-info', badge: 'outline' },
+  atencao: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary' },
+  critico: { icon: XCircle, colorClass: 'text-destructive', badge: 'destructive' },
 };
 
 export default function Alerts() {
@@ -57,60 +57,27 @@ export default function Alerts() {
     setGenerating(true);
     const newAlerts: Omit<Alert, 'id' | 'created_at'>[] = [];
 
-    // Notebooks em manutenção há mais de 30 dias
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const { data: manutNbs } = await supabase.from('notebooks').select('id, patrimonio, secao, data_entrada_manutencao')
       .eq('status', 'Em manutenção');
     (manutNbs as any[] || []).forEach(nb => {
       if (nb.data_entrada_manutencao && new Date(nb.data_entrada_manutencao) < thirtyDaysAgo) {
-        newAlerts.push({
-          tipo: 'Manutenção prolongada',
-          nivel: 'atencao',
-          mensagem: `Notebook ${nb.patrimonio} em manutenção há mais de 30 dias`,
-          item_id: nb.id,
-          item_tipo: 'notebook',
-          item_patrimonio: nb.patrimonio,
-          secao: nb.secao,
-          status: 'ativo',
-        });
+        newAlerts.push({ tipo: 'Manutenção prolongada', nivel: 'atencao', mensagem: `Notebook ${nb.patrimonio} em manutenção há mais de 30 dias`, item_id: nb.id, item_tipo: 'notebook', item_patrimonio: nb.patrimonio, secao: nb.secao, status: 'ativo' });
       }
     });
 
-    // Notebooks sem foto
-    const { data: noPhotoNbs } = await supabase.from('notebooks').select('id, patrimonio, secao')
-      .is('foto_url', null);
+    const { data: noPhotoNbs } = await supabase.from('notebooks').select('id, patrimonio, secao').is('foto_url', null);
     (noPhotoNbs as any[] || []).forEach(nb => {
-      newAlerts.push({
-        tipo: 'Sem foto',
-        nivel: 'informativo',
-        mensagem: `Notebook ${nb.patrimonio} sem foto cadastrada`,
-        item_id: nb.id,
-        item_tipo: 'notebook',
-        item_patrimonio: nb.patrimonio,
-        secao: nb.secao,
-        status: 'ativo',
-      });
+      newAlerts.push({ tipo: 'Sem foto', nivel: 'informativo', mensagem: `Notebook ${nb.patrimonio} sem foto cadastrada`, item_id: nb.id, item_tipo: 'notebook', item_patrimonio: nb.patrimonio, secao: nb.secao, status: 'ativo' });
     });
 
-    // Notebooks baixados ainda vinculados a seção
-    const { data: baixados } = await supabase.from('notebooks').select('id, patrimonio, secao')
-      .eq('status', 'Baixado').not('secao', 'is', null);
+    const { data: baixados } = await supabase.from('notebooks').select('id, patrimonio, secao').eq('status', 'Baixado').not('secao', 'is', null);
     (baixados as any[] || []).forEach(nb => {
-      newAlerts.push({
-        tipo: 'Baixado com seção',
-        nivel: 'atencao',
-        mensagem: `Notebook ${nb.patrimonio} está baixado mas ainda vinculado à seção ${nb.secao}`,
-        item_id: nb.id,
-        item_tipo: 'notebook',
-        item_patrimonio: nb.patrimonio,
-        secao: nb.secao,
-        status: 'ativo',
-      });
+      newAlerts.push({ tipo: 'Baixado com seção', nivel: 'atencao', mensagem: `Notebook ${nb.patrimonio} está baixado mas ainda vinculado à seção ${nb.secao}`, item_id: nb.id, item_tipo: 'notebook', item_patrimonio: nb.patrimonio, secao: nb.secao, status: 'ativo' });
     });
 
     if (newAlerts.length > 0) {
-      // Clear old auto-generated active alerts before inserting new ones
       await supabase.from('alerts').delete().eq('status', 'ativo');
       const { error } = await supabase.from('alerts').insert(newAlerts as any);
       if (error) toast.error('Erro ao gerar alertas.');
@@ -148,29 +115,31 @@ export default function Alerts() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto py-6 px-4 animate-in-page">
-        <Card className="animate-in-card">
+        <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Bell className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2.5 text-lg">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bell className="h-4 w-4 text-primary" />
+              </div>
               Alertas do Sistema
             </CardTitle>
             <div className="flex gap-2 flex-wrap">
-              <Button size="sm" onClick={generateAlerts} disabled={generating} className="transition-hover">
-                <RefreshCw className={`h-4 w-4 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
+              <Button size="sm" onClick={generateAlerts} disabled={generating} className="shadow-sm transition-all duration-200">
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
                 {generating ? 'Gerando...' : 'Gerar Alertas'}
               </Button>
-              <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0} className="transition-hover">
-                <Download className="h-4 w-4 mr-1.5" />CSV
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0} className="transition-all duration-200">
+                <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={alerts.length === 0} className="transition-hover">
-                <Printer className="h-4 w-4 mr-1.5" />Imprimir
+              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={alerts.length === 0} className="transition-all duration-200">
+                <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-3 mb-5 no-print">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="ativo">Ativos</SelectItem>
@@ -178,7 +147,7 @@ export default function Alerts() {
                 </SelectContent>
               </Select>
               <Select value={filterNivel} onValueChange={setFilterNivel}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/60"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os níveis</SelectItem>
                   <SelectItem value="informativo">Informativo</SelectItem>
@@ -189,26 +158,28 @@ export default function Alerts() {
             </div>
 
             {loading ? (
-              <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-md" />)}</div>
+              <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
             ) : alerts.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground animate-in-card">
-                <Bell className="h-14 w-14 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-medium">Nenhum alerta encontrado</p>
+              <div className="text-center py-20 text-muted-foreground animate-in-card">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                  <Bell className="h-7 w-7 text-muted-foreground/40" />
+                </div>
+                <p className="text-base font-semibold">Nenhum alerta encontrado</p>
                 <p className="text-sm mt-1">Clique em "Gerar Alertas" para verificar o sistema.</p>
               </div>
             ) : (
               <>
-                <div className="rounded-lg border overflow-x-auto">
+                <div className="rounded-xl border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-muted/40 hover:bg-muted/40">
-                        <TableHead className="font-semibold w-8">Nível</TableHead>
-                        <TableHead className="font-semibold">Tipo</TableHead>
-                        <TableHead className="font-semibold">Mensagem</TableHead>
-                        <TableHead className="font-semibold hidden md:table-cell">Patrimônio</TableHead>
-                        <TableHead className="font-semibold hidden md:table-cell">Seção</TableHead>
-                        <TableHead className="font-semibold hidden sm:table-cell">Data</TableHead>
-                        <TableHead className="font-semibold text-right">Ações</TableHead>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50 border-b">
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider w-10">Nível</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Tipo</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider">Mensagem</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Patrimônio</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden md:table-cell">Seção</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Data</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -216,17 +187,17 @@ export default function Alerts() {
                         const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
                         const Icon = cfg.icon;
                         return (
-                          <TableRow key={a.id} className="hover:bg-muted/20 transition-hover">
-                            <TableCell><Icon className={`h-4 w-4 ${cfg.color}`} /></TableCell>
-                            <TableCell><Badge variant={cfg.badge as any} className="text-xs">{a.tipo}</Badge></TableCell>
+                          <TableRow key={a.id} className="hover:bg-muted/30 transition-colors duration-150 group">
+                            <TableCell><Icon className={`h-4 w-4 ${cfg.colorClass}`} /></TableCell>
+                            <TableCell><Badge variant={cfg.badge as any} className="text-[10px] font-medium">{a.tipo}</Badge></TableCell>
                             <TableCell className="text-sm max-w-[300px]">{a.mensagem}</TableCell>
-                            <TableCell className="text-sm font-mono hidden md:table-cell">{a.item_patrimonio || '—'}</TableCell>
-                            <TableCell className="text-sm hidden md:table-cell">{a.secao || '—'}</TableCell>
-                            <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap">{new Date(a.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                            <TableCell className="text-sm font-mono text-muted-foreground hidden md:table-cell">{a.item_patrimonio || '—'}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground hidden md:table-cell">{a.secao || '—'}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground hidden sm:table-cell whitespace-nowrap">{new Date(a.created_at).toLocaleDateString('pt-BR')}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
+                              <div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-150">
                                 {a.item_id && a.item_tipo && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 transition-hover" onClick={() => {
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary hover:bg-primary/10 transition-all duration-200" onClick={() => {
                                     if (a.item_tipo === 'notebook') navigate(`/itens/${a.item_id}/editar`);
                                     else navigate(`/materiais/${a.item_id}/editar`);
                                   }} title="Abrir item">
@@ -234,7 +205,7 @@ export default function Alerts() {
                                   </Button>
                                 )}
                                 {a.status === 'ativo' && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success transition-hover" onClick={() => resolveAlert(a.id)} title="Resolver">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success hover:bg-success/10 transition-all duration-200" onClick={() => resolveAlert(a.id)} title="Resolver">
                                     <CheckCircle className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
@@ -246,7 +217,7 @@ export default function Alerts() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{alerts.length} alerta(s)</p>
+                <p className="text-xs text-muted-foreground mt-3 font-medium">{alerts.length} alerta(s)</p>
               </>
             )}
           </CardContent>
