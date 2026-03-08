@@ -13,7 +13,7 @@ import PageHeader from '@/components/PageHeader';
 type SectionData = {
   name: string;
   notebooks: number;
-  materials: number;
+  
   emManutencao: number;
   baixados: number;
   emUso: number;
