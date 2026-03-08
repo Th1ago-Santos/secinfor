@@ -49,9 +49,7 @@ export default function Sections() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 max-w-3xl animate-in-page">
+    <div className="container mx-auto py-6 px-4 max-w-3xl animate-in-page">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">

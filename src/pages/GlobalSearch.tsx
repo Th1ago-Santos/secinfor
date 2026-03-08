@@ -51,9 +51,7 @@ export default function GlobalSearch() {
   const total = notebooks.length + materials.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2.5 text-lg">

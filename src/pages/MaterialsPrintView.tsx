@@ -39,9 +39,7 @@ export default function MaterialsPrintView() {
   const handlePrint = () => window.print();
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4">
         <div className="no-print mb-6">
           <Card>
             <CardHeader>

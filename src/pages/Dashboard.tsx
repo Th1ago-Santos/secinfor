@@ -179,9 +179,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <div className="flex items-center gap-2 mb-6">
           <div className="p-2 rounded-lg bg-primary/10">
             <TrendingUp className="h-5 w-5 text-primary" />

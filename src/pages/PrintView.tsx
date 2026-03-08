@@ -55,9 +55,7 @@ export default function PrintView() {
   const baseUrl = window.location.origin;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="container mx-auto py-6 px-4 animate-in-page">
+    <div className="container mx-auto py-6 px-4 animate-in-page">
         <div className="no-print mb-6">
           <Card>
             <CardHeader className="pb-4">
