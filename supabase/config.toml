@@ -1,1 +1,4 @@
 project_id = "xlaohcbecdhvibwsgbgy"
+
+[functions.analyze-notebooks]
+verify_jwt = false
