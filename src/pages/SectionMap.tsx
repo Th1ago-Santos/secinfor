@@ -32,20 +32,30 @@ export default function SectionMap() {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: sections } = await supabase.from('sections').select('name').order('name');
-    const { data: allNbs } = await supabase.from('notebooks').select('secao, status');
-    const { data: alertsData } = await supabase.from('alerts').select('secao').eq('status', 'ativo');
+    const [
+      { data: sections },
+      { data: allNbs },
+      { data: allMats },
+      { data: alertsData },
+    ] = await Promise.all([
+      supabase.from('sections').select('name').order('name'),
+      supabase.from('notebooks').select('secao, status'),
+      supabase.from('materials').select('patrimonio'),
+      supabase.from('alerts').select('secao').eq('status', 'ativo'),
+    ]);
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const { data: recentMovs } = await supabase.from('movements').select('secao_destino').gte('data_hora', thirtyDaysAgo.toISOString());
+
+    const totalMaterials = (allMats as any[] || []).length;
 
     const result: SectionData[] = (sections as any[] || []).map(s => {
       const sNbs = (allNbs as any[] || []).filter(n => n.secao === s.name);
       return {
         name: s.name,
         notebooks: sNbs.length,
-        materials: 0,
+        materials: totalMaterials,
         emManutencao: sNbs.filter(n => n.status === 'Em manutenção').length,
         baixados: sNbs.filter(n => n.status === 'Baixado').length,
         emUso: sNbs.filter(n => n.status === 'Em uso').length,

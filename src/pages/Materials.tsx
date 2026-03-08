@@ -7,39 +7,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Package, History } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Package, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
-
-type Material = {
-  id: string;
-  patrimonio: string;
-  codigo_material: string;
-  numero_ficha: string;
-  nome: string;
-  created_at: string;
-  updated_at: string;
-};
+import type { Material } from '@/types';
 
 export default function Materials() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [searchNome, setSearchNome] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 50;
   const navigate = useNavigate();
 
   const fetchMaterials = async () => {
     setLoading(true);
-    let query = supabase.from('materials').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('materials').select('*', { count: 'exact' }).order('created_at', { ascending: false });
     if (searchNome.trim()) query = query.ilike('nome', `%${searchNome.trim()}%`);
-    const { data, error } = await query;
+    query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    const { data, error, count } = await query;
     if (error) toast.error('Erro ao carregar materiais.');
-    else setMaterials((data as Material[]) || []);
+    else { setMaterials((data as Material[]) || []); setTotalCount(count || 0); }
     setLoading(false);
   };
 
-  useEffect(() => { fetchMaterials(); }, [searchNome]);
+  useEffect(() => { fetchMaterials(); }, [searchNome, page]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -55,7 +52,7 @@ export default function Materials() {
         <PageHeader
           icon={Package}
           title="Material Carga da Seção"
-          description={`${materials.length} registro(s)`}
+          description={`${totalCount} registro(s)`}
           actions={
             <Button onClick={() => navigate('/materiais/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
               <Plus className="h-4 w-4 mr-1.5" />
@@ -121,6 +118,23 @@ export default function Materials() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Página {page + 1} de {totalPages} ({totalCount} registros)
+                </p>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

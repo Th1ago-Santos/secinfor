@@ -10,32 +10,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
+import { generatePDFReport } from '@/lib/pdfExport';
+import { format } from 'date-fns';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
-
-type Notebook = {
-  id: string;
-  patrimonio: string;
-  modelo: string;
-  secao: string;
-  militar: string;
-  status: string;
-  foto_url: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-const statusColor = (s: string) => {
-  if (s === 'Em uso') return 'default';
-  if (s === 'Em manutenção') return 'destructive';
-  if (s === 'Baixado') return 'secondary';
-  if (s === 'Em estoque') return 'outline';
-  return 'default';
-};
+import { Notebook, statusColor } from '@/types';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -47,22 +30,50 @@ export default function Index() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const [qrItem, setQrItem] = useState<Notebook | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 50;
   const navigate = useNavigate();
   const { sections } = useSections();
 
   const fetchNotebooks = async () => {
     setLoading(true);
-    let query = supabase.from('notebooks').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('notebooks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
     if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
     if (filterStatus !== 'all') query = query.eq('status', filterStatus);
     if (searchPatrimonio.trim()) query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
-    const { data, error } = await query;
+    query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    const { data, error, count } = await query;
     if (error) toast.error('Erro ao carregar dados.');
-    else setNotebooks((data as Notebook[]) || []);
+    else { setNotebooks((data as Notebook[]) || []); setTotalCount(count || 0); }
     setLoading(false);
   };
 
-  useEffect(() => { fetchNotebooks(); }, [filterSecao, filterStatus, searchPatrimonio]);
+  useEffect(() => { fetchNotebooks(); }, [filterSecao, filterStatus, searchPatrimonio, page]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const exportCSV = () => {
+    const header = 'Patrimônio;Modelo;Seção;Militar;Status\n';
+    const rows = notebooks.map(n => `${n.patrimonio};${n.modelo};${n.secao};${n.militar};${n.status}`).join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `notebooks_${format(new Date(), 'yyyy-MM-dd')}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exportado.');
+  };
+
+  const exportPDF = () => {
+    generatePDFReport({
+      title: 'Relatório de Notebooks',
+      subtitle: `${totalCount} registro(s)`,
+      columns: ['Patrimônio', 'Modelo', 'Seção', 'Militar', 'Status'],
+      rows: notebooks.map(n => [n.patrimonio, n.modelo, n.secao, n.militar, n.status]),
+      filename: 'notebooks',
+    });
+    toast.success('PDF exportado.');
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -80,12 +91,20 @@ export default function Index() {
         <PageHeader
           icon={Laptop}
           title="Notebooks Cadastrados"
-          description={`${notebooks.length} registro(s)`}
+          description={`${totalCount} registro(s)`}
           actions={
-            <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
-              <Plus className="h-4 w-4 mr-1.5" />
-              Novo Notebook
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={exportPDF} disabled={notebooks.length === 0}>
+                <FileText className="h-3.5 w-3.5 mr-1.5" />PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCSV} disabled={notebooks.length === 0}>
+                <Download className="h-3.5 w-3.5 mr-1.5" />CSV
+              </Button>
+              <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
+                <Plus className="h-4 w-4 mr-1.5" />
+                Novo Notebook
+              </Button>
+            </div>
           }
         />
 
@@ -188,6 +207,23 @@ export default function Index() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Página {page + 1} de {totalPages} ({totalCount} registros)
+                </p>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

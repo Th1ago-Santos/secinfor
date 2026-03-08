@@ -101,7 +101,7 @@ function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, 
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         {index > 0 && (
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
             <ArrowUpToLine className="h-3 w-3" />
@@ -163,9 +163,9 @@ export default function Priorities() {
   useEffect(() => { fetchPriorities(); }, [fetchPriorities]);
 
   const persistOrder = async (items: Priority[]) => {
-    for (let i = 0; i < items.length; i++) {
-      await supabase.from('computer_priorities').update({ ordem: i }).eq('id', items[i].id);
-    }
+    const ids = items.map(p => p.id);
+    const orders = items.map((_, i) => i);
+    await supabase.rpc('batch_update_priority_order', { ids, orders });
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
