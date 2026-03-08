@@ -18,19 +18,25 @@ export default function Materials() {
   const [searchNome, setSearchNome] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 50;
   const navigate = useNavigate();
 
   const fetchMaterials = async () => {
     setLoading(true);
-    let query = supabase.from('materials').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('materials').select('*', { count: 'exact' }).order('created_at', { ascending: false });
     if (searchNome.trim()) query = query.ilike('nome', `%${searchNome.trim()}%`);
-    const { data, error } = await query;
+    query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    const { data, error, count } = await query;
     if (error) toast.error('Erro ao carregar materiais.');
-    else setMaterials((data as Material[]) || []);
+    else { setMaterials((data as Material[]) || []); setTotalCount(count || 0); }
     setLoading(false);
   };
 
-  useEffect(() => { fetchMaterials(); }, [searchNome]);
+  useEffect(() => { fetchMaterials(); }, [searchNome, page]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const handleDelete = async () => {
     if (!deleteId) return;
