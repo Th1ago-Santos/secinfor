@@ -18,8 +18,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LogOut, Monitor, Printer, Package, Search, ClipboardCheck,
-  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered,
+  LogOut, Monitor, Printer, Package, ClipboardCheck,
+  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
