@@ -62,6 +62,7 @@ export type Database = {
       computer_priorities: {
         Row: {
           created_at: string
+          data_encerramento: string | null
           data_solicitacao: string | null
           id: string
           motivo: string
@@ -69,10 +70,12 @@ export type Database = {
           ordem: number
           responsavel: string
           secao: string
+          status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          data_encerramento?: string | null
           data_solicitacao?: string | null
           id?: string
           motivo: string
@@ -80,10 +83,12 @@ export type Database = {
           ordem?: number
           responsavel: string
           secao: string
+          status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          data_encerramento?: string | null
           data_solicitacao?: string | null
           id?: string
           motivo?: string
@@ -91,6 +96,7 @@ export type Database = {
           ordem?: number
           responsavel?: string
           secao?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []
