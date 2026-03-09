@@ -435,6 +435,8 @@ export default function Priorities() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{p.secao}</p>
                         <p className="text-xs text-muted-foreground">{p.responsavel}</p>
+                        {p.motivo && <p className="text-xs text-muted-foreground mt-0.5">{p.motivo}</p>}
+                        {p.observacoes && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">Obs: {p.observacoes}</p>}
                         <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
                           <span>Aberta: {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yy') : format(new Date(p.created_at), 'dd/MM/yy')}</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium">
