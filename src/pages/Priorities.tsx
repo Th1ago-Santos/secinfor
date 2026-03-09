@@ -225,6 +225,7 @@ export default function Priorities() {
 
     await supabase.from('computer_priorities').update({
       status: 'concluida', data_encerramento: now,
+      observacoes: deliverObs || deliverTarget.observacoes || null,
     }).eq('id', deliverTarget.id);
 
     await supabase.from('movements').insert({
