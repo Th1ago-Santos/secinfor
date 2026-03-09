@@ -26,7 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   ListOrdered, Plus, GripVertical, Pencil, Trash2, Printer,
   ArrowUpToLine, ArrowDownToLine, Trophy, Clock, Hash,
-  CheckCircle2, PackageCheck, ChevronDown, ChevronUp,
+  CheckCircle2, PackageCheck, ChevronDown, ChevronUp, Undo2,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
