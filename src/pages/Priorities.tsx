@@ -424,6 +424,7 @@ export default function Priorities() {
                         <TableHead className="hidden lg:table-cell">Observações</TableHead>
                         <TableHead>Abertura</TableHead>
                         <TableHead>Encerramento</TableHead>
+                        <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
