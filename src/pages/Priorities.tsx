@@ -402,6 +402,7 @@ export default function Priorities() {
                         <TableHead>Seção</TableHead>
                         <TableHead>Responsável</TableHead>
                         <TableHead className="hidden md:table-cell">Motivo</TableHead>
+                        <TableHead className="hidden lg:table-cell">Observações</TableHead>
                         <TableHead>Abertura</TableHead>
                         <TableHead>Encerramento</TableHead>
                       </TableRow>
@@ -413,6 +414,7 @@ export default function Priorities() {
                           <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
                           <TableCell>{p.responsavel}</TableCell>
                           <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
+                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs italic">{p.observacoes || '—'}</TableCell>
                           <TableCell className="text-xs">
                             {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
                           </TableCell>
@@ -433,6 +435,8 @@ export default function Priorities() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{p.secao}</p>
                         <p className="text-xs text-muted-foreground">{p.responsavel}</p>
+                        {p.motivo && <p className="text-xs text-muted-foreground mt-0.5">{p.motivo}</p>}
+                        {p.observacoes && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">Obs: {p.observacoes}</p>}
                         <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
                           <span>Aberta: {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yy') : format(new Date(p.created_at), 'dd/MM/yy')}</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium">
