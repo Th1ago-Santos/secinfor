@@ -1,4 +1,4 @@
-import { useState, useCallback, forwardRef } from 'react';
+import { useState, useCallback, forwardRef, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSections } from '@/hooks/useSections';
@@ -27,6 +27,7 @@ import {
   ListOrdered, Plus, GripVertical, Pencil, Trash2, Printer,
   ArrowUpToLine, ArrowDownToLine, Trophy, Clock, Hash,
   CheckCircle2, PackageCheck, ChevronDown, ChevronUp, Undo2,
+  Filter, FileDown,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -42,7 +43,6 @@ import type { Priority } from '@/types';
 
 const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', data_solicitacao: '' };
 
-// Fix forwardRef warning by wrapping SortableItem with forwardRef
 const SortableItem = forwardRef<HTMLDivElement, {
   item: Priority; index: number; onEdit: () => void; onDelete: () => void;
   onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
@@ -91,7 +91,6 @@ const SortableItem = forwardRef<HTMLDivElement, {
         )}
       </div>
 
-      {/* Always visible on mobile, hover on desktop */}
       <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
         {index > 0 && (
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
@@ -125,8 +124,13 @@ export default function Priorities() {
   const [saving, setSaving] = useState(false);
   const [deliverTarget, setDeliverTarget] = useState<Priority | null>(null);
   const [deliverObs, setDeliverObs] = useState('');
+  const [reopenTarget, setReopenTarget] = useState<Priority | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [printFilter, setPrintFilter] = useState<'abertas' | 'concluidas' | 'todas'>('todas');
+  // Filters for completed
+  const [filterSecao, setFilterSecao] = useState('all');
+  const [filterResponsavel, setFilterResponsavel] = useState('all');
+  const [filterPeriodo, setFilterPeriodo] = useState<'all' | '7d' | '30d' | '90d'>('all');
   const { sections } = useSections();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -148,9 +152,42 @@ export default function Priorities() {
     staleTime: 10_000,
   });
 
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('priorities-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'computer_priorities' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['priorities'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   const activePriorities = allPriorities.filter(p => p.status === 'aberta').sort((a, b) => a.ordem - b.ordem);
-  const completedPriorities = allPriorities.filter(p => p.status === 'concluida')
+  const allCompleted = allPriorities.filter(p => p.status === 'concluida')
     .sort((a, b) => new Date(b.data_encerramento || b.created_at).getTime() - new Date(a.data_encerramento || a.created_at).getTime());
+
+  // Unique values for filters
+  const uniqueSecoes = useMemo(() => [...new Set(allCompleted.map(p => p.secao))].sort(), [allCompleted]);
+  const uniqueResponsaveis = useMemo(() => [...new Set(allCompleted.map(p => p.responsavel).filter(Boolean))].sort(), [allCompleted]);
+
+  // Filtered completed
+  const completedPriorities = useMemo(() => {
+    let filtered = allCompleted;
+    if (filterSecao !== 'all') filtered = filtered.filter(p => p.secao === filterSecao);
+    if (filterResponsavel !== 'all') filtered = filtered.filter(p => p.responsavel === filterResponsavel);
+    if (filterPeriodo !== 'all') {
+      const now = Date.now();
+      const days = filterPeriodo === '7d' ? 7 : filterPeriodo === '30d' ? 30 : 90;
+      const cutoff = now - days * 24 * 60 * 60 * 1000;
+      filtered = filtered.filter(p => {
+        const d = p.data_encerramento ? new Date(p.data_encerramento).getTime() : new Date(p.created_at).getTime();
+        return d >= cutoff;
+      });
+    }
+    return filtered;
+  }, [allCompleted, filterSecao, filterResponsavel, filterPeriodo]);
 
   const persistOrder = async (items: Priority[]) => {
     const ids = items.map(p => p.id);
@@ -164,7 +201,6 @@ export default function Priorities() {
     const oldIndex = activePriorities.findIndex(p => p.id === active.id);
     const newIndex = activePriorities.findIndex(p => p.id === over.id);
     const reordered = arrayMove(activePriorities, oldIndex, newIndex).map((p, i) => ({ ...p, ordem: i }));
-    // Optimistic update
     queryClient.setQueryData(['priorities'], [...reordered, ...allPriorities.filter(p => p.status !== 'aberta')]);
     await persistOrder(reordered);
   };
@@ -262,6 +298,7 @@ export default function Priorities() {
 
     toast({ title: 'Prioridade reaberta', description: `Seção ${priority.secao} voltou ao ranking.` });
     setSaving(false);
+    setReopenTarget(null);
     queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
@@ -273,15 +310,29 @@ export default function Priorities() {
     generatePDFReport({
       title: 'Ranking de Prioridades de Computadores',
       subtitle: `Filtro: ${filterLabel} — Total: ${items.length} prioridade(s)`,
-      columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Abertura', 'Encerramento', 'Status'],
+      columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Observações', 'Abertura', 'Encerramento', 'Status'],
       rows: items.map((p) => [
         p.status === 'aberta' ? String(activePriorities.indexOf(p) + 1) : '—',
-        p.secao, p.responsavel, p.motivo,
+        p.secao, p.responsavel || '-', p.motivo || '-', p.observacoes || '-',
         p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
         p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
         p.status === 'aberta' ? 'Aberta' : 'Concluída',
       ]),
       filename: 'ranking_prioridades',
+    });
+  };
+
+  const handleExportCompleted = () => {
+    generatePDFReport({
+      title: 'Prioridades Concluídas',
+      subtitle: `Total: ${completedPriorities.length} prioridade(s) concluída(s)`,
+      columns: ['Seção', 'Responsável', 'Motivo', 'Observações', 'Abertura', 'Encerramento'],
+      rows: completedPriorities.map((p) => [
+        p.secao, p.responsavel || '-', p.motivo || '-', p.observacoes || '-',
+        p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
+        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
+      ]),
+      filename: 'prioridades_concluidas',
     });
   };
 
@@ -331,7 +382,7 @@ export default function Priorities() {
               <div className="p-2 rounded-lg bg-emerald-500/10"><CheckCircle2 className="h-5 w-5 text-emerald-500" /></div>
               <div>
                 <p className="text-xs text-muted-foreground">Concluídas</p>
-                <p className="text-xl font-bold">{completedPriorities.length}</p>
+                <p className="text-xl font-bold">{allCompleted.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -399,7 +450,7 @@ export default function Priorities() {
         </div>
 
         {/* Completed priorities */}
-        {completedPriorities.length > 0 && (
+        {allCompleted.length > 0 && (
           <div>
             <button
               onClick={() => setShowCompleted(v => !v)}
@@ -407,76 +458,112 @@ export default function Priorities() {
             >
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               Prioridades Concluídas
-              <Badge variant="secondary" className="text-[10px]">{completedPriorities.length}</Badge>
+              <Badge variant="secondary" className="text-[10px]">{allCompleted.length}</Badge>
               {showCompleted ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </button>
 
             {showCompleted && (
-              <Card className="shadow-card overflow-hidden">
-                {/* Desktop table */}
-                <div className="hidden sm:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10"></TableHead>
-                        <TableHead>Seção</TableHead>
-                        <TableHead>Responsável</TableHead>
-                        <TableHead className="hidden md:table-cell">Motivo</TableHead>
-                        <TableHead className="hidden lg:table-cell">Observações</TableHead>
-                        <TableHead>Abertura</TableHead>
-                        <TableHead>Encerramento</TableHead>
-                        <TableHead className="w-10"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {completedPriorities.map(p => (
-                        <TableRow key={p.id} className="text-muted-foreground">
-                          <TableCell><CheckCircle2 className="h-4 w-4 text-emerald-500" /></TableCell>
-                          <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
-                          <TableCell>{p.responsavel}</TableCell>
-                          <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
-                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs italic">{p.observacoes || '—'}</TableCell>
-                          <TableCell className="text-xs">
-                            {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
-                          </TableCell>
-                          <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                            {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleReopen(p)} disabled={saving} title="Reabrir prioridade">
-                              <Undo2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+              <>
+                {/* Filters */}
+                <div className="flex flex-wrap gap-2 mb-3 items-center">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Select value={filterSecao} onValueChange={setFilterSecao}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Seção" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas seções</SelectItem>
+                      {uniqueSecoes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterResponsavel} onValueChange={setFilterResponsavel}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Responsável" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {uniqueResponsaveis.map(r => <SelectItem key={r!} value={r!}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterPeriodo} onValueChange={v => setFilterPeriodo(v as typeof filterPeriodo)}>
+                    <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todo período</SelectItem>
+                      <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                      <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                      <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExportCompleted} disabled={completedPriorities.length === 0}>
+                    <FileDown className="h-3.5 w-3.5 mr-1" /> PDF Concluídas
+                  </Button>
+                  {completedPriorities.length !== allCompleted.length && (
+                    <Badge variant="outline" className="text-[10px]">{completedPriorities.length} de {allCompleted.length}</Badge>
+                  )}
                 </div>
 
-                {/* Mobile card view */}
-                <div className="space-y-0 sm:hidden divide-y divide-border/30">
-                  {completedPriorities.map(p => (
-                    <div key={p.id} className="p-4 flex items-start gap-3">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{p.secao}</p>
-                        <p className="text-xs text-muted-foreground">{p.responsavel}</p>
-                        {p.motivo && <p className="text-xs text-muted-foreground mt-0.5">{p.motivo}</p>}
-                        {p.observacoes && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">Obs: {p.observacoes}</p>}
-                        <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
-                          <span>Aberta: {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yy') : format(new Date(p.created_at), 'dd/MM/yy')}</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                            Entregue: {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yy') : '-'}
-                          </span>
+                <Card className="shadow-card overflow-hidden">
+                  {/* Desktop table */}
+                  <div className="hidden sm:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10"></TableHead>
+                          <TableHead>Seção</TableHead>
+                          <TableHead>Responsável</TableHead>
+                          <TableHead className="hidden md:table-cell">Motivo</TableHead>
+                          <TableHead className="hidden lg:table-cell">Observações</TableHead>
+                          <TableHead>Abertura</TableHead>
+                          <TableHead>Encerramento</TableHead>
+                          <TableHead className="w-10"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {completedPriorities.map(p => (
+                          <TableRow key={p.id} className="text-muted-foreground">
+                            <TableCell><CheckCircle2 className="h-4 w-4 text-emerald-500" /></TableCell>
+                            <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
+                            <TableCell>{p.responsavel}</TableCell>
+                            <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
+                            <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs italic">{p.observacoes || '—'}</TableCell>
+                            <TableCell className="text-xs">
+                              {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                              {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir prioridade">
+                                <Undo2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile card view */}
+                  <div className="space-y-0 sm:hidden divide-y divide-border/30">
+                    {completedPriorities.map(p => (
+                      <div key={p.id} className="p-4 flex items-start gap-3">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{p.secao}</p>
+                          <p className="text-xs text-muted-foreground">{p.responsavel}</p>
+                          {p.motivo && <p className="text-xs text-muted-foreground mt-0.5">{p.motivo}</p>}
+                          {p.observacoes && <p className="text-[10px] text-muted-foreground/70 italic mt-0.5">Obs: {p.observacoes}</p>}
+                          <div className="flex gap-3 mt-1 text-[10px] text-muted-foreground">
+                            <span>Aberta: {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yy') : format(new Date(p.created_at), 'dd/MM/yy')}</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              Entregue: {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yy') : '-'}
+                            </span>
+                          </div>
                         </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir">
+                          <Undo2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleReopen(p)} disabled={saving} title="Reabrir">
-                        <Undo2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+                    ))}
+                  </div>
+                </Card>
+              </>
             )}
           </div>
         )}
@@ -576,6 +663,31 @@ export default function Priorities() {
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {saving ? 'Registrando...' : 'Confirmar Entrega'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reopen confirmation dialog */}
+        <AlertDialog open={!!reopenTarget} onOpenChange={open => { if (!open) setReopenTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Undo2 className="h-5 w-5 text-primary" />
+                Reabrir prioridade
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja reabrir a prioridade da seção <strong>{reopenTarget?.secao}</strong>?
+                Ela voltará ao final do ranking ativo.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => reopenTarget && handleReopen(reopenTarget)}
+                disabled={saving}
+              >
+                {saving ? 'Reabrindo...' : 'Confirmar Reabertura'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
