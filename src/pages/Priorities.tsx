@@ -26,7 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   ListOrdered, Plus, GripVertical, Pencil, Trash2, Printer,
   ArrowUpToLine, ArrowDownToLine, Trophy, Clock, Hash,
-  CheckCircle2, PackageCheck, ChevronDown, ChevronUp,
+  CheckCircle2, PackageCheck, ChevronDown, ChevronUp, Undo2,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -245,6 +245,25 @@ export default function Priorities() {
     queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
+  const handleReopen = async (priority: Priority) => {
+    setSaving(true);
+    const newOrdem = activePriorities.length;
+    await supabase.from('computer_priorities').update({
+      status: 'aberta', data_encerramento: null, ordem: newOrdem,
+    }).eq('id', priority.id);
+
+    await supabase.from('movements').insert({
+      item_id: priority.id, item_tipo: 'prioridade', tipo_evento: 'reabertura_prioridade',
+      secao_destino: priority.secao, responsavel_novo: priority.responsavel,
+      observacao: `Prioridade reaberta para seção ${priority.secao}`,
+      usuario_sistema: user?.id || null, data_hora: new Date().toISOString(),
+    });
+
+    toast({ title: 'Prioridade reaberta', description: `Seção ${priority.secao} voltou ao ranking.` });
+    setSaving(false);
+    queryClient.invalidateQueries({ queryKey: ['priorities'] });
+  };
+
   const handlePrint = () => {
     const items = printFilter === 'abertas' ? activePriorities :
       printFilter === 'concluidas' ? completedPriorities : [...activePriorities, ...completedPriorities];
@@ -405,6 +424,7 @@ export default function Priorities() {
                         <TableHead className="hidden lg:table-cell">Observações</TableHead>
                         <TableHead>Abertura</TableHead>
                         <TableHead>Encerramento</TableHead>
+                        <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -420,6 +440,11 @@ export default function Priorities() {
                           </TableCell>
                           <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                             {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleReopen(p)} disabled={saving} title="Reabrir prioridade">
+                              <Undo2 className="h-3.5 w-3.5" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -444,6 +469,9 @@ export default function Priorities() {
                           </span>
                         </div>
                       </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleReopen(p)} disabled={saving} title="Reabrir">
+                        <Undo2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   ))}
                 </div>
