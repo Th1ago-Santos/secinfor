@@ -441,6 +441,11 @@ export default function Priorities() {
                           <TableCell className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                             {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
                           </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleReopen(p)} disabled={saving} title="Reabrir prioridade">
+                              <Undo2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
