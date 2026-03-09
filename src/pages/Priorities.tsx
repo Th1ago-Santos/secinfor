@@ -245,7 +245,26 @@ export default function Priorities() {
     queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
-  const handlePrint = () => {
+  const handleReopen = async (priority: Priority) => {
+    setSaving(true);
+    const newOrdem = activePriorities.length;
+    await supabase.from('computer_priorities').update({
+      status: 'aberta', data_encerramento: null, ordem: newOrdem,
+    }).eq('id', priority.id);
+
+    await supabase.from('movements').insert({
+      item_id: priority.id, item_tipo: 'prioridade', tipo_evento: 'reabertura_prioridade',
+      secao_destino: priority.secao, responsavel_novo: priority.responsavel,
+      observacao: `Prioridade reaberta para seção ${priority.secao}`,
+      usuario_sistema: user?.id || null, data_hora: new Date().toISOString(),
+    });
+
+    toast({ title: 'Prioridade reaberta', description: `Seção ${priority.secao} voltou ao ranking.` });
+    setSaving(false);
+    queryClient.invalidateQueries({ queryKey: ['priorities'] });
+  };
+
+
     const items = printFilter === 'abertas' ? activePriorities :
       printFilter === 'concluidas' ? completedPriorities : [...activePriorities, ...completedPriorities];
     const filterLabel = printFilter === 'abertas' ? 'Abertas' : printFilter === 'concluidas' ? 'Concluídas' : 'Todas';
