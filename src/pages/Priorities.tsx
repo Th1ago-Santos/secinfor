@@ -402,6 +402,7 @@ export default function Priorities() {
                         <TableHead>Seção</TableHead>
                         <TableHead>Responsável</TableHead>
                         <TableHead className="hidden md:table-cell">Motivo</TableHead>
+                        <TableHead className="hidden lg:table-cell">Observações</TableHead>
                         <TableHead>Abertura</TableHead>
                         <TableHead>Encerramento</TableHead>
                       </TableRow>
@@ -413,6 +414,7 @@ export default function Priorities() {
                           <TableCell className="font-medium text-foreground">{p.secao}</TableCell>
                           <TableCell>{p.responsavel}</TableCell>
                           <TableCell className="hidden md:table-cell max-w-[200px] truncate">{p.motivo}</TableCell>
+                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate text-xs italic">{p.observacoes || '—'}</TableCell>
                           <TableCell className="text-xs">
                             {p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : format(new Date(p.created_at), 'dd/MM/yyyy')}
                           </TableCell>
