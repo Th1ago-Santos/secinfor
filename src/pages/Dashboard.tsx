@@ -7,6 +7,7 @@ import StatsCards, { type Stats } from '@/components/dashboard/StatsCards';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import HardwareAnalysis from '@/components/dashboard/HardwareAnalysis';
 import RecentActivity from '@/components/dashboard/RecentActivity';
+import PriorityMetrics from '@/components/dashboard/PriorityMetrics';
 
 async function fetchDashboardData() {
   const [
@@ -130,6 +131,7 @@ export default function Dashboard() {
           <>
             <StatsCards stats={data.stats} />
             <HardwareAnalysis />
+            <PriorityMetrics />
             <DashboardCharts
               nbBySection={data.nbBySection}
               statusPieData={data.statusPieData}
