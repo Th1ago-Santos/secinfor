@@ -264,7 +264,7 @@ export default function Priorities() {
     queryClient.invalidateQueries({ queryKey: ['priorities'] });
   };
 
-
+  const handlePrint = () => {
     const items = printFilter === 'abertas' ? activePriorities :
       printFilter === 'concluidas' ? completedPriorities : [...activePriorities, ...completedPriorities];
     const filterLabel = printFilter === 'abertas' ? 'Abertas' : printFilter === 'concluidas' ? 'Concluídas' : 'Todas';
