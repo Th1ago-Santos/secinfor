@@ -188,7 +188,16 @@ export default function NotebookForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="patrimonio" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Número de Patrimônio *</Label>
-                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
+                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required disabled={foraDeCarga} />
+                  <div className="flex items-center gap-2 mt-1">
+                    <Checkbox id="fora-carga" checked={foraDeCarga} onCheckedChange={(v) => {
+                      const checked = !!v;
+                      setForaDeCarga(checked);
+                      if (checked) { setPatrimonio('FORA DE CARGA'); setStatus('Fora de Carga'); }
+                      else { setPatrimonio(''); setStatus('Em uso'); }
+                    }} />
+                    <label htmlFor="fora-carga" className="text-xs cursor-pointer text-muted-foreground">Fora de Carga</label>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="modelo" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Modelo *</Label>
