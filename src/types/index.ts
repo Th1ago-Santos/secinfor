@@ -78,5 +78,6 @@ export const statusColor = (s: string) => {
   if (s === 'Em manutenção') return 'destructive';
   if (s === 'Baixado') return 'secondary';
   if (s === 'Em estoque') return 'outline';
+  if (s === 'Fora de Carga') return 'destructive';
   return 'default';
 };

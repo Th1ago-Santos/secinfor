@@ -23,6 +23,7 @@ import Inventory from "./pages/Inventory";
 import Alerts from "./pages/Alerts";
 import SectionMap from "./pages/SectionMap";
 import Priorities from "./pages/Priorities";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ function AnimatedRoutes() {
         <Route path="/prioridades" element={<ProtectedRoute><Priorities /></ProtectedRoute>} />
         <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
         <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
+        <Route path="/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

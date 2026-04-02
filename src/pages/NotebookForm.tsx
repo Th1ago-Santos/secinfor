@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, AlertCircle, Upload, X, Laptop } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,7 +26,7 @@ const notebookSchema = z.object({
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const STATUS_OPTIONS = ['Em uso', 'Em manutenção', 'Baixado', 'Em estoque'];
+const STATUS_OPTIONS = ['Em uso', 'Em manutenção', 'Baixado', 'Em estoque', 'Fora de Carga'];
 
 export default function NotebookForm() {
   const { id } = useParams();
@@ -39,6 +40,7 @@ export default function NotebookForm() {
   const [secao, setSecao] = useState('');
   const [militar, setMilitar] = useState('');
   const [status, setStatus] = useState('Em uso');
+  const [foraDeCarga, setForaDeCarga] = useState(false);
   const [motivoManutencao, setMotivoManutencao] = useState('');
   const [observacoesManutencao, setObservacoesManutencao] = useState('');
   const [fotoFile, setFotoFile] = useState<File | null>(null);
@@ -62,6 +64,7 @@ export default function NotebookForm() {
           setModelo(d.modelo); setPatrimonio(d.patrimonio); setSecao(d.secao); setMilitar(d.militar);
           setStatus(d.status || 'Em uso'); setMotivoManutencao(d.motivo_manutencao || '');
           setObservacoesManutencao(d.observacoes_manutencao || '');
+          if (d.patrimonio === 'FORA DE CARGA') setForaDeCarga(true);
           if (d.foto_url) setExistingFotoUrl(d.foto_url);
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
@@ -185,7 +188,16 @@ export default function NotebookForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="patrimonio" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Número de Patrimônio *</Label>
-                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
+                  <Input id="patrimonio" placeholder="Ex: NB-2024-001" value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} className="h-10 font-mono bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required disabled={foraDeCarga} />
+                  <div className="flex items-center gap-2 mt-1">
+                    <Checkbox id="fora-carga" checked={foraDeCarga} onCheckedChange={(v) => {
+                      const checked = !!v;
+                      setForaDeCarga(checked);
+                      if (checked) { setPatrimonio('FORA DE CARGA'); setStatus('Fora de Carga'); }
+                      else { setPatrimonio(''); setStatus('Em uso'); }
+                    }} />
+                    <label htmlFor="fora-carga" className="text-xs cursor-pointer text-muted-foreground">Fora de Carga</label>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="modelo" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Modelo *</Label>

@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
@@ -20,31 +20,43 @@ import { format } from 'date-fns';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import { Notebook, statusColor } from '@/types';
+import { useUserRole } from '@/hooks/useUserRole';
+import CautelaPrint from '@/components/CautelaPrint';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
   const [filterSecao, setFilterSecao] = useState(searchParams.get('secao') || 'all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [searchPatrimonio, setSearchPatrimonio] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const [qrItem, setQrItem] = useState<Notebook | null>(null);
+  const [cautelaItem, setCautelaItem] = useState<Notebook | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const navigate = useNavigate();
   const { sections } = useSections();
   const queryClient = useQueryClient();
+  const { canEdit } = useUserRole();
 
-  // Reset page when filters change
   const resetPage = () => setPage(0);
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['notebooks', filterSecao, filterStatus, searchPatrimonio, page],
+    queryKey: ['notebooks', filterSecao, filterStatus, searchTerm, page],
     queryFn: async () => {
       let query = supabase.from('notebooks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
       if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
-      if (filterStatus !== 'all') query = query.eq('status', filterStatus);
-      if (searchPatrimonio.trim()) query = query.ilike('patrimonio', `%${searchPatrimonio.trim()}%`);
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'Fora de Carga') {
+          query = query.eq('patrimonio', 'FORA DE CARGA');
+        } else {
+          query = query.eq('status', filterStatus);
+        }
+      }
+      if (searchTerm.trim()) {
+        const term = `%${searchTerm.trim()}%`;
+        query = query.or(`patrimonio.ilike.${term},militar.ilike.${term},modelo.ilike.${term},secao.ilike.${term}`);
+      }
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
       const { data, error, count } = await query;
       if (error) { toast.error('Erro ao carregar dados.'); throw error; }
@@ -92,6 +104,11 @@ export default function Index() {
 
   const baseUrl = window.location.origin;
 
+  // Show cautela full-screen print view
+  if (cautelaItem) {
+    return <CautelaPrint notebook={cautelaItem} onClose={() => setCautelaItem(null)} />;
+  }
+
   return (
     <PageTransition>
       <div className="container mx-auto py-6 px-4">
@@ -107,10 +124,12 @@ export default function Index() {
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={notebooks.length === 0}>
                 <Download className="h-3.5 w-3.5 mr-1.5" />CSV
               </Button>
-              <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
-                <Plus className="h-4 w-4 mr-1.5" />
-                Novo Notebook
-              </Button>
+              {canEdit && (
+                <Button onClick={() => navigate('/itens/novo')} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Novo Notebook
+                </Button>
+              )}
             </div>
           }
         />
@@ -121,7 +140,7 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                <Input placeholder="Buscar por patrimônio..." value={searchPatrimonio} onChange={(e) => { setSearchPatrimonio(e.target.value); resetPage(); }} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
+                <Input placeholder="Buscar patrimônio, militar, modelo, seção..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); resetPage(); }} className="pl-9 h-9 bg-muted/30 border-border/50 focus:bg-background focus:border-primary/50 focus:shadow-glow transition-all duration-300" />
               </div>
               <Select value={filterSecao} onValueChange={v => { setFilterSecao(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50">
@@ -142,6 +161,7 @@ export default function Index() {
                   <SelectItem value="Em manutenção">Em manutenção</SelectItem>
                   <SelectItem value="Baixado">Baixado</SelectItem>
                   <SelectItem value="Em estoque">Em estoque</SelectItem>
+                  <SelectItem value="Fora de Carga">Fora de Carga</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -197,9 +217,14 @@ export default function Index() {
                             <div className="flex justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                               <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></Button>
+                              {canEdit && (
+                                <>
+                                  <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} title="Editar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Pencil className="h-3.5 w-3.5" /></Button>
+                                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} title="Excluir" className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                </>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -233,9 +258,14 @@ export default function Index() {
                         <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-border/30">
                           <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} className="h-8 w-8"><Pencil className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} className="h-8 w-8 text-destructive/60"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          {canEdit && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/itens/${nb.id}/editar`)} className="h-8 w-8"><Pencil className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setDeleteId(nb.id)} className="h-8 w-8 text-destructive/60"><Trash2 className="h-3.5 w-3.5" /></Button>
+                            </>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -313,6 +343,11 @@ export default function Index() {
                 </div>
               </div>
               <p className="text-[10px] text-center text-muted-foreground">Escaneie para consulta rápida</p>
+              <div className="flex justify-center">
+                <Button variant="outline" size="sm" onClick={() => { setViewItem(null); setCautelaItem(viewItem); }}>
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir Cautela
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
