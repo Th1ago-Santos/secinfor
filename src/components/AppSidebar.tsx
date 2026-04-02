@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,30 +20,34 @@ import {
 } from '@/components/ui/sidebar';
 import {
   LogOut, Monitor, Printer, Package, ClipboardCheck,
-  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search,
+  Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
-const navItems = [
-  { label: 'Dashboard', path: '/', icon: BarChart3 },
-  { label: 'Notebooks', path: '/notebooks', icon: Laptop },
-  { label: 'Material Carga', path: '/materiais', icon: Package },
-  { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft },
-  { label: 'Inventário', path: '/inventario', icon: ClipboardCheck },
-  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered },
-  { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map },
-  { label: 'Seções', path: '/secoes', icon: Settings },
-  { label: 'Impressão', path: '/impressao', icon: Printer },
+const allNavItems = [
+  { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
+  { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador'] },
+  { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador'] },
+  { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
+  { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador'] },
+  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador'] },
+  { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador'] },
+  { label: 'Seções', path: '/secoes', icon: Settings, roles: ['admin'] },
+  { label: 'Impressão', path: '/impressao', icon: Printer, roles: ['admin', 'operador'] },
+  { label: 'Usuários', path: '/usuarios', icon: Users, roles: ['admin'] },
 ];
 
 export default function AppSidebar() {
   const { user, signOut } = useAuth();
+  const { role } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
+
+  const navItems = allNavItems.filter(item => !role || item.roles.includes(role));
 
   const fetchAlertCount = () => {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
@@ -73,6 +78,8 @@ export default function AppSidebar() {
     await signOut();
     navigate('/login');
   };
+
+  const showAlerts = role === 'admin' || role === 'operador';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
@@ -126,47 +133,49 @@ export default function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
-              {/* Alerts */}
-              <SidebarMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive('/alertas')}
-                      className="transition-all duration-200 rounded-lg"
-                    >
-                      <button
-                        onClick={() => navigate('/alertas')}
-                        className="flex items-center gap-2.5 w-full relative"
+              {/* Alerts - only for admin/operador */}
+              {showAlerts && (
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive('/alertas')}
+                        className="transition-all duration-200 rounded-lg"
                       >
-                        <div className="relative shrink-0">
-                          <Bell className="h-4 w-4" />
-                          {alertCount > 0 && (
-                            <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center ring-2 ring-sidebar-background">
-                              {alertCount}
+                        <button
+                          onClick={() => navigate('/alertas')}
+                          className="flex items-center gap-2.5 w-full relative"
+                        >
+                          <div className="relative shrink-0">
+                            <Bell className="h-4 w-4" />
+                            {alertCount > 0 && (
+                              <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center ring-2 ring-sidebar-background">
+                                {alertCount}
+                              </span>
+                            )}
+                          </div>
+                          {!collapsed && (
+                            <span className="truncate flex items-center gap-2 text-[13px]">
+                              Alertas
+                              {alertCount > 0 && (
+                                <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-semibold">
+                                  {alertCount}
+                                </Badge>
+                              )}
                             </span>
                           )}
-                        </div>
-                        {!collapsed && (
-                          <span className="truncate flex items-center gap-2 text-[13px]">
-                            Alertas
-                            {alertCount > 0 && (
-                              <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-semibold">
-                                {alertCount}
-                              </Badge>
-                            )}
-                          </span>
-                        )}
-                      </button>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {collapsed && (
-                    <TooltipContent side="right" className="font-medium">
-                      Alertas {alertCount > 0 ? `(${alertCount})` : ''}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
+                        </button>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right" className="font-medium">
+                        Alertas {alertCount > 0 ? `(${alertCount})` : ''}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

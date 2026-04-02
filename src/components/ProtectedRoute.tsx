@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Navigate, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
@@ -18,13 +19,33 @@ const routeTitles: Record<string, string> = {
   '/secoes': 'Seções',
   '/impressao': 'Impressão',
   '/pesquisa': 'Pesquisa',
+  '/usuarios': 'Usuários',
 };
+
+// Routes accessible by each role
+const roleRoutes: Record<string, string[]> = {
+  admin: ['*'], // all routes
+  operador: ['/', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa'],
+  visualizador: ['/prioridades', '/mapa-secoes'],
+};
+
+function isRouteAllowed(pathname: string, role: string | null): boolean {
+  if (!role) return true; // still loading
+  const allowed = roleRoutes[role];
+  if (!allowed) return false;
+  if (allowed.includes('*')) return true;
+  return allowed.some(r => {
+    if (r === '/') return pathname === '/';
+    return pathname.startsWith(r);
+  });
+}
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const location = useLocation();
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -36,6 +57,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // Redirect unauthorized users to their default page
+  if (!isRouteAllowed(location.pathname, role)) {
+    const defaultRoute = role === 'visualizador' ? '/prioridades' : '/';
+    return <Navigate to={defaultRoute} replace />;
+  }
 
   const currentTitle = routeTitles[location.pathname] || '';
 
