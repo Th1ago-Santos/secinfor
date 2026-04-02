@@ -25,7 +25,7 @@ const notebookSchema = z.object({
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const STATUS_OPTIONS = ['Em uso', 'Em manutenção', 'Baixado', 'Em estoque'];
+const STATUS_OPTIONS = ['Em uso', 'Em manutenção', 'Baixado', 'Em estoque', 'Fora de Carga'];
 
 export default function NotebookForm() {
   const { id } = useParams();
