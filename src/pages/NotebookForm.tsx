@@ -40,6 +40,7 @@ export default function NotebookForm() {
   const [secao, setSecao] = useState('');
   const [militar, setMilitar] = useState('');
   const [status, setStatus] = useState('Em uso');
+  const [foraDeCarga, setForaDeCarga] = useState(false);
   const [motivoManutencao, setMotivoManutencao] = useState('');
   const [observacoesManutencao, setObservacoesManutencao] = useState('');
   const [fotoFile, setFotoFile] = useState<File | null>(null);
