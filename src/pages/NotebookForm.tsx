@@ -64,6 +64,7 @@ export default function NotebookForm() {
           setModelo(d.modelo); setPatrimonio(d.patrimonio); setSecao(d.secao); setMilitar(d.militar);
           setStatus(d.status || 'Em uso'); setMotivoManutencao(d.motivo_manutencao || '');
           setObservacoesManutencao(d.observacoes_manutencao || '');
+          if (d.patrimonio === 'FORA DE CARGA') setForaDeCarga(true);
           if (d.foto_url) setExistingFotoUrl(d.foto_url);
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
