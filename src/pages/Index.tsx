@@ -32,6 +32,8 @@ export default function Index() {
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const [qrItem, setQrItem] = useState<Notebook | null>(null);
   const [cautelaItem, setCautelaItem] = useState<Notebook | null>(null);
+  const [cautelaDialogItem, setCautelaDialogItem] = useState<Notebook | null>(null);
+  const [responsavelCautela, setResponsavelCautela] = useState('');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const navigate = useNavigate();
