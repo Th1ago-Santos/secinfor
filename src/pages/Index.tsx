@@ -250,7 +250,7 @@ export default function Index() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-mono font-semibold text-sm">{nb.patrimonio}</span>
+                              <span className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</span>
                               <Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge>
                             </div>
                             <p className="text-sm truncate">{nb.modelo}</p>
