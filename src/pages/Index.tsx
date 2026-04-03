@@ -108,7 +108,7 @@ export default function Index() {
 
   // Show cautela full-screen print view
   if (cautelaItem) {
-    return <CautelaPrint notebook={cautelaItem} onClose={() => setCautelaItem(null)} />;
+    return <CautelaPrint notebook={cautelaItem} responsavelCautela={responsavelCautela} onClose={() => { setCautelaItem(null); setResponsavelCautela(''); }} />;
   }
 
   return (
