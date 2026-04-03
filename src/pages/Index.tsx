@@ -219,7 +219,7 @@ export default function Index() {
                             <div className="flex justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                               <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
                               {canEdit && (
                                 <>
