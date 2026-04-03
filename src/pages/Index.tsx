@@ -208,7 +208,7 @@ export default function Index() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio}</TableCell>
+                          <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</TableCell>
                           <TableCell className="text-sm">{nb.modelo}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{nb.secao}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{nb.militar}</TableCell>
