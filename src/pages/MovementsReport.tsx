@@ -117,7 +117,7 @@ export default function MovementsReport() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
+              <Button variant="outline" size="sm" onClick={() => { setPrintMode(true); setTimeout(() => { window.print(); setTimeout(() => setPrintMode(false), 500); }, 100); }} disabled={filtered.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
             </div>
           }
         />
