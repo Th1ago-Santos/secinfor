@@ -50,7 +50,7 @@ export default function Index() {
       if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
       if (filterStatus !== 'all') {
         if (filterStatus === 'Fora de Carga') {
-          query = query.eq('patrimonio', 'FORA DE CARGA');
+          query = query.eq('status', 'Fora de Carga');
         } else {
           query = query.eq('status', filterStatus);
         }
