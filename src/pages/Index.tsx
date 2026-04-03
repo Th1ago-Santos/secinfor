@@ -260,7 +260,7 @@ export default function Index() {
                         <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-border/30">
                           <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
                           {canEdit && (
                             <>
