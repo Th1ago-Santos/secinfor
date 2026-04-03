@@ -346,7 +346,7 @@ export default function Index() {
               </div>
               <p className="text-[10px] text-center text-muted-foreground">Escaneie para consulta rápida</p>
               <div className="flex justify-center">
-                <Button variant="outline" size="sm" onClick={() => { setViewItem(null); setCautelaItem(viewItem); }}>
+                <Button variant="outline" size="sm" onClick={() => { setViewItem(null); setCautelaDialogItem(viewItem); }}>
                   <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir Cautela
                 </Button>
               </div>
