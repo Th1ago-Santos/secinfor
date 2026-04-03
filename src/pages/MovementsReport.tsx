@@ -31,6 +31,7 @@ export default function MovementsReport() {
   const [filterSecao, setFilterSecao] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(0);
+  const [printMode, setPrintMode] = useState(false);
   const PAGE_SIZE = 100;
 
   const { data, isLoading: loading } = useQuery({
@@ -105,6 +106,58 @@ export default function MovementsReport() {
     setFilterEvento('all'); setFilterSecao('all'); setSearchText(''); setPage(0);
   };
 
+  if (printMode) {
+    const dataAtual = new Date().toLocaleDateString('pt-BR');
+    const horaAtual = new Date().toLocaleTimeString('pt-BR');
+    return (
+      <div className="fixed inset-0 z-[100] bg-white text-black overflow-auto" style={{ fontFamily: "'DM Sans', Arial, sans-serif" }}>
+        <div className="no-print fixed top-4 right-4 z-50">
+          <button onClick={() => setPrintMode(false)} className="px-4 py-2 rounded-lg bg-gray-200 text-black text-sm font-medium shadow-lg hover:bg-gray-300 transition-all">Fechar</button>
+        </div>
+        <div className="max-w-[210mm] mx-auto p-[15mm]">
+          <div className="text-center border-b-2 border-black pb-4 mb-6">
+            <h1 className="text-xl font-bold uppercase">Seção de Informática — 14° B Log</h1>
+            <h2 className="text-lg font-semibold mt-1 uppercase">Relatório de Movimentações</h2>
+            <p className="text-xs mt-2 text-gray-600">Data: {dataAtual} — Hora: {horaAtual}</p>
+            <p className="text-xs font-semibold mt-1">{filtered.length} registro(s)</p>
+          </div>
+          <table className="w-full text-[10px] border-collapse">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Data/Hora</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Tipo</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Evento</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Origem</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Destino</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Resp. Ant.</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Resp. Novo</th>
+                <th className="border border-gray-400 px-1.5 py-1 text-left font-semibold">Obs.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((m, i) => (
+                <tr key={m.id} className={i % 2 === 1 ? 'bg-gray-50' : ''}>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{new Date(m.data_hora).toLocaleString('pt-BR')}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5 capitalize">{m.item_tipo}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.tipo_evento}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.secao_origem || '—'}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.secao_destino || '—'}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.responsavel_anterior || '—'}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.responsavel_novo || '—'}</td>
+                  <td className="border border-gray-300 px-1.5 py-0.5">{m.observacao || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-8 text-center text-[10px] border-t border-gray-400 pt-4">
+            <p>Total de registros: {filtered.length}</p>
+            <p className="mt-1">Documento gerado pela Seção de Informática — 14° B Log</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <PageTransition>
       <div className="container mx-auto py-6 px-4">
@@ -116,7 +169,7 @@ export default function MovementsReport() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={exportPDF} disabled={filtered.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
               <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={filtered.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
+              <Button variant="outline" size="sm" onClick={() => { setPrintMode(true); setTimeout(() => { window.print(); setTimeout(() => setPrintMode(false), 500); }, 100); }} disabled={filtered.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
             </div>
           }
         />

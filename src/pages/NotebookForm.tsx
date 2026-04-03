@@ -64,7 +64,7 @@ export default function NotebookForm() {
           setModelo(d.modelo); setPatrimonio(d.patrimonio); setSecao(d.secao); setMilitar(d.militar);
           setStatus(d.status || 'Em uso'); setMotivoManutencao(d.motivo_manutencao || '');
           setObservacoesManutencao(d.observacoes_manutencao || '');
-          if (d.patrimonio === 'FORA DE CARGA') setForaDeCarga(true);
+          if (d.patrimonio?.startsWith('FC-') || d.status === 'Fora de Carga') setForaDeCarga(true);
           if (d.foto_url) setExistingFotoUrl(d.foto_url);
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
@@ -193,7 +193,7 @@ export default function NotebookForm() {
                     <Checkbox id="fora-carga" checked={foraDeCarga} onCheckedChange={(v) => {
                       const checked = !!v;
                       setForaDeCarga(checked);
-                      if (checked) { setPatrimonio('FORA DE CARGA'); setStatus('Fora de Carga'); }
+                      if (checked) { setPatrimonio(`FC-${Date.now()}`); setStatus('Fora de Carga'); }
                       else { setPatrimonio(''); setStatus('Em uso'); }
                     }} />
                     <label htmlFor="fora-carga" className="text-xs cursor-pointer text-muted-foreground">Fora de Carga</label>

@@ -32,6 +32,8 @@ export default function Index() {
   const [viewItem, setViewItem] = useState<Notebook | null>(null);
   const [qrItem, setQrItem] = useState<Notebook | null>(null);
   const [cautelaItem, setCautelaItem] = useState<Notebook | null>(null);
+  const [cautelaDialogItem, setCautelaDialogItem] = useState<Notebook | null>(null);
+  const [responsavelCautela, setResponsavelCautela] = useState('');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export default function Index() {
       if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
       if (filterStatus !== 'all') {
         if (filterStatus === 'Fora de Carga') {
-          query = query.eq('patrimonio', 'FORA DE CARGA');
+          query = query.eq('status', 'Fora de Carga');
         } else {
           query = query.eq('status', filterStatus);
         }
@@ -106,7 +108,7 @@ export default function Index() {
 
   // Show cautela full-screen print view
   if (cautelaItem) {
-    return <CautelaPrint notebook={cautelaItem} onClose={() => setCautelaItem(null)} />;
+    return <CautelaPrint notebook={cautelaItem} responsavelCautela={responsavelCautela} onClose={() => { setCautelaItem(null); setResponsavelCautela(''); }} />;
   }
 
   return (
@@ -206,7 +208,7 @@ export default function Index() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio}</TableCell>
+                          <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</TableCell>
                           <TableCell className="text-sm">{nb.modelo}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{nb.secao}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{nb.militar}</TableCell>
@@ -217,7 +219,7 @@ export default function Index() {
                             <div className="flex justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                               <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
                               {canEdit && (
                                 <>
@@ -248,7 +250,7 @@ export default function Index() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-mono font-semibold text-sm">{nb.patrimonio}</span>
+                              <span className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</span>
                               <Badge variant={statusColor(nb.status) as any} className="text-[10px] font-medium">{nb.status}</Badge>
                             </div>
                             <p className="text-sm truncate">{nb.modelo}</p>
@@ -258,7 +260,7 @@ export default function Index() {
                         <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-border/30">
                           <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setCautelaItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
                           {canEdit && (
                             <>
@@ -344,7 +346,7 @@ export default function Index() {
               </div>
               <p className="text-[10px] text-center text-muted-foreground">Escaneie para consulta rápida</p>
               <div className="flex justify-center">
-                <Button variant="outline" size="sm" onClick={() => { setViewItem(null); setCautelaItem(viewItem); }}>
+                <Button variant="outline" size="sm" onClick={() => { setViewItem(null); setCautelaDialogItem(viewItem); }}>
                   <Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir Cautela
                 </Button>
               </div>
@@ -372,7 +374,43 @@ export default function Index() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete dialog */}
+      {/* Cautela responsible dialog */}
+      <Dialog open={!!cautelaDialogItem} onOpenChange={() => setCautelaDialogItem(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg gradient-primary">
+                <Printer className="h-4 w-4 text-primary-foreground" />
+              </div>
+              Imprimir Cautela
+            </DialogTitle>
+          </DialogHeader>
+          {cautelaDialogItem && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Item: <strong className="text-foreground">{cautelaDialogItem.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : cautelaDialogItem.patrimonio}</strong> — {cautelaDialogItem.modelo}
+              </p>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do responsável pela cautela</label>
+                <Input
+                  placeholder="Ex: Sgt Ferreira"
+                  value={responsavelCautela}
+                  onChange={e => setResponsavelCautela(e.target.value)}
+                  className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200"
+                />
+                <p className="text-[10px] text-muted-foreground">Será impresso no campo de assinatura do responsável.</p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCautelaDialogItem(null)}>Cancelar</Button>
+                <Button size="sm" onClick={() => { setCautelaItem(cautelaDialogItem); setCautelaDialogItem(null); }}>
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />Gerar Cautela
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

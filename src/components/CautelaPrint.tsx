@@ -5,10 +5,11 @@ import { Notebook } from '@/types';
 
 interface CautelaPrintProps {
   notebook: Notebook;
+  responsavelCautela: string;
   onClose: () => void;
 }
 
-export default function CautelaPrint({ notebook, onClose }: CautelaPrintProps) {
+export default function CautelaPrint({ notebook, responsavelCautela, onClose }: CautelaPrintProps) {
   const baseUrl = window.location.origin;
   const dataEmissao = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const horaEmissao = format(new Date(), 'HH:mm');
@@ -16,6 +17,8 @@ export default function CautelaPrint({ notebook, onClose }: CautelaPrintProps) {
   const handlePrint = () => {
     window.print();
   };
+
+  const patrimonioDisplay = notebook.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : notebook.patrimonio;
 
   return (
     <div className="fixed inset-0 z-[100] bg-background">
@@ -51,7 +54,7 @@ export default function CautelaPrint({ notebook, onClose }: CautelaPrintProps) {
               <tbody>
                 <tr className="border-b border-gray-300">
                   <td className="py-2.5 pr-4 font-semibold text-gray-700 w-44 uppercase text-xs tracking-wider">Nº Patrimônio</td>
-                  <td className="py-2.5 font-mono font-bold text-base">{notebook.patrimonio}</td>
+                  <td className="py-2.5 font-mono font-bold text-base">{patrimonioDisplay}</td>
                 </tr>
                 <tr className="border-b border-gray-300">
                   <td className="py-2.5 pr-4 font-semibold text-gray-700 uppercase text-xs tracking-wider">Modelo</td>
@@ -117,7 +120,7 @@ export default function CautelaPrint({ notebook, onClose }: CautelaPrintProps) {
           </div>
           <div className="flex-1 text-center">
             <div className="border-t-2 border-black pt-2 mx-4">
-              <p className="text-sm font-semibold">_________________________</p>
+              <p className="text-sm font-semibold">{responsavelCautela || '_________________________'}</p>
               <p className="text-xs text-gray-600">Responsável pela Cautela</p>
               <p className="text-xs text-gray-500 mt-0.5">Seção de Informática</p>
             </div>

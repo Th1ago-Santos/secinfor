@@ -8,6 +8,7 @@ import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import HardwareAnalysis from '@/components/dashboard/HardwareAnalysis';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import PriorityMetrics from '@/components/dashboard/PriorityMetrics';
+import OperationalInsights from '@/components/dashboard/OperationalInsights';
 
 async function fetchDashboardData() {
   const [
@@ -131,6 +132,7 @@ export default function Dashboard() {
           <>
             <StatsCards stats={data.stats} />
             <HardwareAnalysis />
+            <OperationalInsights />
             <PriorityMetrics />
             <DashboardCharts
               nbBySection={data.nbBySection}
