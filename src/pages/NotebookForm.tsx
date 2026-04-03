@@ -193,7 +193,7 @@ export default function NotebookForm() {
                     <Checkbox id="fora-carga" checked={foraDeCarga} onCheckedChange={(v) => {
                       const checked = !!v;
                       setForaDeCarga(checked);
-                      if (checked) { setPatrimonio('FORA DE CARGA'); setStatus('Fora de Carga'); }
+                      if (checked) { setPatrimonio(`FC-${Date.now()}`); setStatus('Fora de Carga'); }
                       else { setPatrimonio(''); setStatus('Em uso'); }
                     }} />
                     <label htmlFor="fora-carga" className="text-xs cursor-pointer text-muted-foreground">Fora de Carga</label>
