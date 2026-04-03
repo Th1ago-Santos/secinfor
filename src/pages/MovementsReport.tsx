@@ -31,6 +31,7 @@ export default function MovementsReport() {
   const [filterSecao, setFilterSecao] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(0);
+  const [printMode, setPrintMode] = useState(false);
   const PAGE_SIZE = 100;
 
   const { data, isLoading: loading } = useQuery({
