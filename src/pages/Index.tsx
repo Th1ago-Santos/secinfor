@@ -374,7 +374,43 @@ export default function Index() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete dialog */}
+      {/* Cautela responsible dialog */}
+      <Dialog open={!!cautelaDialogItem} onOpenChange={() => setCautelaDialogItem(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg gradient-primary">
+                <Printer className="h-4 w-4 text-primary-foreground" />
+              </div>
+              Imprimir Cautela
+            </DialogTitle>
+          </DialogHeader>
+          {cautelaDialogItem && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Item: <strong className="text-foreground">{cautelaDialogItem.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : cautelaDialogItem.patrimonio}</strong> — {cautelaDialogItem.modelo}
+              </p>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nome do responsável pela cautela</label>
+                <Input
+                  placeholder="Ex: Sgt Ferreira"
+                  value={responsavelCautela}
+                  onChange={e => setResponsavelCautela(e.target.value)}
+                  className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200"
+                />
+                <p className="text-[10px] text-muted-foreground">Será impresso no campo de assinatura do responsável.</p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setCautelaDialogItem(null)}>Cancelar</Button>
+                <Button size="sm" onClick={() => { setCautelaItem(cautelaDialogItem); setCautelaDialogItem(null); }}>
+                  <Printer className="h-3.5 w-3.5 mr-1.5" />Gerar Cautela
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
