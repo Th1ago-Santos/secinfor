@@ -566,9 +566,11 @@ export default function Priorities() {
                             </span>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir">
-                          <Undo2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir">
+                            <Undo2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
