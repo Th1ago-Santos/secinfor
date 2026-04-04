@@ -22,6 +22,7 @@ import PageHeader from '@/components/PageHeader';
 import { Notebook, statusColor } from '@/types';
 import { useUserRole } from '@/hooks/useUserRole';
 import CautelaPrint from '@/components/CautelaPrint';
+import MaterialLabel from '@/components/MaterialLabel';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
