@@ -65,7 +65,8 @@ const SortableItem = forwardRef<HTMLDivElement, {
         type="button"
         {...attributes}
         {...listeners}
-        className="flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 -m-1 touch-none"
+        className={`flex items-center justify-center ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 -m-1 touch-none`}
+        disabled={!canEdit}
       >
         <GripVertical className="h-4 w-4" />
       </button>
