@@ -9,6 +9,7 @@ import HardwareAnalysis from '@/components/dashboard/HardwareAnalysis';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import PriorityMetrics from '@/components/dashboard/PriorityMetrics';
 import OperationalInsights from '@/components/dashboard/OperationalInsights';
+import SmartRecommendations from '@/components/dashboard/SmartRecommendations';
 
 async function fetchDashboardData() {
   const [
