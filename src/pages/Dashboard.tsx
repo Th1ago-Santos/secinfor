@@ -134,6 +134,8 @@ export default function Dashboard() {
             <StatsCards stats={data.stats} />
             <HardwareAnalysis />
             <OperationalInsights />
+            <SmartRecommendations />
+            <PriorityMetrics />
             <PriorityMetrics />
             <DashboardCharts
               nbBySection={data.nbBySection}
