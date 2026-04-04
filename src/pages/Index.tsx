@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight, Printer, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
