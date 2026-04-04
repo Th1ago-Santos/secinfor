@@ -46,7 +46,8 @@ const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', dat
 const SortableItem = forwardRef<HTMLDivElement, {
   item: Priority; index: number; onEdit: () => void; onDelete: () => void;
   onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
-}>(function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total }, _ref) {
+  canEdit: boolean;
+}>(function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total, canEdit }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
     transform: CSS.Transform.toString(transform),
