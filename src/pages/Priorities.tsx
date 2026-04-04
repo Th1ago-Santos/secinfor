@@ -364,9 +364,11 @@ export default function Priorities() {
               <Button variant="outline" size="sm" onClick={handlePrint} disabled={allPriorities.length === 0}>
                 <Printer className="h-4 w-4 mr-1.5" /> Imprimir
               </Button>
-              <Button size="sm" onClick={openNew}>
-                <Plus className="h-4 w-4 mr-1.5" /> Nova Prioridade
-              </Button>
+              {canEdit && (
+                <Button size="sm" onClick={openNew}>
+                  <Plus className="h-4 w-4 mr-1.5" /> Nova Prioridade
+                </Button>
+              )}
             </div>
           }
         />
