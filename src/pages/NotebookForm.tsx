@@ -20,7 +20,7 @@ const notebookSchema = z.object({
   modelo: z.string().trim().min(1, 'Modelo é obrigatório').max(200),
   patrimonio: z.string().trim().min(1, 'Número de patrimônio é obrigatório').max(100),
   secao: z.string().trim().min(1, 'Seção é obrigatória').max(200),
-  militar: z.string().trim().min(1, 'Militar é obrigatório').max(200),
+  militar: z.string().trim().max(200).optional().default(''),
   status: z.string().min(1, 'Status é obrigatório'),
 });
 
@@ -213,8 +213,8 @@ export default function NotebookForm() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="militar" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Militar *</Label>
-                  <Input id="militar" placeholder="Ex: Sgt Silva" value={militar} onChange={(e) => setMilitar(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" required />
+                  <Label htmlFor="militar" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Militar</Label>
+                  <Input id="militar" placeholder="Ex: Sgt Silva (opcional)" value={militar} onChange={(e) => setMilitar(e.target.value)} className="h-10 bg-muted/30 border-border/60 focus:bg-background transition-all duration-200" />
                 </div>
               </div>
 

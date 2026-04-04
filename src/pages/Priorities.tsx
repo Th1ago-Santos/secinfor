@@ -40,13 +40,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Priority } from '@/types';
-
+import { useUserRole } from '@/hooks/useUserRole';
 const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', data_solicitacao: '' };
 
 const SortableItem = forwardRef<HTMLDivElement, {
   item: Priority; index: number; onEdit: () => void; onDelete: () => void;
   onMoveTop: () => void; onMoveBottom: () => void; onDeliver: () => void; total: number;
-}>(function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total }, _ref) {
+  canEdit: boolean;
+}>(function SortableItem({ item, index, onEdit, onDelete, onMoveTop, onMoveBottom, onDeliver, total, canEdit }, _ref) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -64,7 +65,8 @@ const SortableItem = forwardRef<HTMLDivElement, {
         type="button"
         {...attributes}
         {...listeners}
-        className="flex items-center justify-center cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 -m-1 touch-none"
+        className={`flex items-center justify-center ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 -m-1 touch-none`}
+        disabled={!canEdit}
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -91,27 +93,29 @@ const SortableItem = forwardRef<HTMLDivElement, {
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-        {index > 0 && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
-            <ArrowUpToLine className="h-3 w-3" />
+      {canEdit && (
+        <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+          {index > 0 && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
+              <ArrowUpToLine className="h-3 w-3" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit} title="Editar">
+            <Pencil className="h-3 w-3" />
           </Button>
-        )}
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit} title="Editar">
-          <Pencil className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
-          <PackageCheck className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
-          <Trash2 className="h-3 w-3" />
-        </Button>
-        {index < total - 1 && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveBottom} title="Mover ao final">
-            <ArrowDownToLine className="h-3 w-3" />
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
+            <PackageCheck className="h-3 w-3" />
           </Button>
-        )}
-      </div>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
+            <Trash2 className="h-3 w-3" />
+          </Button>
+          {index < total - 1 && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveBottom} title="Mover ao final">
+              <ArrowDownToLine className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -134,6 +138,7 @@ export default function Priorities() {
   const { sections } = useSections();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { canEdit } = useUserRole();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -359,9 +364,11 @@ export default function Priorities() {
               <Button variant="outline" size="sm" onClick={handlePrint} disabled={allPriorities.length === 0}>
                 <Printer className="h-4 w-4 mr-1.5" /> Imprimir
               </Button>
-              <Button size="sm" onClick={openNew}>
-                <Plus className="h-4 w-4 mr-1.5" /> Nova Prioridade
-              </Button>
+              {canEdit && (
+                <Button size="sm" onClick={openNew}>
+                  <Plus className="h-4 w-4 mr-1.5" /> Nova Prioridade
+                </Button>
+              )}
             </div>
           }
         />
@@ -436,6 +443,7 @@ export default function Priorities() {
                       item={item}
                       index={index}
                       total={activePriorities.length}
+                      canEdit={canEdit}
                       onEdit={() => openEdit(item)}
                       onDelete={() => handleDelete(item.id)}
                       onMoveTop={() => moveToPosition(item.id, 'top')}
@@ -529,9 +537,11 @@ export default function Priorities() {
                               {p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-'}
                             </TableCell>
                             <TableCell>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir prioridade">
-                                <Undo2 className="h-3.5 w-3.5" />
-                              </Button>
+                              {canEdit && (
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir prioridade">
+                                  <Undo2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -556,9 +566,11 @@ export default function Priorities() {
                             </span>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir">
-                          <Undo2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setReopenTarget(p)} disabled={saving} title="Reabrir">
+                            <Undo2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>

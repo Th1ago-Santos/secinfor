@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, History, QrCode, Laptop, Download, FileText, ChevronLeft, ChevronRight, Printer, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
 import { QRCodeSVG } from 'qrcode.react';
@@ -22,6 +22,7 @@ import PageHeader from '@/components/PageHeader';
 import { Notebook, statusColor } from '@/types';
 import { useUserRole } from '@/hooks/useUserRole';
 import CautelaPrint from '@/components/CautelaPrint';
+import MaterialLabel from '@/components/MaterialLabel';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ export default function Index() {
   const [cautelaItem, setCautelaItem] = useState<Notebook | null>(null);
   const [cautelaDialogItem, setCautelaDialogItem] = useState<Notebook | null>(null);
   const [responsavelCautela, setResponsavelCautela] = useState('');
+  const [labelItem, setLabelItem] = useState<Notebook | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const navigate = useNavigate();
@@ -106,7 +108,10 @@ export default function Index() {
 
   const baseUrl = window.location.origin;
 
-  // Show cautela full-screen print view
+  if (labelItem) {
+    return <MaterialLabel notebook={labelItem} onClose={() => setLabelItem(null)} />;
+  }
+
   if (cautelaItem) {
     return <CautelaPrint notebook={cautelaItem} responsavelCautela={responsavelCautela} onClose={() => { setCautelaItem(null); setResponsavelCautela(''); }} />;
   }
@@ -220,6 +225,7 @@ export default function Index() {
                               <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setLabelItem(nb)} title="Ficha de identificação" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Tag className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
                               {canEdit && (
                                 <>
@@ -261,6 +267,7 @@ export default function Index() {
                           <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setLabelItem(nb)} className="h-8 w-8"><Tag className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
                           {canEdit && (
                             <>
