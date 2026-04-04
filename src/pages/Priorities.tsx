@@ -441,6 +441,7 @@ export default function Priorities() {
                       item={item}
                       index={index}
                       total={activePriorities.length}
+                      canEdit={canEdit}
                       onEdit={() => openEdit(item)}
                       onDelete={() => handleDelete(item.id)}
                       onMoveTop={() => moveToPosition(item.id, 'top')}
