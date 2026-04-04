@@ -138,6 +138,7 @@ export default function Priorities() {
   const { sections } = useSections();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { canEdit } = useUserRole();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
