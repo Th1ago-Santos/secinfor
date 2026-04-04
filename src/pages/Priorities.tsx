@@ -93,27 +93,29 @@ const SortableItem = forwardRef<HTMLDivElement, {
         )}
       </div>
 
-      <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-        {index > 0 && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
-            <ArrowUpToLine className="h-3 w-3" />
+      {canEdit && (
+        <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+          {index > 0 && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveTop} title="Mover ao topo">
+              <ArrowUpToLine className="h-3 w-3" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit} title="Editar">
+            <Pencil className="h-3 w-3" />
           </Button>
-        )}
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit} title="Editar">
-          <Pencil className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
-          <PackageCheck className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
-          <Trash2 className="h-3 w-3" />
-        </Button>
-        {index < total - 1 && (
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveBottom} title="Mover ao final">
-            <ArrowDownToLine className="h-3 w-3" />
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400" onClick={onDeliver} title="Computador entregue">
+            <PackageCheck className="h-3 w-3" />
           </Button>
-        )}
-      </div>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Excluir">
+            <Trash2 className="h-3 w-3" />
+          </Button>
+          {index < total - 1 && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveBottom} title="Mover ao final">
+              <ArrowDownToLine className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 });
