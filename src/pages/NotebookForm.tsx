@@ -20,7 +20,7 @@ const notebookSchema = z.object({
   modelo: z.string().trim().min(1, 'Modelo é obrigatório').max(200),
   patrimonio: z.string().trim().min(1, 'Número de patrimônio é obrigatório').max(100),
   secao: z.string().trim().min(1, 'Seção é obrigatória').max(200),
-  militar: z.string().trim().min(1, 'Militar é obrigatório').max(200),
+  militar: z.string().trim().max(200).optional().default(''),
   status: z.string().min(1, 'Status é obrigatório'),
 });
 
