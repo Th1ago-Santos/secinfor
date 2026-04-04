@@ -40,7 +40,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Priority } from '@/types';
-
+import { useUserRole } from '@/hooks/useUserRole';
 const emptyForm = { secao: '', responsavel: '', motivo: '', observacoes: '', data_solicitacao: '' };
 
 const SortableItem = forwardRef<HTMLDivElement, {
