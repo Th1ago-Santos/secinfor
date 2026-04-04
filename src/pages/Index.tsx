@@ -108,7 +108,10 @@ export default function Index() {
 
   const baseUrl = window.location.origin;
 
-  // Show cautela full-screen print view
+  if (labelItem) {
+    return <MaterialLabel notebook={labelItem} onClose={() => setLabelItem(null)} />;
+  }
+
   if (cautelaItem) {
     return <CautelaPrint notebook={cautelaItem} responsavelCautela={responsavelCautela} onClose={() => { setCautelaItem(null); setResponsavelCautela(''); }} />;
   }
