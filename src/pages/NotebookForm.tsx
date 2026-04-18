@@ -14,6 +14,7 @@ import { ArrowLeft, Save, AlertCircle, Upload, X, Laptop } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useSections } from '@/hooks/useSections';
+import { getNotebookPhotoSignedUrl } from '@/lib/notebookPhoto';
 import { z } from 'zod';
 
 const notebookSchema = z.object({
@@ -65,7 +66,10 @@ export default function NotebookForm() {
           setStatus(d.status || 'Em uso'); setMotivoManutencao(d.motivo_manutencao || '');
           setObservacoesManutencao(d.observacoes_manutencao || '');
           if (d.patrimonio?.startsWith('FC-') || d.status === 'Fora de Carga') setForaDeCarga(true);
-          if (d.foto_url) setExistingFotoUrl(d.foto_url);
+          if (d.foto_url) {
+            const signed = await getNotebookPhotoSignedUrl(d.foto_url);
+            setExistingFotoUrl(signed);
+          }
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
         setLoadingData(false);
