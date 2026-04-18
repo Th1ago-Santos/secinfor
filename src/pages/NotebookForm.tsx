@@ -92,8 +92,8 @@ export default function NotebookForm() {
     const path = `${notebookId}.${ext}`;
     const { error } = await supabase.storage.from('notebook-photos').upload(path, fotoFile, { upsert: true });
     if (error) return null;
-    const { data } = supabase.storage.from('notebook-photos').getPublicUrl(path);
-    return data.publicUrl;
+    // Store the storage path; consumers resolve to signed URLs at render time.
+    return path;
   };
 
   const registerMovement = async (itemId: string, tipoEvento: string, opts: {
