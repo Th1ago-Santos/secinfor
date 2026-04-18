@@ -14,6 +14,7 @@ import { ArrowLeft, Save, AlertCircle, Upload, X, Laptop } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useSections } from '@/hooks/useSections';
+import { getNotebookPhotoSignedUrl } from '@/lib/notebookPhoto';
 import { z } from 'zod';
 
 const notebookSchema = z.object({
@@ -65,7 +66,9 @@ export default function NotebookForm() {
           setStatus(d.status || 'Em uso'); setMotivoManutencao(d.motivo_manutencao || '');
           setObservacoesManutencao(d.observacoes_manutencao || '');
           if (d.patrimonio?.startsWith('FC-') || d.status === 'Fora de Carga') setForaDeCarga(true);
-          if (d.foto_url) setExistingFotoUrl(d.foto_url);
+          if (d.foto_url) {
+            getNotebookPhotoSignedUrl(d.foto_url).then((signed) => setExistingFotoUrl(signed));
+          }
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
         setLoadingData(false);
@@ -92,8 +95,8 @@ export default function NotebookForm() {
     const path = `${notebookId}.${ext}`;
     const { error } = await supabase.storage.from('notebook-photos').upload(path, fotoFile, { upsert: true });
     if (error) return null;
-    const { data } = supabase.storage.from('notebook-photos').getPublicUrl(path);
-    return data.publicUrl;
+    // Store the storage path; consumers resolve to signed URLs at render time.
+    return path;
   };
 
   const registerMovement = async (itemId: string, tipoEvento: string, opts: {
