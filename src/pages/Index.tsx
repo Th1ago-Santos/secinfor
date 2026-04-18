@@ -23,6 +23,7 @@ import { Notebook, statusColor } from '@/types';
 import { useUserRole } from '@/hooks/useUserRole';
 import CautelaPrint from '@/components/CautelaPrint';
 import MaterialLabel from '@/components/MaterialLabel';
+import NotebookPhoto from '@/components/NotebookPhoto';
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -205,13 +206,16 @@ export default function Index() {
                       {notebooks.map((nb) => (
                         <TableRow key={nb.id} className="hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0">
                           <TableCell>
-                            {nb.foto_url ? (
-                              <img src={nb.foto_url} alt="Foto" className="h-9 w-9 rounded-lg object-cover cursor-pointer border border-border/50 hover:scale-110 transition-transform duration-200 shadow-sm" onClick={() => setViewItem(nb)} />
-                            ) : (
-                              <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center">
-                                <Laptop className="h-4 w-4 text-muted-foreground/30" />
-                              </div>
-                            )}
+                            <NotebookPhoto
+                              value={nb.foto_url}
+                              className="h-9 w-9 rounded-lg object-cover cursor-pointer border border-border/50 hover:scale-110 transition-transform duration-200 shadow-sm"
+                              onClick={() => setViewItem(nb)}
+                              fallback={
+                                <div className="h-9 w-9 rounded-lg bg-muted/50 flex items-center justify-center">
+                                  <Laptop className="h-4 w-4 text-muted-foreground/30" />
+                                </div>
+                              }
+                            />
                           </TableCell>
                           <TableCell className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</TableCell>
                           <TableCell className="text-sm">{nb.modelo}</TableCell>
@@ -247,13 +251,16 @@ export default function Index() {
                     <Card key={nb.id} className="border-border/50 shadow-sm">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          {nb.foto_url ? (
-                            <img src={nb.foto_url} alt="Foto" className="h-12 w-12 rounded-lg object-cover border border-border/50 shadow-sm shrink-0" onClick={() => setViewItem(nb)} />
-                          ) : (
-                            <div className="h-12 w-12 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
-                              <Laptop className="h-5 w-5 text-muted-foreground/30" />
-                            </div>
-                          )}
+                          <NotebookPhoto
+                            value={nb.foto_url}
+                            className="h-12 w-12 rounded-lg object-cover border border-border/50 shadow-sm shrink-0"
+                            onClick={() => setViewItem(nb)}
+                            fallback={
+                              <div className="h-12 w-12 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                                <Laptop className="h-5 w-5 text-muted-foreground/30" />
+                              </div>
+                            }
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <span className="font-mono font-semibold text-sm">{nb.patrimonio.startsWith('FC-') ? 'FORA DE CARGA' : nb.patrimonio}</span>
@@ -317,7 +324,7 @@ export default function Index() {
             <div className="space-y-4">
               {viewItem.foto_url && (
                 <div className="rounded-xl overflow-hidden border border-border/50 bg-muted/30">
-                  <img src={viewItem.foto_url} alt="Foto" className="w-full h-auto max-h-56 object-contain" />
+                  <NotebookPhoto value={viewItem.foto_url} className="w-full h-auto max-h-56 object-contain" />
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
