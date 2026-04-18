@@ -67,8 +67,7 @@ export default function NotebookForm() {
           setObservacoesManutencao(d.observacoes_manutencao || '');
           if (d.patrimonio?.startsWith('FC-') || d.status === 'Fora de Carga') setForaDeCarga(true);
           if (d.foto_url) {
-            const signed = await getNotebookPhotoSignedUrl(d.foto_url);
-            setExistingFotoUrl(signed);
+            getNotebookPhotoSignedUrl(d.foto_url).then((signed) => setExistingFotoUrl(signed));
           }
           setOrigSecao(d.secao); setOrigMilitar(d.militar); setOrigStatus(d.status || 'Em uso');
         }
