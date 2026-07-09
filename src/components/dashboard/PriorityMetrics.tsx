@@ -110,12 +110,12 @@ export default function PriorityMetrics() {
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
               <span className="text-[10px] text-muted-foreground">Resolução</span>
             </div>
-            <p className="text-lg font-bold">
-              {data.taxaResolucao}%
-              <Badge variant={data.taxaResolucao >= 70 ? 'default' : 'secondary'} className="ml-1.5 text-[9px] px-1.5">
+            <div className="text-lg font-bold flex items-center justify-center gap-1.5">
+              <span>{data.taxaResolucao}%</span>
+              <Badge variant={data.taxaResolucao >= 70 ? 'default' : 'secondary'} className="text-[9px] px-1.5">
                 {data.taxaResolucao >= 70 ? 'Bom' : 'Atenção'}
               </Badge>
-            </p>
+            </div>
           </div>
         </div>
 
