@@ -340,6 +340,248 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          ticket_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          ticket_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          ticket_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_history: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_queues: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticket_statuses: {
+        Row: {
+          active: boolean
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_closed: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_closed?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_closed?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          assigned_user_id: string | null
+          assigned_user_name: string | null
+          client_section_id: string | null
+          client_section_name: string
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          deleted_at: string | null
+          description: string
+          equipment_id: string | null
+          equipment_patrimonio: string | null
+          equipment_type: string | null
+          id: string
+          plate_name: string | null
+          priority: string
+          queue_id: string | null
+          status_id: string | null
+          subject: string
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id?: string | null
+          assigned_user_name?: string | null
+          client_section_id?: string | null
+          client_section_name: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          deleted_at?: string | null
+          description: string
+          equipment_id?: string | null
+          equipment_patrimonio?: string | null
+          equipment_type?: string | null
+          id?: string
+          plate_name?: string | null
+          priority?: string
+          queue_id?: string | null
+          status_id?: string | null
+          subject: string
+          ticket_number: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string | null
+          assigned_user_name?: string | null
+          client_section_id?: string | null
+          client_section_name?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          deleted_at?: string | null
+          description?: string
+          equipment_id?: string | null
+          equipment_patrimonio?: string | null
+          equipment_type?: string | null
+          id?: string
+          plate_name?: string | null
+          priority?: string
+          queue_id?: string | null
+          status_id?: string | null
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_client_section_id_fkey"
+            columns: ["client_section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_queues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
