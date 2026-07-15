@@ -21,12 +21,14 @@ import {
 import {
   LogOut, Monitor, Printer, Package, ClipboardCheck,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
+  Ticket, SlidersHorizontal,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const allNavItems = [
   { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
+  { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador'] },
   { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador'] },
   { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador'] },
   { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
@@ -34,6 +36,7 @@ const allNavItems = [
   { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador'] },
   { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador'] },
   { label: 'Seções', path: '/secoes', icon: Settings, roles: ['admin'] },
+  { label: 'Filas/Status', path: '/chamados/config', icon: SlidersHorizontal, roles: ['admin'] },
   { label: 'Impressão', path: '/impressao', icon: Printer, roles: ['admin', 'operador'] },
   { label: 'Usuários', path: '/usuarios', icon: Users, roles: ['admin'] },
 ];

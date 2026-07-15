@@ -20,13 +20,16 @@ const routeTitles: Record<string, string> = {
   '/impressao': 'Impressão',
   '/pesquisa': 'Pesquisa',
   '/usuarios': 'Usuários',
+  '/chamados': 'Chamados',
+  '/chamados/novo': 'Abrir Chamado',
+  '/chamados/config': 'Filas e Status',
 };
 
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
   admin: ['*'], // all routes
-  operador: ['/', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa'],
-  visualizador: ['/prioridades', '/mapa-secoes'],
+  operador: ['/', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
+  visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
 
 function isRouteAllowed(pathname: string, role: string | null): boolean {

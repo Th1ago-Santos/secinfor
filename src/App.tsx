@@ -24,6 +24,11 @@ import Alerts from "./pages/Alerts";
 import SectionMap from "./pages/SectionMap";
 import Priorities from "./pages/Priorities";
 import UserManagement from "./pages/UserManagement";
+import Tickets from "./pages/Tickets";
+import TicketForm from "./pages/TicketForm";
+import TicketDetail from "./pages/TicketDetail";
+import TicketLabel from "./pages/TicketLabel";
+import TicketAdmin from "./pages/TicketAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +40,8 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
         <Route path="/consulta/:patrimonio" element={<QuickLookup />} />
+        {/* Public ticket page (accessible via QR Code) */}
+        <Route path="/chamados/:id/publico" element={<TicketDetail publicMode />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/notebooks" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/itens/novo" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
@@ -53,6 +60,13 @@ function AnimatedRoutes() {
         <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
         <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
         <Route path="/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+        {/* Tickets */}
+        <Route path="/chamados" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+        <Route path="/chamados/novo" element={<ProtectedRoute><TicketForm /></ProtectedRoute>} />
+        <Route path="/chamados/config" element={<ProtectedRoute><TicketAdmin /></ProtectedRoute>} />
+        <Route path="/chamados/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
+        <Route path="/chamados/:id/editar" element={<ProtectedRoute><TicketForm /></ProtectedRoute>} />
+        <Route path="/chamados/:id/etiqueta" element={<ProtectedRoute><TicketLabel /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
