@@ -45,7 +45,7 @@ export default function TicketForm() {
   const isEditing = !!id;
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canEdit } = useUserRole();
+  const { canEdit, loading: roleLoading } = useUserRole();
   const { sections } = useSections();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
@@ -73,8 +73,8 @@ export default function TicketForm() {
   const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => {
-    if (!canEdit) navigate('/chamados');
-  }, [canEdit, navigate]);
+    if (!roleLoading && !canEdit) navigate('/chamados');
+  }, [roleLoading, canEdit, navigate]);
 
   // Load equipments (notebooks + materials) once
   useEffect(() => {
