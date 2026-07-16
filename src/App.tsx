@@ -63,6 +63,7 @@ function AnimatedRoutes() {
         <Route path="/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         {/* Tickets */}
         <Route path="/chamados" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+        <Route path="/chamados/dashboard" element={<ProtectedRoute><TicketsDashboard /></ProtectedRoute>} />
         <Route path="/chamados/novo" element={<ProtectedRoute><TicketForm /></ProtectedRoute>} />
         <Route path="/chamados/config" element={<ProtectedRoute><TicketAdmin /></ProtectedRoute>} />
         <Route path="/chamados/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
