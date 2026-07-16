@@ -332,7 +332,7 @@ export default function TicketsDashboard() {
             color="#7c3aed" onClick={() => inProgId && goToList({ status: inProgId })} />
           <KpiCard loading={loading} icon={PackageIcon} label="Aguard. material" value={stats.waitingMaterial}
             color="#f97316" onClick={() => waitMatId && goToList({ status: waitMatId })} />
-          <KpiCard loading={loading} icon={UserClock} label="Aguard. usuário" value={stats.waitingUser}
+          <KpiCard loading={loading} icon={UserCheck} label="Aguard. usuário" value={stats.waitingUser}
             color="#eab308" onClick={() => waitUsrId && goToList({ status: waitUsrId })} />
           <KpiCard loading={loading} icon={CheckCircle2} label="Concluídos" value={stats.done}
             color="#22c55e" onClick={() => doneId && goToList({ status: doneId })} />
