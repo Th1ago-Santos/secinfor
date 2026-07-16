@@ -29,6 +29,7 @@ import TicketForm from "./pages/TicketForm";
 import TicketDetail from "./pages/TicketDetail";
 import TicketLabel from "./pages/TicketLabel";
 import TicketAdmin from "./pages/TicketAdmin";
+import TicketsDashboard from "./pages/TicketsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ function AnimatedRoutes() {
         <Route path="/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         {/* Tickets */}
         <Route path="/chamados" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+        <Route path="/chamados/dashboard" element={<ProtectedRoute><TicketsDashboard /></ProtectedRoute>} />
         <Route path="/chamados/novo" element={<ProtectedRoute><TicketForm /></ProtectedRoute>} />
         <Route path="/chamados/config" element={<ProtectedRoute><TicketAdmin /></ProtectedRoute>} />
         <Route path="/chamados/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />

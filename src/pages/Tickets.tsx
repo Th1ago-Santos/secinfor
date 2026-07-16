@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Plus, Ticket as TicketIcon, Search, Eye, Pencil, Printer, Link2, QrCode
 import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
+import TicketsSubNav from '@/components/TicketsSubNav';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketPriority } from '@/types/ticket';
@@ -26,6 +27,7 @@ const PAGE_SIZE = 15;
 
 export default function Tickets() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
   const { canEdit, isAdmin } = useUserRole();
@@ -36,6 +38,7 @@ export default function Tickets() {
   const [queueFilter, setQueueFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [specialFilter, setSpecialFilter] = useState<string>('none'); // overdue, today-open, today-closed, unassigned
   const [page, setPage] = useState(0);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -52,11 +55,39 @@ export default function Tickets() {
 
   useEffect(() => { fetchTickets(); }, []);
 
+  // Apply URL params (from dashboard card clicks)
+  useEffect(() => {
+    const s = searchParams.get('status'); if (s) setStatusFilter(s);
+    const q = searchParams.get('queue'); if (q) setQueueFilter(q);
+    const p = searchParams.get('priority'); if (p) setPriorityFilter(p);
+    if (searchParams.get('overdue') === '1') setSpecialFilter('overdue');
+    const today = searchParams.get('today');
+    if (today === 'open') setSpecialFilter('today-open');
+    if (today === 'closed') setSpecialFilter('today-closed');
+    if (searchParams.get('unassigned') === '1') setSpecialFilter('unassigned');
+  }, [searchParams]);
+
+  const clearFilters = () => {
+    setQueueFilter('all'); setStatusFilter('all'); setPriorityFilter('all');
+    setSpecialFilter('none'); setSearch(''); setSearchParams({});
+  };
+
   const filtered = useMemo(() => {
+    const now = Date.now();
+    const startToday = new Date(); startToday.setHours(0,0,0,0);
+    const startTodayMs = startToday.getTime();
     return tickets.filter(t => {
       if (queueFilter !== 'all' && t.queue_id !== queueFilter) return false;
       if (statusFilter !== 'all' && t.status_id !== statusFilter) return false;
       if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+      if (specialFilter === 'overdue') {
+        const closed = statuses.find(s => s.id === t.status_id)?.is_closed;
+        if (closed) return false;
+        if ((now - new Date(t.created_at).getTime()) / 86400000 <= 14) return false;
+      }
+      if (specialFilter === 'today-open' && new Date(t.created_at).getTime() < startTodayMs) return false;
+      if (specialFilter === 'today-closed' && (!t.closed_at || new Date(t.closed_at).getTime() < startTodayMs)) return false;
+      if (specialFilter === 'unassigned' && t.assigned_user_id) return false;
       if (search.trim()) {
         const s = search.trim().toLowerCase();
         return (
@@ -68,7 +99,8 @@ export default function Tickets() {
       }
       return true;
     });
-  }, [tickets, search, queueFilter, statusFilter, priorityFilter]);
+  }, [tickets, search, queueFilter, statusFilter, priorityFilter, specialFilter, statuses]);
+
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -108,6 +140,23 @@ export default function Tickets() {
             ) : null
           }
         />
+
+        <TicketsSubNav />
+
+        {specialFilter !== 'none' && (
+          <div className="mb-3 flex items-center gap-2 text-xs">
+            <Badge variant="outline" className="border-primary/40 text-primary bg-primary/5">
+              Filtro ativo: {({
+                'overdue': 'Vencidos (>14d)',
+                'today-open': 'Abertos hoje',
+                'today-closed': 'Concluídos hoje',
+                'unassigned': 'Sem responsável',
+              } as any)[specialFilter]}
+            </Badge>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>Limpar filtros</Button>
+          </div>
+        )}
+
 
         <Card className="shadow-card border-border/50 mb-4">
           <CardContent className="pt-5 space-y-3">
