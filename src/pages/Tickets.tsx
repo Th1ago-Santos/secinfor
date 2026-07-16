@@ -141,6 +141,23 @@ export default function Tickets() {
           }
         />
 
+        <TicketsSubNav />
+
+        {specialFilter !== 'none' && (
+          <div className="mb-3 flex items-center gap-2 text-xs">
+            <Badge variant="outline" className="border-primary/40 text-primary bg-primary/5">
+              Filtro ativo: {({
+                'overdue': 'Vencidos (>14d)',
+                'today-open': 'Abertos hoje',
+                'today-closed': 'Concluídos hoje',
+                'unassigned': 'Sem responsável',
+              } as any)[specialFilter]}
+            </Badge>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>Limpar filtros</Button>
+          </div>
+        )}
+
+
         <Card className="shadow-card border-border/50 mb-4">
           <CardContent className="pt-5 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
