@@ -14,6 +14,7 @@ import { Plus, Ticket as TicketIcon, Search, Eye, Pencil, Printer, Link2, QrCode
 import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
+import TicketsSubNav from '@/components/TicketsSubNav';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketPriority } from '@/types/ticket';
