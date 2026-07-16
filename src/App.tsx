@@ -29,6 +29,7 @@ import TicketForm from "./pages/TicketForm";
 import TicketDetail from "./pages/TicketDetail";
 import TicketLabel from "./pages/TicketLabel";
 import TicketAdmin from "./pages/TicketAdmin";
+import TicketsDashboard from "./pages/TicketsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
