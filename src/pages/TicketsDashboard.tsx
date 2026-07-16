@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  LayoutDashboard, Ticket as TicketIcon, PlayCircle, Package as PackageIcon, UserClock,
+  LayoutDashboard, Ticket as TicketIcon, PlayCircle, Package as PackageIcon, UserCheck,
   CheckCircle2, AlertTriangle, Clock, CalendarPlus, CalendarCheck, TrendingUp, TrendingDown,
-  ArrowRight, ListChecks, Timer, UserX, Activity, ArrowRightLeft,
+  ArrowRight, ListChecks, Timer, UserX, Activity,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid,
