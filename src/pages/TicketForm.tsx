@@ -20,8 +20,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = /^(image\/|application\/pdf|application\/msword|application\/vnd\.|text\/)/;
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const ALLOWED_TYPES = /^(image\/(jpeg|jpg|png|webp|heic|heif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.|text\/plain)/;
 
 const ticketSchema = z.object({
   client_section_id: z.string().uuid('Selecione uma seção'),
