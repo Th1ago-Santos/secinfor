@@ -355,7 +355,7 @@ export default function TicketForm() {
                     <Upload className="h-3.5 w-3.5" /> Adicionar arquivo
                   </span>
                 </label>
-                <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 10MB.</span>
+                <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 25MB.</span>
               </div>
               {files.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
