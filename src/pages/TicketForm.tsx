@@ -210,7 +210,7 @@ export default function TicketForm() {
     }
 
     setSaving(false);
-    navigate(`/chamados/${ticketId}/etiqueta`);
+    navigate('/chamados');
   };
 
   if (loading) {
