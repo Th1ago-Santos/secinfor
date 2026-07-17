@@ -26,7 +26,7 @@ const notebookSchema = z.object({
 });
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const STATUS_OPTIONS = ['Em uso', 'Em manutenção', 'Baixado', 'Em estoque', 'Fora de Carga'];
 
 export default function NotebookForm() {
@@ -80,7 +80,7 @@ export default function NotebookForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!ACCEPTED_TYPES.includes(file.type)) { setError('Formato inválido. Aceitos: JPG, PNG, WebP.'); return; }
-    if (file.size > MAX_FILE_SIZE) { setError('Arquivo muito grande. Máximo: 5 MB.'); return; }
+    if (file.size > MAX_FILE_SIZE) { setError('Arquivo muito grande. Máximo: 25 MB.'); return; }
     setError(''); setFotoFile(file); setRemoveFoto(false);
     const reader = new FileReader();
     reader.onload = () => setFotoPreview(reader.result as string);

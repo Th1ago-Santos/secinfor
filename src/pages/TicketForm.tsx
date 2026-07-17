@@ -20,8 +20,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = /^(image\/|application\/pdf|application\/msword|application\/vnd\.|text\/)/;
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const ALLOWED_TYPES = /^(image\/(jpeg|jpg|png|webp|heic|heif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.|text\/plain)/;
 
 const ticketSchema = z.object({
   client_section_id: z.string().uuid('Selecione uma seção'),
@@ -135,7 +135,7 @@ export default function TicketForm() {
     const list = Array.from(e.target.files || []);
     const valid: File[] = [];
     for (const f of list) {
-      if (f.size > MAX_FILE_SIZE) { toast.error(`${f.name}: excede 10MB`); continue; }
+      if (f.size > MAX_FILE_SIZE) { toast.error(`${f.name}: excede 25MB`); continue; }
       if (!ALLOWED_TYPES.test(f.type)) { toast.error(`${f.name}: tipo não permitido`); continue; }
       valid.push(f);
     }
@@ -210,7 +210,7 @@ export default function TicketForm() {
     }
 
     setSaving(false);
-    navigate(`/chamados/${ticketId}/etiqueta`);
+    navigate('/chamados');
   };
 
   if (loading) {
@@ -355,7 +355,7 @@ export default function TicketForm() {
                     <Upload className="h-3.5 w-3.5" /> Adicionar arquivo
                   </span>
                 </label>
-                <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 10MB.</span>
+                <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 25MB.</span>
               </div>
               {files.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
