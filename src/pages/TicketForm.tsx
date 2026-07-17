@@ -135,7 +135,7 @@ export default function TicketForm() {
     const list = Array.from(e.target.files || []);
     const valid: File[] = [];
     for (const f of list) {
-      if (f.size > MAX_FILE_SIZE) { toast.error(`${f.name}: excede 10MB`); continue; }
+      if (f.size > MAX_FILE_SIZE) { toast.error(`${f.name}: excede 25MB`); continue; }
       if (!ALLOWED_TYPES.test(f.type)) { toast.error(`${f.name}: tipo não permitido`); continue; }
       valid.push(f);
     }
