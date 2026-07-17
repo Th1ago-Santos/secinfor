@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, Printer, Ticket as TicketIcon } from 'lucide-react';
+import { ArrowLeft, Printer, Ticket as TicketIcon, ShieldCheck } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { PRIORITY_COLORS, type Ticket, type TicketQueue, type TicketStatus, type TicketPriority } from '@/types/ticket';
+import { type Ticket, type TicketQueue, type TicketStatus } from '@/types/ticket';
 
 type Format = 'small' | 'a4';
 
@@ -18,7 +16,7 @@ export default function TicketLabel() {
   const [queue, setQueue] = useState<TicketQueue | null>(null);
   const [status, setStatus] = useState<TicketStatus | null>(null);
   const [format, setFormat] = useState<Format>('small');
-  const [copies, setCopies] = useState(1);
+  const [copies, setCopies] = useState(6);
 
   useEffect(() => {
     if (!id) return;
@@ -42,11 +40,11 @@ export default function TicketLabel() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-muted/20">
         {/* Toolbar */}
         <div className="no-print sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/50">
           <div className="container mx-auto py-3 px-4 flex flex-wrap items-center gap-3 justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4 mr-1.5" />Voltar</Button>
               <div className="flex bg-muted/50 rounded-lg p-1">
                 <button className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${format === 'small' ? 'bg-background shadow' : 'text-muted-foreground'}`} onClick={() => setFormat('small')}>Térmica (90mm)</button>
@@ -70,12 +68,12 @@ export default function TicketLabel() {
           <div className="print-area">
             {format === 'small' ? (
               <div className="flex justify-center print:block">
-                <LabelSmall ticket={ticket} queue={queue} status={status} publicUrl={publicUrl} />
+                <LabelCard ticket={ticket} queue={queue} status={status} publicUrl={publicUrl} />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 print:gap-2">
                 {items.map((_, i) => (
-                  <LabelSmall key={i} ticket={ticket} queue={queue} status={status} publicUrl={publicUrl} />
+                  <LabelCard key={i} ticket={ticket} queue={queue} status={status} publicUrl={publicUrl} />
                 ))}
               </div>
             )}
@@ -85,7 +83,7 @@ export default function TicketLabel() {
 
       <style>{`
         @media print {
-          @page { size: ${format === 'small' ? '90mm 60mm' : 'A4'}; margin: ${format === 'small' ? '2mm' : '10mm'}; }
+          @page { size: ${format === 'small' ? '90mm 60mm' : 'A4'}; margin: ${format === 'small' ? '2mm' : '8mm'}; }
           body * { visibility: hidden; }
           .print-area, .print-area * { visibility: visible; }
           .print-area { position: absolute; left: 0; top: 0; width: 100%; }
@@ -96,38 +94,94 @@ export default function TicketLabel() {
   );
 }
 
-function LabelSmall({ ticket, queue, status, publicUrl }: { ticket: Ticket; queue: TicketQueue | null; status: TicketStatus | null; publicUrl: string }) {
+function LabelCard({ ticket, queue, status, publicUrl }: { ticket: Ticket; queue: TicketQueue | null; status: TicketStatus | null; publicUrl: string }) {
+  const priorityColor: Record<string, string> = {
+    Baixa: '#059669',
+    Normal: '#2563eb',
+    Alta: '#d97706',
+    Urgente: '#dc2626',
+  };
+  const pColor = priorityColor[ticket.priority] || '#111827';
+
   return (
-    <div className="border-2 border-foreground/80 rounded-md bg-white text-black p-2.5 w-[340px] print:w-[86mm] print:border print:break-inside-avoid">
-      <div className="flex items-center gap-2 border-b border-foreground/40 pb-1.5 mb-1.5">
-        <div className="p-1 bg-foreground/90 rounded">
-          <TicketIcon className="h-3.5 w-3.5 text-white" />
+    <div
+      className="relative bg-white text-black w-[340px] print:w-[86mm] print:break-inside-avoid rounded-md overflow-hidden shadow-sm"
+      style={{ border: '1.5px solid #111827' }}
+    >
+      {/* Priority side stripe */}
+      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: pColor }} />
+
+      {/* Header */}
+      <div className="pl-3 pr-2 py-1.5 flex items-center gap-2 border-b border-black/70" style={{ background: '#111827', color: '#fff' }}>
+        <div className="p-1 rounded bg-white/15">
+          <ShieldCheck className="h-3.5 w-3.5" />
         </div>
-        <div className="leading-tight">
-          <p className="text-[8px] uppercase tracking-widest font-bold">14° B Log · Sç Informática</p>
-          <p className="text-[9px] font-semibold">Chamado Técnico</p>
+        <div className="leading-tight flex-1 min-w-0">
+          <p className="text-[7.5px] uppercase tracking-[0.18em] font-bold opacity-90">Exército Brasileiro · 14º B Log</p>
+          <p className="text-[9px] font-semibold">Seção de Informática — Chamado Técnico</p>
+        </div>
+        <TicketIcon className="h-3.5 w-3.5 opacity-80" />
+      </div>
+
+      {/* Body */}
+      <div className="pl-3 pr-2.5 py-2 flex gap-2.5">
+        <div className="flex-1 min-w-0 space-y-1">
+          <div>
+            <p className="text-[7px] uppercase tracking-widest text-black/50 font-semibold">Nº do Chamado</p>
+            <p className="font-mono font-extrabold text-lg leading-none tracking-tight">{ticket.ticket_number}</p>
+          </div>
+
+          <div className="pt-0.5">
+            <p className="text-[7px] uppercase tracking-widest text-black/50 font-semibold">Seção Solicitante</p>
+            <p className="text-[10px] font-semibold leading-tight truncate">{ticket.client_section_name}</p>
+          </div>
+
+          <div>
+            <p className="text-[7px] uppercase tracking-widest text-black/50 font-semibold">Assunto</p>
+            <p className="text-[9.5px] leading-tight line-clamp-2">{ticket.subject}</p>
+          </div>
+
+          <div className="flex gap-1 flex-wrap pt-0.5">
+            {queue && (
+              <span className="text-[7.5px] font-semibold px-1.5 py-0.5 rounded border border-black/60">
+                {queue.name}
+              </span>
+            )}
+            <span
+              className="text-[7.5px] font-bold px-1.5 py-0.5 rounded text-white"
+              style={{ backgroundColor: pColor }}
+            >
+              {ticket.priority.toUpperCase()}
+            </span>
+            {status && (
+              <span className="text-[7.5px] font-semibold px-1.5 py-0.5 rounded border border-black/60">
+                {status.name}
+              </span>
+            )}
+          </div>
+
+          <div className="pt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[7.5px] text-black/70">
+            <span>Aberto: <span className="font-semibold text-black">{new Date(ticket.created_at).toLocaleDateString('pt-BR')}</span></span>
+            {ticket.plate_name && <span>Placa: <span className="font-semibold text-black">{ticket.plate_name}</span></span>}
+            {ticket.equipment_patrimonio && <span className="col-span-2">Patr.: <span className="font-mono font-semibold text-black">{ticket.equipment_patrimonio}</span></span>}
+          </div>
+        </div>
+
+        {/* QR */}
+        <div className="flex flex-col items-center gap-0.5 pt-0.5">
+          <div className="p-1 bg-white border border-black/70 rounded">
+            <QRCodeSVG value={publicUrl} size={82} level="M" bgColor="#ffffff" fgColor="#000000" />
+          </div>
+          <p className="text-[6.5px] text-center leading-tight w-[90px] font-medium">
+            Escaneie para acompanhar
+          </p>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className="font-mono font-bold text-lg leading-none">{ticket.ticket_number}</p>
-          <p className="text-[10px] font-semibold truncate">{ticket.client_section_name}</p>
-          <p className="text-[9px] leading-tight">
-            <span className="opacity-70">Placa:</span> {ticket.plate_name || <span className="italic opacity-60">sem placa</span>}
-          </p>
-          <p className="text-[9px] leading-tight truncate"><span className="opacity-70">Assunto:</span> {ticket.subject}</p>
-          <div className="flex gap-1 flex-wrap pt-0.5">
-            {queue && <span className="text-[8px] font-semibold px-1 py-0.5 border border-foreground/60 rounded">{queue.name}</span>}
-            <span className="text-[8px] font-semibold px-1 py-0.5 border border-foreground/60 rounded">{ticket.priority}</span>
-          </div>
-          <p className="text-[8px] opacity-70">Aberto: {new Date(ticket.created_at).toLocaleDateString('pt-BR')}</p>
-          {ticket.equipment_patrimonio && <p className="text-[8px] opacity-70">Patr.: <span className="font-mono">{ticket.equipment_patrimonio}</span></p>}
-        </div>
-        <div className="flex flex-col items-center gap-0.5">
-          <QRCodeSVG value={publicUrl} size={80} level="M" bgColor="#ffffff" fgColor="#000000" />
-          <p className="text-[7px] text-center leading-tight w-[80px]">Escaneie para consultar</p>
-        </div>
+      {/* Footer */}
+      <div className="px-3 py-1 border-t border-black/20 flex items-center justify-between text-[7px] text-black/60">
+        <span className="font-semibold tracking-wider uppercase">SECINFOR</span>
+        <span className="font-mono truncate max-w-[60%]">{publicUrl.replace(/^https?:\/\//, '')}</span>
       </div>
     </div>
   );
