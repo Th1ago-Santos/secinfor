@@ -114,25 +114,24 @@ export default function Tickets() {
     toast.success('Link copiado!');
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteId || isDeleting) return;
     const target = tickets.find(t => t.id === deleteId);
-    const { data: authData } = await supabase.auth.getUser();
-    const { error } = await (supabase as any)
-      .from('tickets')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', deleteId);
-    if (error) { toast.error('Erro ao excluir chamado.'); setDeleteId(null); return; }
-    // Registra no histórico (best-effort)
-    await (supabase as any).from('ticket_history').insert({
-      ticket_id: deleteId,
-      action: 'excluido',
-      description: `Chamado ${target?.ticket_number || ''} excluído`,
-      user_id: authData.user?.id || null,
-      user_name: authData.user?.user_metadata?.display_name || authData.user?.email || null,
-    });
-    toast.success(`Chamado ${target?.ticket_number || ''} excluído.`);
-    fetchTickets();
+    setIsDeleting(true);
+    const { data, error } = await (supabase as any).rpc('soft_delete_ticket', { p_ticket_id: deleteId });
+    setIsDeleting(false);
+    if (error) {
+      console.error('Erro ao excluir chamado:', { error, ticketId: deleteId });
+      const msg = /permission/i.test(error.message) ? 'Sem permissão para excluir.'
+        : /not found/i.test(error.message) ? 'Chamado já excluído.'
+        : 'Não foi possível excluir o chamado.';
+      toast.error(msg);
+      setDeleteId(null);
+      return;
+    }
+    toast.success(`Chamado ${data || target?.ticket_number || ''} excluído com sucesso.`);
+    setTickets(prev => prev.filter(t => t.id !== deleteId));
     setDeleteId(null);
   };
 
