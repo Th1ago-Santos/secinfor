@@ -45,11 +45,8 @@ async function fetchDashboardData(period: Period) {
     { data: recentNb },
     { data: recentMat },
     { data: movsPeriod },
-    { count: chAbertos },
-    { count: chEmAtend },
-    { count: chAguard },
-    { count: chConcluidos },
-    { count: chUrgentes },
+    { data: allTickets },
+    { data: allStatuses },
   ] = await Promise.all([
     supabase.from('notebooks').select('*', { count: 'exact', head: true }),
     supabase.from('materials').select('*', { count: 'exact', head: true }),
@@ -63,12 +60,20 @@ async function fetchDashboardData(period: Period) {
     supabase.from('notebooks').select('id, patrimonio, modelo, created_at').order('created_at', { ascending: false }).limit(3),
     supabase.from('materials').select('id, patrimonio, nome, created_at').order('created_at', { ascending: false }).limit(3),
     supabase.from('movements').select('data_hora').gte('data_hora', start.toISOString()).order('data_hora'),
-    (supabase as any).from('tickets').select('*', { count: 'exact', head: true }).is('deleted_at', null).ilike('status_name', '%abert%'),
-    (supabase as any).from('tickets').select('*', { count: 'exact', head: true }).is('deleted_at', null).ilike('status_name', '%atend%'),
-    (supabase as any).from('tickets').select('*', { count: 'exact', head: true }).is('deleted_at', null).ilike('status_name', '%aguard%'),
-    (supabase as any).from('tickets').select('*', { count: 'exact', head: true }).is('deleted_at', null).ilike('status_name', '%conclu%'),
-    (supabase as any).from('tickets').select('*', { count: 'exact', head: true }).is('deleted_at', null).eq('priority', 'Urgente'),
+    (supabase as any).from('tickets').select('id, status_id, priority, closed_at').is('deleted_at', null),
+    (supabase as any).from('ticket_statuses').select('id, name'),
   ]);
+
+  // Ticket counters
+  const statusById: Record<string, string> = {};
+  ((allStatuses as any[]) || []).forEach(s => { statusById[s.id] = (s.name || '').toLowerCase(); });
+  const tks = (allTickets as any[]) || [];
+  const nameOf = (t: any) => statusById[t.status_id] || '';
+  const chAbertos = tks.filter(t => nameOf(t).includes('abert')).length;
+  const chEmAtend = tks.filter(t => nameOf(t).includes('atend')).length;
+  const chAguard = tks.filter(t => nameOf(t).includes('aguard')).length;
+  const chConcluidos = tks.filter(t => nameOf(t).includes('conclu') || t.closed_at).length;
+  const chUrgentes = tks.filter(t => t.priority === 'Urgente' && !t.closed_at).length;
 
   const nbs = (allNb as any[]) || [];
 
