@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import NotebookForm from "./pages/NotebookForm";
 import Sections from "./pages/Sections";
 import PrintView from "./pages/PrintView";
+import NotebookLabel from "./pages/NotebookLabel";
 import Materials from "./pages/Materials";
 import MaterialForm from "./pages/MaterialForm";
 import MovementHistory from "./pages/MovementHistory";
@@ -48,6 +49,7 @@ function AnimatedRoutes() {
         <Route path="/itens/novo" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
         <Route path="/itens/:id/editar" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
         <Route path="/notebooks/:id/historico" element={<ProtectedRoute><MovementHistory /></ProtectedRoute>} />
+        <Route path="/notebooks/:id/ficha" element={<ProtectedRoute><NotebookLabel /></ProtectedRoute>} />
         <Route path="/materiais" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
         <Route path="/materiais/novo" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
         <Route path="/materiais/:id/editar" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
