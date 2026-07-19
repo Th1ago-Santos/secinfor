@@ -229,7 +229,7 @@ export default function Index() {
                               <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} title="Visualizar" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Eye className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} title="QR Code" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><QrCode className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} title="Cautela" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Printer className="h-3.5 w-3.5" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => setLabelItem(nb)} title="Ficha de identificação" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Tag className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/ficha`)} title="Ficha de identificação" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><Tag className="h-3.5 w-3.5" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} title="Histórico" className="h-8 w-8 hover:text-primary hover:bg-primary/10 rounded-lg"><History className="h-3.5 w-3.5" /></Button>
                               {canEdit && (
                                 <>
@@ -274,7 +274,7 @@ export default function Index() {
                           <Button variant="ghost" size="icon" onClick={() => setViewItem(nb)} className="h-8 w-8"><Eye className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setQrItem(nb)} className="h-8 w-8"><QrCode className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => setCautelaDialogItem(nb)} className="h-8 w-8"><Printer className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setLabelItem(nb)} className="h-8 w-8"><Tag className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/ficha`)} className="h-8 w-8"><Tag className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notebooks/${nb.id}/historico`)} className="h-8 w-8"><History className="h-3.5 w-3.5" /></Button>
                           {canEdit && (
                             <>
