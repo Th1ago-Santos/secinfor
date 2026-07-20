@@ -35,7 +35,9 @@ export default function TicketLabel() {
 
   if (!ticket) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
-  const publicUrl = `${window.location.origin}/chamados/${ticket.id}`;
+  const publicUrl = ticket.public_token
+    ? `${window.location.origin}/chamado/publico/${ticket.public_token}`
+    : `${window.location.origin}/chamados/${ticket.id}`;
   const items = Array.from({ length: copies });
 
   return (
