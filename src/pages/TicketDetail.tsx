@@ -35,6 +35,31 @@ export default function TicketDetail({ publicMode = false }: Props) {
     if (!id) return;
     (async () => {
       setLoading(true);
+
+      if (publicMode) {
+        // Anonymous QR lookup: only limited fields via SECURITY DEFINER RPC
+        const { data } = await (supabase as any).rpc('lookup_ticket_public', { p_ticket_id: id });
+        if (!data) { setLoading(false); return; }
+        const d = data as any;
+        setTicket({
+          id: d.id,
+          ticket_number: d.ticket_number,
+          subject: d.subject,
+          description: d.description,
+          priority: d.priority,
+          client_section_name: d.client_section_name,
+          plate_name: d.plate_name,
+          equipment_type: d.equipment_type,
+          equipment_patrimonio: d.equipment_patrimonio,
+          created_at: d.created_at,
+          closed_at: d.closed_at,
+        } as unknown as Ticket);
+        if (d.queue_name) setQueue({ id: '', name: d.queue_name } as TicketQueue);
+        if (d.status_name) setStatus({ id: '', name: d.status_name, color: d.status_color } as TicketStatus);
+        setLoading(false);
+        return;
+      }
+
       const { data: t } = await (supabase as any).from('tickets').select('*').eq('id', id).is('deleted_at', null).maybeSingle();
       if (!t) { setLoading(false); return; }
       setTicket(t as Ticket);
@@ -57,7 +82,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
       }
       setLoading(false);
     })();
-  }, [id]);
+  }, [id, publicMode]);
 
   if (loading) return <div className="p-10 text-center text-muted-foreground">Carregando chamado...</div>;
   if (!ticket) return (
