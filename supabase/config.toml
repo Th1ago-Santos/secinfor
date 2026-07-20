@@ -2,3 +2,6 @@ project_id = "xlaohcbecdhvibwsgbgy"
 
 [functions.analyze-notebooks]
 verify_jwt = false
+
+[functions.public-notebook-photo]
+verify_jwt = false

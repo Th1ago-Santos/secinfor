@@ -16,7 +16,23 @@ import {
   ImageOff,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import NotebookPhoto from '@/components/NotebookPhoto';
+
+function PublicNotebookPhoto({ patrimonio, fallback, className, alt }: { patrimonio: string; fallback: React.ReactNode; className?: string; alt?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.functions.invoke('public-notebook-photo', { body: { patrimonio } }).then(({ data }) => {
+      if (cancelled) return;
+      setUrl((data as any)?.url ?? null);
+      setReady(true);
+    }).catch(() => { if (!cancelled) { setUrl(null); setReady(true); } });
+    return () => { cancelled = true; };
+  }, [patrimonio]);
+  if (!ready) return null;
+  if (!url) return <>{fallback}</>;
+  return <img src={url} alt={alt} className={className} />;
+}
 
 type ItemData = {
   id: string;
@@ -176,8 +192,8 @@ export default function QuickLookup() {
                   <div
                     className={`relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 aspect-[4/3] flex items-center justify-center ring-1 ${statusInfo?.ring ?? 'ring-slate-700/30'}`}
                   >
-                    <NotebookPhoto
-                      value={item.foto_url}
+                    <PublicNotebookPhoto
+                      patrimonio={item.patrimonio}
                       alt={`Foto do notebook ${item.patrimonio}`}
                       className="w-full h-full object-contain"
                       fallback={
