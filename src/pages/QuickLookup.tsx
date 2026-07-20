@@ -16,7 +16,23 @@ import {
   ImageOff,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import NotebookPhoto from '@/components/NotebookPhoto';
+
+function PublicNotebookPhoto({ patrimonio, fallback, className, alt }: { patrimonio: string; fallback: React.ReactNode; className?: string; alt?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.functions.invoke('public-notebook-photo', { body: { patrimonio } }).then(({ data }) => {
+      if (cancelled) return;
+      setUrl((data as any)?.url ?? null);
+      setReady(true);
+    }).catch(() => { if (!cancelled) { setUrl(null); setReady(true); } });
+    return () => { cancelled = true; };
+  }, [patrimonio]);
+  if (!ready) return null;
+  if (!url) return <>{fallback}</>;
+  return <img src={url} alt={alt} className={className} />;
+}
 
 type ItemData = {
   id: string;
