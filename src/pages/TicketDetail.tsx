@@ -33,7 +33,8 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { canEdit } = useUserRole();
-  const { queues, statuses } = useTicketMeta();
+  const { queues } = useTicketQueues();
+  const { statuses } = useTicketStatuses();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [queue, setQueue] = useState<TicketQueue | null>(null);
