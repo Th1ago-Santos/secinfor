@@ -22,7 +22,7 @@ import {
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useTicketMeta } from '@/hooks/useTicketMeta';
+import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
 
 interface Props { publicMode?: boolean }
 
