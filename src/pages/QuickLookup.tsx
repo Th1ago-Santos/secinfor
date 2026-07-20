@@ -192,8 +192,8 @@ export default function QuickLookup() {
                   <div
                     className={`relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 aspect-[4/3] flex items-center justify-center ring-1 ${statusInfo?.ring ?? 'ring-slate-700/30'}`}
                   >
-                    <NotebookPhoto
-                      value={item.foto_url}
+                    <PublicNotebookPhoto
+                      patrimonio={item.patrimonio}
                       alt={`Foto do notebook ${item.patrimonio}`}
                       className="w-full h-full object-contain"
                       fallback={
