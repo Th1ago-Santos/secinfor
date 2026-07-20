@@ -43,6 +43,7 @@ function AnimatedRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/consulta/:patrimonio" element={<QuickLookup />} />
         {/* Public ticket page (accessible via QR Code) */}
+        <Route path="/chamado/publico/:token" element={<TicketDetail publicMode />} />
         <Route path="/chamados/:id/publico" element={<TicketDetail publicMode />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/notebooks" element={<ProtectedRoute><Index /></ProtectedRoute>} />

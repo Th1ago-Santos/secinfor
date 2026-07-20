@@ -24,6 +24,7 @@ export type TicketPriority = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 export type Ticket = {
   id: string;
   ticket_number: string;
+  public_token?: string | null;
   client_section_id: string | null;
   client_section_name: string;
   equipment_type: string | null;
@@ -44,6 +45,48 @@ export type Ticket = {
   closed_at: string | null;
   deleted_at: string | null;
 };
+
+export type TicketMessage = {
+  id: string;
+  ticket_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  message_type: string;
+  content: string;
+  visibility: 'publica' | 'interna';
+  status_id_snapshot: string | null;
+  queue_id_snapshot: string | null;
+  assigned_user_id_snapshot: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const MESSAGE_TYPES = [
+  'atualizacao',
+  'atendimento',
+  'solicitacao_informacao',
+  'resposta_solicitante',
+  'material_solicitado',
+  'material_recebido',
+  'alteracao_status',
+  'observacao_interna',
+  'conclusao',
+  'reabertura',
+] as const;
+
+export const MESSAGE_TYPE_LABEL: Record<string, string> = {
+  atualizacao: 'Atualização',
+  atendimento: 'Atendimento técnico',
+  solicitacao_informacao: 'Solicitação de informação',
+  resposta_solicitante: 'Resposta do solicitante',
+  material_solicitado: 'Material solicitado',
+  material_recebido: 'Material recebido',
+  alteracao_status: 'Alteração de status',
+  observacao_interna: 'Observação interna',
+  conclusao: 'Conclusão',
+  reabertura: 'Reabertura',
+};
+
 
 export type TicketHistory = {
   id: string;
