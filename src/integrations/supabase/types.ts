@@ -620,6 +620,7 @@ export type Database = {
         Returns: boolean
       }
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
+      lookup_ticket_public: { Args: { p_ticket_id: string }; Returns: Json }
       soft_delete_ticket: { Args: { p_ticket_id: string }; Returns: string }
     }
     Enums: {
