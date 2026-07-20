@@ -425,6 +425,62 @@ export type Database = {
           },
         ]
       }
+      ticket_messages: {
+        Row: {
+          assigned_user_id_snapshot: string | null
+          author_id: string | null
+          author_name: string | null
+          content: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          message_type: string
+          queue_id_snapshot: string | null
+          status_id_snapshot: string | null
+          ticket_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          assigned_user_id_snapshot?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          content: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          message_type?: string
+          queue_id_snapshot?: string | null
+          status_id_snapshot?: string | null
+          ticket_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          assigned_user_id_snapshot?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          message_type?: string
+          queue_id_snapshot?: string | null
+          status_id_snapshot?: string | null
+          ticket_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_queues: {
         Row: {
           active: boolean
@@ -506,6 +562,7 @@ export type Database = {
           id: string
           plate_name: string | null
           priority: string
+          public_token: string
           queue_id: string | null
           status_id: string | null
           subject: string
@@ -529,6 +586,7 @@ export type Database = {
           id?: string
           plate_name?: string | null
           priority?: string
+          public_token?: string
           queue_id?: string | null
           status_id?: string | null
           subject: string
@@ -552,6 +610,7 @@ export type Database = {
           id?: string
           plate_name?: string | null
           priority?: string
+          public_token?: string
           queue_id?: string | null
           status_id?: string | null
           subject?: string
@@ -608,6 +667,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_ticket_update: {
+        Args: {
+          p_assigned_user_id?: string
+          p_assigned_user_name?: string
+          p_content: string
+          p_message_type?: string
+          p_priority?: string
+          p_queue_id?: string
+          p_status_id?: string
+          p_ticket_id: string
+          p_visibility?: string
+        }
+        Returns: Json
+      }
       batch_update_priority_order: {
         Args: { ids: string[]; orders: number[] }
         Returns: undefined
@@ -619,8 +692,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_ticket_messages_public: {
+        Args: { p_limit?: number; p_token: string }
+        Returns: Json
+      }
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
-      lookup_ticket_public: { Args: { p_ticket_id: string }; Returns: Json }
+      lookup_ticket_public: { Args: { p_token: string }; Returns: Json }
       soft_delete_ticket: { Args: { p_ticket_id: string }; Returns: string }
     }
     Enums: {
