@@ -19,6 +19,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
+import { TICKET_CATEGORIES, ATTACHMENT_KIND_LABEL } from '@/types/ticket';
+
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ALLOWED_TYPES = /^(image\/(jpeg|jpg|png|webp|heic|heif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.|text\/plain)/;
@@ -62,6 +64,7 @@ export default function TicketForm() {
     plate_name: '',
     subject: '',
     description: '',
+    category: '',
     queue_id: '',
     priority: 'Normal' as 'Baixa' | 'Normal' | 'Alta' | 'Urgente',
     status_id: '',
@@ -71,6 +74,9 @@ export default function TicketForm() {
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [attVisibility, setAttVisibility] = useState<'publica' | 'interna'>('interna');
+  const [attKind, setAttKind] = useState<'foto_problema' | 'foto_equipamento' | 'documento' | 'outro'>('foto_problema');
+
 
   useEffect(() => {
     if (!roleLoading && !canEdit) navigate('/chamados');
@@ -110,6 +116,8 @@ export default function TicketForm() {
           plate_name: data.plate_name || '',
           subject: data.subject || '',
           description: data.description || '',
+          category: data.category || '',
+
           queue_id: data.queue_id || '',
           priority: data.priority || 'Normal',
           status_id: data.status_id || '',
@@ -167,6 +175,8 @@ export default function TicketForm() {
       plate_name: form.plate_name?.trim() || null,
       subject: form.subject.trim(),
       description: form.description.trim(),
+      category: form.category || null,
+
       queue_id: form.queue_id,
       priority: form.priority,
       status_id: form.status_id || null,
@@ -205,7 +215,9 @@ export default function TicketForm() {
         if (upErr) { toast.error(`Falha ao enviar ${f.name}`); continue; }
         await (supabase as any).from('ticket_attachments').insert({
           ticket_id: ticketId, file_name: f.name, file_path: path, file_type: f.type, file_size: f.size, uploaded_by: user?.id,
+          visibility: attVisibility, kind: attKind,
         });
+
       }
     }
 
@@ -311,8 +323,20 @@ export default function TicketForm() {
               <p className="text-[10px] text-muted-foreground">{form.description.length}/5000</p>
             </div>
 
+            {/* Categoria */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Categoria</Label>
+              <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
+                <SelectTrigger className="h-10"><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger>
+                <SelectContent>
+                  {TICKET_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Fila, Prioridade, Status */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
               <div className="space-y-1.5">
                 <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Fila <span className="text-destructive">*</span></Label>
                 <Select value={form.queue_id} onValueChange={(v) => setForm(f => ({ ...f, queue_id: v }))}>
@@ -357,6 +381,22 @@ export default function TicketForm() {
                 </label>
                 <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 25MB.</span>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Select value={attKind} onValueChange={(v) => setAttKind(v as any)}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ATTACHMENT_KIND_LABEL).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={attVisibility} onValueChange={(v) => setAttVisibility(v as any)}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="interna">Anexo interno (não aparece na consulta pública)</SelectItem>
+                    <SelectItem value="publica">Anexo público</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {files.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                   {files.map((f, idx) => {

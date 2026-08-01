@@ -21,6 +21,64 @@ export type TicketStatus = {
 
 export type TicketPriority = 'Baixa' | 'Normal' | 'Alta' | 'Urgente';
 
+export const TICKET_CATEGORIES = [
+  'Rede',
+  'Impressora',
+  'Notebook',
+  'Sistema',
+  'E-mail',
+  'Conta de usuário',
+  'Manutenção preventiva',
+  'Outros',
+] as const;
+
+export type TicketChecklist = Record<string, boolean>;
+
+export const CHECKLIST_ITEMS: { key: string; label: string }[] = [
+  { key: 'equipamento_verificado', label: 'Equipamento verificado' },
+  { key: 'usuario_orientado', label: 'Usuário orientado' },
+  { key: 'solucao_aplicada', label: 'Solução aplicada' },
+  { key: 'teste_final', label: 'Teste final realizado' },
+  { key: 'chamado_validado', label: 'Chamado validado' },
+];
+
+export type TicketSla = {
+  id: string;
+  priority: string;
+  response_minutes: number;
+  resolution_minutes: number;
+};
+
+export type SlaState = {
+  dueAt: Date;
+  overdue: boolean;
+  remainingLabel: string;
+  percent: number;
+};
+
+export function computeSla(
+  createdAt: string,
+  closedAt: string | null | undefined,
+  resolutionMinutes: number,
+): SlaState {
+  const start = new Date(createdAt).getTime();
+  const due = start + resolutionMinutes * 60 * 1000;
+  const ref = closedAt ? new Date(closedAt).getTime() : Date.now();
+  const overdue = ref > due;
+  const diff = Math.abs(due - ref);
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const parts = days > 0 ? `${days} d ${hours} h` : hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`;
+  const percent = Math.min(100, Math.max(0, ((ref - start) / (due - start)) * 100));
+  return {
+    dueAt: new Date(due),
+    overdue,
+    remainingLabel: overdue ? `${parts} em atraso` : `${parts} restantes`,
+    percent,
+  };
+}
+
 export type Ticket = {
   id: string;
   ticket_number: string;
@@ -33,6 +91,9 @@ export type Ticket = {
   plate_name: string | null;
   subject: string;
   description: string;
+  category?: string | null;
+  checklist?: TicketChecklist | null;
+  first_response_at?: string | null;
   queue_id: string | null;
   priority: TicketPriority;
   status_id: string | null;
@@ -45,6 +106,7 @@ export type Ticket = {
   closed_at: string | null;
   deleted_at: string | null;
 };
+
 
 export type TicketMessage = {
   id: string;
@@ -108,8 +170,18 @@ export type TicketAttachment = {
   file_type: string | null;
   file_size: number | null;
   uploaded_by: string | null;
+  visibility?: 'publica' | 'interna';
+  kind?: 'foto_problema' | 'foto_equipamento' | 'documento' | 'outro';
   created_at: string;
 };
+
+export const ATTACHMENT_KIND_LABEL: Record<string, string> = {
+  foto_problema: 'Foto do problema',
+  foto_equipamento: 'Foto do equipamento',
+  documento: 'Documento / cautela',
+  outro: 'Outro',
+};
+
 
 export const PRIORITY_COLORS: Record<TicketPriority, string> = {
   Baixa: 'bg-slate-500/15 text-slate-500 border-slate-500/30',

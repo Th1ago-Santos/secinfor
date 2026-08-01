@@ -8,21 +8,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QRCodeSVG } from 'qrcode.react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import {
   Ticket as TicketIcon, ArrowLeft, Printer, Pencil, Building, Tag, Layers,
   AlertTriangle, Clock, User, Paperclip, History as HistoryIcon, ExternalLink,
-  MessageSquare, Send, Lock, Globe, Eye,
+  MessageSquare, Send, Lock, Globe, Eye, UserCheck, Timer, ImageOff, ListChecks, FolderTree,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import {
   formatTicketAge, PRIORITY_COLORS, MESSAGE_TYPES, MESSAGE_TYPE_LABEL,
+  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, computeSla,
   type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage,
 } from '@/types/ticket';
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
+import { useTicketQueues, useTicketStatuses, useTicketSla } from '@/hooks/useTicketMeta';
+
 
 interface Props { publicMode?: boolean }
 
@@ -35,6 +38,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const { canEdit } = useUserRole();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
+  const { sla } = useTicketSla();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [queue, setQueue] = useState<TicketQueue | null>(null);
@@ -44,6 +48,10 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [publicMessages, setPublicMessages] = useState<PublicMsg[]>([]);
   const [equipmentPhoto, setEquipmentPhoto] = useState<string | null>(null);
+  const [equipmentInfo, setEquipmentInfo] = useState<{ nome: string; secao: string | null; status: string | null } | null>(null);
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [savingChecklist, setSavingChecklist] = useState(false);
+  const [assigning, setAssigning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -61,6 +69,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
     const { data: t } = await (supabase as any).from('tickets').select('*').eq('id', ticketId).is('deleted_at', null).maybeSingle();
     if (!t) { setNotFound(true); setLoading(false); return; }
     setTicket(t as Ticket);
+    setChecklist((t.checklist as Record<string, boolean>) || {});
     const [q, s, h, a, m] = await Promise.all([
       t.queue_id ? (supabase as any).from('ticket_queues').select('*').eq('id', t.queue_id).maybeSingle() : Promise.resolve({ data: null }),
       t.status_id ? (supabase as any).from('ticket_statuses').select('*').eq('id', t.status_id).maybeSingle() : Promise.resolve({ data: null }),
@@ -71,14 +80,55 @@ export default function TicketDetail({ publicMode = false }: Props) {
     setQueue(q.data as TicketQueue | null);
     setStatus(s.data as TicketStatus | null);
     setHistory((h.data as TicketHistory[]) || []);
-    setAttachments((a.data as TicketAttachment[]) || []);
+    const atts = (a.data as TicketAttachment[]) || [];
+    setAttachments(atts);
     setMessages((m.data as TicketMessage[]) || []);
+
+    // Equipment card: photo priority 1) patrimônio 2) foto do equipamento anexada 3) foto pública do problema
+    let photo: string | null = null;
     if (t.equipment_type === 'notebook' && t.equipment_id) {
-      const { data: nb } = await supabase.from('notebooks').select('foto_url').eq('id', t.equipment_id).maybeSingle();
-      setEquipmentPhoto(nb?.foto_url || null);
+      const { data: nb } = await supabase.from('notebooks').select('foto_url,modelo,secao,status').eq('id', t.equipment_id).maybeSingle();
+      photo = nb?.foto_url || null;
+      if (nb) setEquipmentInfo({ nome: nb.modelo || '—', secao: nb.secao, status: nb.status });
+      else setEquipmentInfo(null);
+    } else if (t.equipment_type === 'material' && t.equipment_id) {
+      const { data: mt } = await supabase.from('materials').select('nome').eq('id', t.equipment_id).maybeSingle();
+      setEquipmentInfo(mt ? { nome: mt.nome, secao: null, status: null } : null);
+    } else {
+      setEquipmentInfo(null);
     }
+    if (!photo) {
+      const imgAtt =
+        atts.find(x => x.kind === 'foto_equipamento' && (x.file_type || '').startsWith('image/')) ||
+        atts.find(x => x.kind === 'foto_problema' && x.visibility === 'publica' && (x.file_type || '').startsWith('image/'));
+      if (imgAtt) {
+        const { data: signed } = await supabase.storage.from('ticket-attachments').createSignedUrl(imgAtt.file_path, 600);
+        photo = signed?.signedUrl || null;
+      }
+    }
+    setEquipmentPhoto(photo);
     setLoading(false);
   };
+
+  const assumeTicket = async () => {
+    if (!ticket || assigning) return;
+    setAssigning(true);
+    const { error } = await (supabase as any).rpc('assign_ticket_self', { p_ticket_id: ticket.id });
+    if (error) toast({ title: 'Erro ao assumir chamado', description: error.message, variant: 'destructive' });
+    else { toast({ title: 'Chamado assumido com sucesso.' }); await loadAuthenticated(ticket.id); }
+    setAssigning(false);
+  };
+
+  const toggleChecklist = async (key: string, value: boolean) => {
+    if (!ticket) return;
+    const next = { ...checklist, [key]: value };
+    setChecklist(next);
+    setSavingChecklist(true);
+    const { error } = await (supabase as any).rpc('update_ticket_checklist', { p_ticket_id: ticket.id, p_checklist: next });
+    if (error) { toast({ title: 'Erro ao salvar checklist', description: error.message, variant: 'destructive' }); setChecklist(checklist); }
+    setSavingChecklist(false);
+  };
+
 
   useEffect(() => {
     (async () => {
@@ -100,7 +150,9 @@ export default function TicketDetail({ publicMode = false }: Props) {
           ticket_number: d.ticket_number,
           subject: d.subject,
           description: d.description,
+          category: d.category,
           priority: d.priority,
+
           client_section_name: d.client_section_name,
           plate_name: d.plate_name,
           equipment_type: d.equipment_type,
@@ -170,6 +222,9 @@ export default function TicketDetail({ publicMode = false }: Props) {
     ? `${window.location.origin}/chamado/publico/${ticket.public_token}`
     : `${window.location.origin}/chamados/${ticket.id}/publico`;
   const isAuthed = !!user && !publicMode;
+  const slaCfg = sla[ticket.priority as string];
+  const slaState = slaCfg ? computeSla(ticket.created_at, ticket.closed_at, slaCfg.resolution_minutes) : null;
+
 
   return (
     <PageTransition>
@@ -178,9 +233,15 @@ export default function TicketDetail({ publicMode = false }: Props) {
           <div className="flex items-center justify-between mb-4 no-print">
             <Button variant="ghost" size="sm" onClick={() => navigate('/chamados')}><ArrowLeft className="h-4 w-4 mr-1.5" />Voltar</Button>
             <div className="flex gap-2">
+              {canEdit && !ticket.assigned_user_id && (
+                <Button size="sm" onClick={assumeTicket} disabled={assigning} className="gradient-primary border-0">
+                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />{assigning ? 'Assumindo...' : 'Assumir chamado'}
+                </Button>
+              )}
               {canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/chamados/${ticket.id}/editar`)}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Button>}
               <Button variant="outline" size="sm" onClick={() => navigate(`/chamados/${ticket.id}/etiqueta`)}><Printer className="h-3.5 w-3.5 mr-1.5" />Etiqueta e QR</Button>
             </div>
+
           </div>
         )}
 
@@ -207,13 +268,26 @@ export default function TicketDetail({ publicMode = false }: Props) {
                   <div className="flex gap-2 flex-wrap">
                     {status && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur" style={{ backgroundColor: status.color || undefined }}>{status.name}</Badge>}
                     <Badge variant="secondary" className={`${PRIORITY_COLORS[ticket.priority as TicketPriority]} border`}>{ticket.priority}</Badge>
+                    {ticket.category && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur">{ticket.category}</Badge>}
                   </div>
                 </div>
               </div>
-              <CardContent className="pt-5">
-                <h2 className="text-lg font-bold">{ticket.subject}</h2>
-                {!publicMode && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{ticket.description}</p>}
+              <CardContent className="pt-5 space-y-3">
+                <div>
+                  <h2 className="text-lg font-bold">{ticket.subject}</h2>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2 break-words">{ticket.description}</p>
+                </div>
+                {slaState && (
+                  <div className={`rounded-lg border px-3 py-2 text-xs flex items-center gap-2 ${slaState.overdue ? 'border-destructive/40 bg-destructive/10 text-destructive' : 'border-border/60 bg-muted/40 text-muted-foreground'}`}>
+                    <Timer className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {ticket.closed_at ? 'SLA no encerramento' : 'Prazo de solução'} · {slaState.dueAt.toLocaleString('pt-BR')} — <strong>{slaState.remainingLabel}</strong>
+                    </span>
+                    {slaState.overdue && <Badge variant="outline" className="ml-auto border-destructive/50 text-destructive text-[10px]">Atrasado</Badge>}
+                  </div>
+                )}
               </CardContent>
+
             </Card>
 
             {/* Tabs */}
@@ -230,6 +304,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
                 <Card className="shadow-card border-border/50"><CardContent className="pt-5 space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <InfoRow icon={Building} label="Seção / Cliente" value={ticket.client_section_name} />
+                    <InfoRow icon={FolderTree} label="Categoria" value={ticket.category || '—'} />
                     <InfoRow icon={Tag} label="Placa" value={ticket.plate_name || <span className="italic text-muted-foreground">Sem placa cadastrada</span>} />
                     <InfoRow icon={Layers} label="Fila" value={queue?.name || '—'} />
                     <InfoRow icon={AlertTriangle} label="Prioridade" value={ticket.priority} />
@@ -237,26 +312,51 @@ export default function TicketDetail({ publicMode = false }: Props) {
                     <InfoRow icon={Clock} label="Última atualização" value={ticket.updated_at ? new Date(ticket.updated_at).toLocaleString('pt-BR') : '—'} />
                     <InfoRow icon={Clock} label="Tempo em aberto" value={formatTicketAge(ticket.created_at, ticket.closed_at)} />
                     {ticket.closed_at && <InfoRow icon={Clock} label="Concluído em" value={new Date(ticket.closed_at).toLocaleString('pt-BR')} />}
-                    {isAuthed && ticket.assigned_user_name && <InfoRow icon={User} label="Responsável" value={ticket.assigned_user_name} />}
+                    {isAuthed && <InfoRow icon={User} label="Responsável" value={ticket.assigned_user_name || <span className="italic text-muted-foreground">Não atribuído</span>} />}
                     {isAuthed && ticket.created_by_name && <InfoRow icon={User} label="Aberto por" value={ticket.created_by_name} />}
                   </div>
-                  {ticket.equipment_patrimonio && (
+                  {(ticket.equipment_patrimonio || equipmentPhoto) && (
                     <div className="pt-3 border-t border-border/40">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Equipamento vinculado</p>
                       <div className="flex items-center gap-3">
-                        {equipmentPhoto && (
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full bg-muted" />} />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-mono text-sm font-semibold">{ticket.equipment_patrimonio}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{ticket.equipment_type}</p>
+                        <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/50">
+                          {equipmentPhoto ? (
+                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                              <ImageOff className="h-6 w-6" />
+                              <span className="text-[9px]">Sem foto</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="font-mono text-sm font-semibold">{ticket.equipment_patrimonio || '—'}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{ticket.equipment_type || 'Equipamento'}</p>
+                          {equipmentInfo && <p className="text-xs text-foreground/80 truncate">{equipmentInfo.nome}</p>}
+                          {equipmentInfo?.secao && <p className="text-[11px] text-muted-foreground">Seção: {equipmentInfo.secao}</p>}
+                          {equipmentInfo?.status && <Badge variant="outline" className="text-[10px] mt-1">{equipmentInfo.status}</Badge>}
                         </div>
                       </div>
                     </div>
                   )}
+                  {isAuthed && canEdit && (
+                    <div className="pt-3 border-t border-border/40">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <ListChecks className="h-3.5 w-3.5" />Checklist de atendimento
+                        {savingChecklist && <span className="normal-case tracking-normal text-[10px] italic">salvando...</span>}
+                      </p>
+                      <div className="space-y-2">
+                        {CHECKLIST_ITEMS.map(item => (
+                          <label key={item.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <Checkbox checked={!!checklist[item.key]} onCheckedChange={(v) => toggleChecklist(item.key, !!v)} />
+                            <span className={checklist[item.key] ? 'line-through text-muted-foreground' : ''}>{item.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent></Card>
+
               </TabsContent>
 
               {/* Conversas */}
@@ -471,6 +571,14 @@ function AttachmentThumb({ att }: { att: TicketAttachment }) {
           <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
         </div>
       )}
+      <div className="flex items-center gap-1 flex-wrap p-1.5 border-t border-border/40 bg-muted/30">
+        <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[att.kind || 'outro'] || 'Outro'}</Badge>
+        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${att.visibility === 'publica' ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
+          {att.visibility === 'publica' ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
+          {att.visibility === 'publica' ? 'Público' : 'Interno'}
+        </Badge>
+      </div>
     </a>
   );
+
 }
