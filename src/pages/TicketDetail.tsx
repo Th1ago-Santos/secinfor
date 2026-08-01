@@ -8,21 +8,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { QRCodeSVG } from 'qrcode.react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import {
   Ticket as TicketIcon, ArrowLeft, Printer, Pencil, Building, Tag, Layers,
   AlertTriangle, Clock, User, Paperclip, History as HistoryIcon, ExternalLink,
-  MessageSquare, Send, Lock, Globe, Eye,
+  MessageSquare, Send, Lock, Globe, Eye, UserCheck, Timer, ImageOff, ListChecks, FolderTree,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import {
   formatTicketAge, PRIORITY_COLORS, MESSAGE_TYPES, MESSAGE_TYPE_LABEL,
+  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, computeSla,
   type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage,
 } from '@/types/ticket';
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
+import { useTicketQueues, useTicketStatuses, useTicketSla } from '@/hooks/useTicketMeta';
+
 
 interface Props { publicMode?: boolean }
 
