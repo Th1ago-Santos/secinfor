@@ -268,13 +268,26 @@ export default function TicketDetail({ publicMode = false }: Props) {
                   <div className="flex gap-2 flex-wrap">
                     {status && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur" style={{ backgroundColor: status.color || undefined }}>{status.name}</Badge>}
                     <Badge variant="secondary" className={`${PRIORITY_COLORS[ticket.priority as TicketPriority]} border`}>{ticket.priority}</Badge>
+                    {ticket.category && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur">{ticket.category}</Badge>}
                   </div>
                 </div>
               </div>
-              <CardContent className="pt-5">
-                <h2 className="text-lg font-bold">{ticket.subject}</h2>
-                {!publicMode && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{ticket.description}</p>}
+              <CardContent className="pt-5 space-y-3">
+                <div>
+                  <h2 className="text-lg font-bold">{ticket.subject}</h2>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2 break-words">{ticket.description}</p>
+                </div>
+                {slaState && (
+                  <div className={`rounded-lg border px-3 py-2 text-xs flex items-center gap-2 ${slaState.overdue ? 'border-destructive/40 bg-destructive/10 text-destructive' : 'border-border/60 bg-muted/40 text-muted-foreground'}`}>
+                    <Timer className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {ticket.closed_at ? 'SLA no encerramento' : 'Prazo de solução'} · {slaState.dueAt.toLocaleString('pt-BR')} — <strong>{slaState.remainingLabel}</strong>
+                    </span>
+                    {slaState.overdue && <Badge variant="outline" className="ml-auto border-destructive/50 text-destructive text-[10px]">Atrasado</Badge>}
+                  </div>
+                )}
               </CardContent>
+
             </Card>
 
             {/* Tabs */}
