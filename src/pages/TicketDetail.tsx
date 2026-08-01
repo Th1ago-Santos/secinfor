@@ -304,6 +304,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
                 <Card className="shadow-card border-border/50"><CardContent className="pt-5 space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <InfoRow icon={Building} label="Seção / Cliente" value={ticket.client_section_name} />
+                    <InfoRow icon={FolderTree} label="Categoria" value={ticket.category || '—'} />
                     <InfoRow icon={Tag} label="Placa" value={ticket.plate_name || <span className="italic text-muted-foreground">Sem placa cadastrada</span>} />
                     <InfoRow icon={Layers} label="Fila" value={queue?.name || '—'} />
                     <InfoRow icon={AlertTriangle} label="Prioridade" value={ticket.priority} />
@@ -311,26 +312,51 @@ export default function TicketDetail({ publicMode = false }: Props) {
                     <InfoRow icon={Clock} label="Última atualização" value={ticket.updated_at ? new Date(ticket.updated_at).toLocaleString('pt-BR') : '—'} />
                     <InfoRow icon={Clock} label="Tempo em aberto" value={formatTicketAge(ticket.created_at, ticket.closed_at)} />
                     {ticket.closed_at && <InfoRow icon={Clock} label="Concluído em" value={new Date(ticket.closed_at).toLocaleString('pt-BR')} />}
-                    {isAuthed && ticket.assigned_user_name && <InfoRow icon={User} label="Responsável" value={ticket.assigned_user_name} />}
+                    {isAuthed && <InfoRow icon={User} label="Responsável" value={ticket.assigned_user_name || <span className="italic text-muted-foreground">Não atribuído</span>} />}
                     {isAuthed && ticket.created_by_name && <InfoRow icon={User} label="Aberto por" value={ticket.created_by_name} />}
                   </div>
-                  {ticket.equipment_patrimonio && (
+                  {(ticket.equipment_patrimonio || equipmentPhoto) && (
                     <div className="pt-3 border-t border-border/40">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Equipamento vinculado</p>
                       <div className="flex items-center gap-3">
-                        {equipmentPhoto && (
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full bg-muted" />} />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-mono text-sm font-semibold">{ticket.equipment_patrimonio}</p>
-                          <p className="text-xs text-muted-foreground capitalize">{ticket.equipment_type}</p>
+                        <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/50">
+                          {equipmentPhoto ? (
+                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                              <ImageOff className="h-6 w-6" />
+                              <span className="text-[9px]">Sem foto</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="font-mono text-sm font-semibold">{ticket.equipment_patrimonio || '—'}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{ticket.equipment_type || 'Equipamento'}</p>
+                          {equipmentInfo && <p className="text-xs text-foreground/80 truncate">{equipmentInfo.nome}</p>}
+                          {equipmentInfo?.secao && <p className="text-[11px] text-muted-foreground">Seção: {equipmentInfo.secao}</p>}
+                          {equipmentInfo?.status && <Badge variant="outline" className="text-[10px] mt-1">{equipmentInfo.status}</Badge>}
                         </div>
                       </div>
                     </div>
                   )}
+                  {isAuthed && canEdit && (
+                    <div className="pt-3 border-t border-border/40">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <ListChecks className="h-3.5 w-3.5" />Checklist de atendimento
+                        {savingChecklist && <span className="normal-case tracking-normal text-[10px] italic">salvando...</span>}
+                      </p>
+                      <div className="space-y-2">
+                        {CHECKLIST_ITEMS.map(item => (
+                          <label key={item.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <Checkbox checked={!!checklist[item.key]} onCheckedChange={(v) => toggleChecklist(item.key, !!v)} />
+                            <span className={checklist[item.key] ? 'line-through text-muted-foreground' : ''}>{item.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent></Card>
+
               </TabsContent>
 
               {/* Conversas */}
