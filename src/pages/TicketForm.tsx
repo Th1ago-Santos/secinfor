@@ -114,6 +114,8 @@ export default function TicketForm() {
           plate_name: data.plate_name || '',
           subject: data.subject || '',
           description: data.description || '',
+          category: data.category || '',
+
           queue_id: data.queue_id || '',
           priority: data.priority || 'Normal',
           status_id: data.status_id || '',
