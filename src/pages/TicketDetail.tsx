@@ -222,6 +222,9 @@ export default function TicketDetail({ publicMode = false }: Props) {
     ? `${window.location.origin}/chamado/publico/${ticket.public_token}`
     : `${window.location.origin}/chamados/${ticket.id}/publico`;
   const isAuthed = !!user && !publicMode;
+  const slaCfg = sla[ticket.priority as string];
+  const slaState = slaCfg ? computeSla(ticket.created_at, ticket.closed_at, slaCfg.resolution_minutes) : null;
+
 
   return (
     <PageTransition>
