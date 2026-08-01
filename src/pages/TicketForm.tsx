@@ -321,8 +321,20 @@ export default function TicketForm() {
               <p className="text-[10px] text-muted-foreground">{form.description.length}/5000</p>
             </div>
 
+            {/* Categoria */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Categoria</Label>
+              <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
+                <SelectTrigger className="h-10"><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger>
+                <SelectContent>
+                  {TICKET_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Fila, Prioridade, Status */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
               <div className="space-y-1.5">
                 <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Fila <span className="text-destructive">*</span></Label>
                 <Select value={form.queue_id} onValueChange={(v) => setForm(f => ({ ...f, queue_id: v }))}>
