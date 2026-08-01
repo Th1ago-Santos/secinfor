@@ -170,8 +170,18 @@ export type TicketAttachment = {
   file_type: string | null;
   file_size: number | null;
   uploaded_by: string | null;
+  visibility?: 'publica' | 'interna';
+  kind?: 'foto_problema' | 'foto_equipamento' | 'documento' | 'outro';
   created_at: string;
 };
+
+export const ATTACHMENT_KIND_LABEL: Record<string, string> = {
+  foto_problema: 'Foto do problema',
+  foto_equipamento: 'Foto do equipamento',
+  documento: 'Documento / cautela',
+  outro: 'Outro',
+};
+
 
 export const PRIORITY_COLORS: Record<TicketPriority, string> = {
   Baixa: 'bg-slate-500/15 text-slate-500 border-slate-500/30',
