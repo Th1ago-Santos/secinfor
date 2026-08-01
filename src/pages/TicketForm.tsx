@@ -62,6 +62,7 @@ export default function TicketForm() {
     plate_name: '',
     subject: '',
     description: '',
+    category: '',
     queue_id: '',
     priority: 'Normal' as 'Baixa' | 'Normal' | 'Alta' | 'Urgente',
     status_id: '',
@@ -71,6 +72,9 @@ export default function TicketForm() {
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [attVisibility, setAttVisibility] = useState<'publica' | 'interna'>('interna');
+  const [attKind, setAttKind] = useState<'foto_problema' | 'foto_equipamento' | 'documento' | 'outro'>('foto_problema');
+
 
   useEffect(() => {
     if (!roleLoading && !canEdit) navigate('/chamados');
