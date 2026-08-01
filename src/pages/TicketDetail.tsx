@@ -38,6 +38,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const { canEdit } = useUserRole();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
+  const { sla } = useTicketSla();
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [queue, setQueue] = useState<TicketQueue | null>(null);
@@ -47,6 +48,10 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [publicMessages, setPublicMessages] = useState<PublicMsg[]>([]);
   const [equipmentPhoto, setEquipmentPhoto] = useState<string | null>(null);
+  const [equipmentInfo, setEquipmentInfo] = useState<{ nome: string; secao: string | null; status: string | null } | null>(null);
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [savingChecklist, setSavingChecklist] = useState(false);
+  const [assigning, setAssigning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -64,6 +69,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
     const { data: t } = await (supabase as any).from('tickets').select('*').eq('id', ticketId).is('deleted_at', null).maybeSingle();
     if (!t) { setNotFound(true); setLoading(false); return; }
     setTicket(t as Ticket);
+    setChecklist((t.checklist as Record<string, boolean>) || {});
     const [q, s, h, a, m] = await Promise.all([
       t.queue_id ? (supabase as any).from('ticket_queues').select('*').eq('id', t.queue_id).maybeSingle() : Promise.resolve({ data: null }),
       t.status_id ? (supabase as any).from('ticket_statuses').select('*').eq('id', t.status_id).maybeSingle() : Promise.resolve({ data: null }),
@@ -74,14 +80,55 @@ export default function TicketDetail({ publicMode = false }: Props) {
     setQueue(q.data as TicketQueue | null);
     setStatus(s.data as TicketStatus | null);
     setHistory((h.data as TicketHistory[]) || []);
-    setAttachments((a.data as TicketAttachment[]) || []);
+    const atts = (a.data as TicketAttachment[]) || [];
+    setAttachments(atts);
     setMessages((m.data as TicketMessage[]) || []);
+
+    // Equipment card: photo priority 1) patrimônio 2) foto do equipamento anexada 3) foto pública do problema
+    let photo: string | null = null;
     if (t.equipment_type === 'notebook' && t.equipment_id) {
-      const { data: nb } = await supabase.from('notebooks').select('foto_url').eq('id', t.equipment_id).maybeSingle();
-      setEquipmentPhoto(nb?.foto_url || null);
+      const { data: nb } = await supabase.from('notebooks').select('foto_url,modelo,secao,status').eq('id', t.equipment_id).maybeSingle();
+      photo = nb?.foto_url || null;
+      if (nb) setEquipmentInfo({ nome: nb.modelo || '—', secao: nb.secao, status: nb.status });
+      else setEquipmentInfo(null);
+    } else if (t.equipment_type === 'material' && t.equipment_id) {
+      const { data: mt } = await supabase.from('materials').select('nome').eq('id', t.equipment_id).maybeSingle();
+      setEquipmentInfo(mt ? { nome: mt.nome, secao: null, status: null } : null);
+    } else {
+      setEquipmentInfo(null);
     }
+    if (!photo) {
+      const imgAtt =
+        atts.find(x => x.kind === 'foto_equipamento' && (x.file_type || '').startsWith('image/')) ||
+        atts.find(x => x.kind === 'foto_problema' && x.visibility === 'publica' && (x.file_type || '').startsWith('image/'));
+      if (imgAtt) {
+        const { data: signed } = await supabase.storage.from('ticket-attachments').createSignedUrl(imgAtt.file_path, 600);
+        photo = signed?.signedUrl || null;
+      }
+    }
+    setEquipmentPhoto(photo);
     setLoading(false);
   };
+
+  const assumeTicket = async () => {
+    if (!ticket || assigning) return;
+    setAssigning(true);
+    const { error } = await (supabase as any).rpc('assign_ticket_self', { p_ticket_id: ticket.id });
+    if (error) toast({ title: 'Erro ao assumir chamado', description: error.message, variant: 'destructive' });
+    else { toast({ title: 'Chamado assumido com sucesso.' }); await loadAuthenticated(ticket.id); }
+    setAssigning(false);
+  };
+
+  const toggleChecklist = async (key: string, value: boolean) => {
+    if (!ticket) return;
+    const next = { ...checklist, [key]: value };
+    setChecklist(next);
+    setSavingChecklist(true);
+    const { error } = await (supabase as any).rpc('update_ticket_checklist', { p_ticket_id: ticket.id, p_checklist: next });
+    if (error) { toast({ title: 'Erro ao salvar checklist', description: error.message, variant: 'destructive' }); setChecklist(checklist); }
+    setSavingChecklist(false);
+  };
+
 
   useEffect(() => {
     (async () => {
