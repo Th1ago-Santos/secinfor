@@ -19,6 +19,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
+import { TICKET_CATEGORIES, ATTACHMENT_KIND_LABEL } from '@/types/ticket';
+
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ALLOWED_TYPES = /^(image\/(jpeg|jpg|png|webp|heic|heif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.|text\/plain)/;
