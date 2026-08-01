@@ -381,6 +381,22 @@ export default function TicketForm() {
                 </label>
                 <span className="text-[10px] text-muted-foreground">Imagens, PDFs e documentos até 25MB.</span>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Select value={attKind} onValueChange={(v) => setAttKind(v as any)}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ATTACHMENT_KIND_LABEL).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={attVisibility} onValueChange={(v) => setAttVisibility(v as any)}>
+                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="interna">Anexo interno (não aparece na consulta pública)</SelectItem>
+                    <SelectItem value="publica">Anexo público</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {files.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                   {files.map((f, idx) => {
