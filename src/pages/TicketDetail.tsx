@@ -150,7 +150,9 @@ export default function TicketDetail({ publicMode = false }: Props) {
           ticket_number: d.ticket_number,
           subject: d.subject,
           description: d.description,
+          category: d.category,
           priority: d.priority,
+
           client_section_name: d.client_section_name,
           plate_name: d.plate_name,
           equipment_type: d.equipment_type,
