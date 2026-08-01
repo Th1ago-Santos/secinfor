@@ -173,6 +173,8 @@ export default function TicketForm() {
       plate_name: form.plate_name?.trim() || null,
       subject: form.subject.trim(),
       description: form.description.trim(),
+      category: form.category || null,
+
       queue_id: form.queue_id,
       priority: form.priority,
       status_id: form.status_id || null,
