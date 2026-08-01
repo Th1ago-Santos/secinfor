@@ -348,8 +348,10 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           id: string
+          kind: string
           ticket_id: string
           uploaded_by: string | null
+          visibility: string
         }
         Insert: {
           created_at?: string
@@ -358,8 +360,10 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          kind?: string
           ticket_id: string
           uploaded_by?: string | null
+          visibility?: string
         }
         Update: {
           created_at?: string
@@ -368,8 +372,10 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           id?: string
+          kind?: string
           ticket_id?: string
           uploaded_by?: string | null
+          visibility?: string
         }
         Relationships: [
           {
@@ -511,6 +517,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_sla: {
+        Row: {
+          created_at: string
+          id: string
+          priority: string
+          resolution_minutes: number
+          response_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          priority: string
+          resolution_minutes?: number
+          response_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          priority?: string
+          resolution_minutes?: number
+          response_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_statuses: {
         Row: {
           active: boolean
@@ -548,6 +581,8 @@ export type Database = {
         Row: {
           assigned_user_id: string | null
           assigned_user_name: string | null
+          category: string | null
+          checklist: Json
           client_section_id: string | null
           client_section_name: string
           closed_at: string | null
@@ -559,6 +594,7 @@ export type Database = {
           equipment_id: string | null
           equipment_patrimonio: string | null
           equipment_type: string | null
+          first_response_at: string | null
           id: string
           plate_name: string | null
           priority: string
@@ -572,6 +608,8 @@ export type Database = {
         Insert: {
           assigned_user_id?: string | null
           assigned_user_name?: string | null
+          category?: string | null
+          checklist?: Json
           client_section_id?: string | null
           client_section_name: string
           closed_at?: string | null
@@ -583,6 +621,7 @@ export type Database = {
           equipment_id?: string | null
           equipment_patrimonio?: string | null
           equipment_type?: string | null
+          first_response_at?: string | null
           id?: string
           plate_name?: string | null
           priority?: string
@@ -596,6 +635,8 @@ export type Database = {
         Update: {
           assigned_user_id?: string | null
           assigned_user_name?: string | null
+          category?: string | null
+          checklist?: Json
           client_section_id?: string | null
           client_section_name?: string
           closed_at?: string | null
@@ -607,6 +648,7 @@ export type Database = {
           equipment_id?: string | null
           equipment_patrimonio?: string | null
           equipment_type?: string | null
+          first_response_at?: string | null
           id?: string
           plate_name?: string | null
           priority?: string
@@ -681,6 +723,7 @@ export type Database = {
         }
         Returns: Json
       }
+      assign_ticket_self: { Args: { p_ticket_id: string }; Returns: Json }
       batch_update_priority_order: {
         Args: { ids: string[]; orders: number[] }
         Returns: undefined
@@ -699,6 +742,10 @@ export type Database = {
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
       lookup_ticket_public: { Args: { p_token: string }; Returns: Json }
       soft_delete_ticket: { Args: { p_ticket_id: string }; Returns: string }
+      update_ticket_checklist: {
+        Args: { p_checklist: Json; p_ticket_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "operador" | "visualizador"
