@@ -233,9 +233,15 @@ export default function TicketDetail({ publicMode = false }: Props) {
           <div className="flex items-center justify-between mb-4 no-print">
             <Button variant="ghost" size="sm" onClick={() => navigate('/chamados')}><ArrowLeft className="h-4 w-4 mr-1.5" />Voltar</Button>
             <div className="flex gap-2">
+              {canEdit && !ticket.assigned_user_id && (
+                <Button size="sm" onClick={assumeTicket} disabled={assigning} className="gradient-primary border-0">
+                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />{assigning ? 'Assumindo...' : 'Assumir chamado'}
+                </Button>
+              )}
               {canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/chamados/${ticket.id}/editar`)}><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</Button>}
               <Button variant="outline" size="sm" onClick={() => navigate(`/chamados/${ticket.id}/etiqueta`)}><Printer className="h-3.5 w-3.5 mr-1.5" />Etiqueta e QR</Button>
             </div>
+
           </div>
         )}
 
