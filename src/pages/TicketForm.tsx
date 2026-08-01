@@ -213,7 +213,9 @@ export default function TicketForm() {
         if (upErr) { toast.error(`Falha ao enviar ${f.name}`); continue; }
         await (supabase as any).from('ticket_attachments').insert({
           ticket_id: ticketId, file_name: f.name, file_path: path, file_type: f.type, file_size: f.size, uploaded_by: user?.id,
+          visibility: attVisibility, kind: attKind,
         });
+
       }
     }
 
