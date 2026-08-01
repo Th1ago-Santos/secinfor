@@ -571,6 +571,14 @@ function AttachmentThumb({ att }: { att: TicketAttachment }) {
           <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
         </div>
       )}
+      <div className="flex items-center gap-1 flex-wrap p-1.5 border-t border-border/40 bg-muted/30">
+        <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[att.kind || 'outro'] || 'Outro'}</Badge>
+        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${att.visibility === 'publica' ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
+          {att.visibility === 'publica' ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
+          {att.visibility === 'publica' ? 'Público' : 'Interno'}
+        </Badge>
+      </div>
     </a>
   );
+
 }
