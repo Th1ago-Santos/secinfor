@@ -154,10 +154,13 @@ export default function TicketDetail({ publicMode = false }: Props) {
         // Support both /chamado/publico/:token and legacy /chamados/:id/publico
         const token = params.token || params.id;
         if (!token) { setNotFound(true); setLoading(false); return; }
-        const [{ data: t }, { data: msgs }] = await Promise.all([
+        const [{ data: t }, { data: msgs }, attRes] = await Promise.all([
           (supabase as any).rpc('lookup_ticket_public', { p_token: token }),
           (supabase as any).rpc('list_ticket_messages_public', { p_token: token, p_limit: 20 }),
+          supabase.functions.invoke('public-ticket-attachments', { body: { token } }).catch(() => ({ data: null })),
         ]);
+        const pubAtts = ((attRes as any)?.data?.attachments ?? []) as PublicAttachment[];
+        setPublicAttachments(pubAtts);
         if (!t) { setNotFound(true); setLoading(false); return; }
         const d = t as any;
         setTicket({
