@@ -183,6 +183,11 @@ export default function TicketDetail({ publicMode = false }: Props) {
         if (d.queue_name) setQueue({ id: '', name: d.queue_name } as TicketQueue);
         if (d.status_name) setStatus({ id: '', name: d.status_name, color: d.status_color } as TicketStatus);
         setPublicMessages(Array.isArray(msgs) ? (msgs as PublicMsg[]) : []);
+        const heroImg =
+          pubAtts.find(a => a.kind === 'foto_problema' && (a.file_type || '').startsWith('image/') && a.url) ||
+          pubAtts.find(a => a.kind === 'foto_equipamento' && (a.file_type || '').startsWith('image/') && a.url) ||
+          pubAtts.find(a => (a.file_type || '').startsWith('image/') && a.url);
+        setEquipmentPhoto(heroImg?.url ?? null);
         setLoading(false);
         return;
       }
