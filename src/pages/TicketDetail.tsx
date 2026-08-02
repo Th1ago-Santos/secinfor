@@ -130,6 +130,21 @@ export default function TicketDetail({ publicMode = false }: Props) {
     setSavingChecklist(false);
   };
 
+  const updateAttachment = async (attId: string, patch: { visibility?: string; kind?: string }) => {
+    const { error } = await (supabase as any).rpc('update_ticket_attachment_metadata', {
+      p_attachment_id: attId,
+      p_visibility: patch.visibility ?? null,
+      p_kind: patch.kind ?? null,
+    });
+    if (error) {
+      toast({ title: 'Erro ao atualizar anexo', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Anexo atualizado.' });
+    if (ticket) await loadAuthenticated(ticket.id);
+  };
+
+
 
   useEffect(() => {
     (async () => {
