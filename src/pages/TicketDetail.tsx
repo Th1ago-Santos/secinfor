@@ -18,8 +18,8 @@ import {
 import PageTransition from '@/components/PageTransition';
 import {
   formatTicketAge, PRIORITY_COLORS, MESSAGE_TYPES, MESSAGE_TYPE_LABEL,
-  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, computeSla,
-  type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage,
+  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, ATTACHMENT_KINDS, computeSla,
+  type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage, type PublicAttachment,
 } from '@/types/ticket';
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
