@@ -47,6 +47,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [publicMessages, setPublicMessages] = useState<PublicMsg[]>([]);
+  const [publicAttachments, setPublicAttachments] = useState<PublicAttachment[]>([]);
   const [equipmentPhoto, setEquipmentPhoto] = useState<string | null>(null);
   const [equipmentInfo, setEquipmentInfo] = useState<{ nome: string; secao: string | null; status: string | null } | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
