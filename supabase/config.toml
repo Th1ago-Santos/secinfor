@@ -5,3 +5,7 @@ verify_jwt = false
 
 [functions.public-notebook-photo]
 verify_jwt = false
+
+[functions.public-ticket-attachments]
+verify_jwt = false
+
