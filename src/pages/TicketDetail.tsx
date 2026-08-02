@@ -609,32 +609,69 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function AttachmentThumb({ att }: { att: TicketAttachment }) {
+function AttachmentThumb({ att, canEdit, onUpdate }: {
+  att: TicketAttachment;
+  canEdit?: boolean;
+  onUpdate?: (attId: string, patch: { visibility?: string; kind?: string }) => Promise<void>;
+}) {
   const [url, setUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     supabase.storage.from('ticket-attachments').createSignedUrl(att.file_path, 300).then(({ data }) => {
       setUrl(data?.signedUrl || null);
     });
   }, [att.file_path]);
   const isImg = (att.file_type || '').startsWith('image/');
+  const isPublic = att.visibility === 'publica';
+
+  const change = async (patch: { visibility?: string; kind?: string }) => {
+    if (!onUpdate || saving) return;
+    setSaving(true);
+    await onUpdate(att.id, patch);
+    setSaving(false);
+  };
+
   return (
-    <a href={url || '#'} target="_blank" rel="noreferrer" className="border border-border/60 rounded-lg overflow-hidden hover:border-primary/50 transition-colors block">
-      {isImg && url ? (
-        <img src={url} alt={att.file_name} className="w-full h-24 object-cover" />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
-          <Paperclip className="h-5 w-5" />
-          <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
-        </div>
-      )}
+    <div className="border border-border/60 rounded-lg overflow-hidden">
+      <a href={url || '#'} target="_blank" rel="noreferrer" className="block hover:opacity-90 transition-opacity">
+        {isImg && url ? (
+          <img src={url} alt={att.file_name} className="w-full h-24 object-cover" />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
+            <Paperclip className="h-5 w-5" />
+            <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
+          </div>
+        )}
+      </a>
       <div className="flex items-center gap-1 flex-wrap p-1.5 border-t border-border/40 bg-muted/30">
         <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[att.kind || 'outro'] || 'Outro'}</Badge>
-        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${att.visibility === 'publica' ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
-          {att.visibility === 'publica' ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
-          {att.visibility === 'publica' ? 'Público' : 'Interno'}
+        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${isPublic ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
+          {isPublic ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
+          {isPublic ? 'Público' : 'Interno'}
         </Badge>
       </div>
-    </a>
+      {canEdit && onUpdate && (
+        <div className="p-1.5 space-y-1.5 border-t border-border/40">
+          <Select value={att.kind || 'outro'} onValueChange={(v) => change({ kind: v })} disabled={saving}>
+            <SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ATTACHMENT_KINDS.map(k => <SelectItem key={k} value={k} className="text-xs">{ATTACHMENT_KIND_LABEL[k]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-[11px]"
+            disabled={saving}
+            onClick={() => change({ visibility: isPublic ? 'interna' : 'publica' })}
+          >
+            {saving ? 'Salvando...' : isPublic
+              ? (<><Lock className="h-3 w-3 mr-1" />Tornar interno</>)
+              : (<><Globe className="h-3 w-3 mr-1" />Tornar público</>)}
+          </Button>
+        </div>
+      )}
+    </div>
   );
-
 }
+
