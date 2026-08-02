@@ -383,6 +383,34 @@ export default function TicketDetail({ publicMode = false }: Props) {
                       </div>
                     </div>
                   )}
+                  {publicMode && publicAttachments.length > 0 && (
+                    <div className="pt-3 border-t border-border/40">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <Paperclip className="h-3.5 w-3.5" />Anexos públicos ({publicAttachments.length})
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {publicAttachments.map(a => {
+                          const isImg = (a.file_type || '').startsWith('image/');
+                          return (
+                            <a key={a.id} href={a.url || '#'} target="_blank" rel="noreferrer"
+                               className="border border-border/60 rounded-lg overflow-hidden hover:border-primary/50 transition-colors block">
+                              {isImg && a.url ? (
+                                <img src={a.url} alt={a.file_name} className="w-full h-24 object-cover" />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
+                                  <Paperclip className="h-5 w-5" />
+                                  <span className="text-[10px] text-center truncate max-w-full">{a.file_name}</span>
+                                </div>
+                              )}
+                              <div className="p-1.5 border-t border-border/40 bg-muted/30">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[a.kind || 'outro'] || 'Outro'}</Badge>
+                              </div>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </CardContent></Card>
 
               </TabsContent>
