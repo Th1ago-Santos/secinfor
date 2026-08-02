@@ -565,7 +565,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
                       <p className="text-sm text-muted-foreground text-center py-6">Nenhum anexo.</p>
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {attachments.map(a => <AttachmentThumb key={a.id} att={a} />)}
+                        {attachments.map(a => <AttachmentThumb key={a.id} att={a} canEdit={canEdit} onUpdate={updateAttachment} />)}
                       </div>
                     )}
                   </CardContent></Card>
