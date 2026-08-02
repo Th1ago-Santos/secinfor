@@ -171,15 +171,27 @@ export type TicketAttachment = {
   file_size: number | null;
   uploaded_by: string | null;
   visibility?: 'publica' | 'interna';
-  kind?: 'foto_problema' | 'foto_equipamento' | 'documento' | 'outro';
+  kind?: 'foto_problema' | 'foto_equipamento' | 'documento' | 'cautela' | 'outro';
   created_at: string;
 };
+
+export const ATTACHMENT_KINDS = ['foto_problema', 'foto_equipamento', 'documento', 'cautela', 'outro'] as const;
 
 export const ATTACHMENT_KIND_LABEL: Record<string, string> = {
   foto_problema: 'Foto do problema',
   foto_equipamento: 'Foto do equipamento',
-  documento: 'Documento / cautela',
+  documento: 'Documento',
+  cautela: 'Cautela',
   outro: 'Outro',
+};
+
+export type PublicAttachment = {
+  id: string;
+  file_name: string;
+  file_type: string | null;
+  kind: string | null;
+  created_at: string;
+  url: string | null;
 };
 
 

@@ -742,6 +742,14 @@ export type Database = {
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
       lookup_ticket_public: { Args: { p_token: string }; Returns: Json }
       soft_delete_ticket: { Args: { p_ticket_id: string }; Returns: string }
+      update_ticket_attachment_metadata: {
+        Args: {
+          p_attachment_id: string
+          p_kind?: string
+          p_visibility?: string
+        }
+        Returns: Json
+      }
       update_ticket_checklist: {
         Args: { p_checklist: Json; p_ticket_id: string }
         Returns: Json

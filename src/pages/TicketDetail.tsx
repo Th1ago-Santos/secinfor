@@ -18,8 +18,8 @@ import {
 import PageTransition from '@/components/PageTransition';
 import {
   formatTicketAge, PRIORITY_COLORS, MESSAGE_TYPES, MESSAGE_TYPE_LABEL,
-  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, computeSla,
-  type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage,
+  CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, ATTACHMENT_KINDS, computeSla,
+  type Ticket, type TicketHistory, type TicketAttachment, type TicketQueue, type TicketStatus, type TicketPriority, type TicketMessage, type PublicAttachment,
 } from '@/types/ticket';
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
@@ -47,6 +47,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [publicMessages, setPublicMessages] = useState<PublicMsg[]>([]);
+  const [publicAttachments, setPublicAttachments] = useState<PublicAttachment[]>([]);
   const [equipmentPhoto, setEquipmentPhoto] = useState<string | null>(null);
   const [equipmentInfo, setEquipmentInfo] = useState<{ nome: string; secao: string | null; status: string | null } | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
@@ -129,6 +130,21 @@ export default function TicketDetail({ publicMode = false }: Props) {
     setSavingChecklist(false);
   };
 
+  const updateAttachment = async (attId: string, patch: { visibility?: string; kind?: string }) => {
+    const { error } = await (supabase as any).rpc('update_ticket_attachment_metadata', {
+      p_attachment_id: attId,
+      p_visibility: patch.visibility ?? null,
+      p_kind: patch.kind ?? null,
+    });
+    if (error) {
+      toast({ title: 'Erro ao atualizar anexo', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Anexo atualizado.' });
+    if (ticket) await loadAuthenticated(ticket.id);
+  };
+
+
 
   useEffect(() => {
     (async () => {
@@ -138,10 +154,13 @@ export default function TicketDetail({ publicMode = false }: Props) {
         // Support both /chamado/publico/:token and legacy /chamados/:id/publico
         const token = params.token || params.id;
         if (!token) { setNotFound(true); setLoading(false); return; }
-        const [{ data: t }, { data: msgs }] = await Promise.all([
+        const [{ data: t }, { data: msgs }, attRes] = await Promise.all([
           (supabase as any).rpc('lookup_ticket_public', { p_token: token }),
           (supabase as any).rpc('list_ticket_messages_public', { p_token: token, p_limit: 20 }),
+          supabase.functions.invoke('public-ticket-attachments', { body: { token } }).catch(() => ({ data: null })),
         ]);
+        const pubAtts = ((attRes as any)?.data?.attachments ?? []) as PublicAttachment[];
+        setPublicAttachments(pubAtts);
         if (!t) { setNotFound(true); setLoading(false); return; }
         const d = t as any;
         setTicket({
@@ -164,6 +183,11 @@ export default function TicketDetail({ publicMode = false }: Props) {
         if (d.queue_name) setQueue({ id: '', name: d.queue_name } as TicketQueue);
         if (d.status_name) setStatus({ id: '', name: d.status_name, color: d.status_color } as TicketStatus);
         setPublicMessages(Array.isArray(msgs) ? (msgs as PublicMsg[]) : []);
+        const heroImg =
+          pubAtts.find(a => a.kind === 'foto_problema' && (a.file_type || '').startsWith('image/') && a.url) ||
+          pubAtts.find(a => a.kind === 'foto_equipamento' && (a.file_type || '').startsWith('image/') && a.url) ||
+          pubAtts.find(a => (a.file_type || '').startsWith('image/') && a.url);
+        setEquipmentPhoto(heroImg?.url ?? null);
         setLoading(false);
         return;
       }
@@ -321,7 +345,11 @@ export default function TicketDetail({ publicMode = false }: Props) {
                       <div className="flex items-center gap-3">
                         <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/50">
                           {equipmentPhoto ? (
-                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
+                            publicMode ? (
+                              <img src={equipmentPhoto} alt="Foto pública do chamado" className="w-full h-full object-cover" />
+                            ) : (
+                              <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
+                            )
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
                               <ImageOff className="h-6 w-6" />
@@ -352,6 +380,34 @@ export default function TicketDetail({ publicMode = false }: Props) {
                             <span className={checklist[item.key] ? 'line-through text-muted-foreground' : ''}>{item.label}</span>
                           </label>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                  {publicMode && publicAttachments.length > 0 && (
+                    <div className="pt-3 border-t border-border/40">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <Paperclip className="h-3.5 w-3.5" />Anexos públicos ({publicAttachments.length})
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {publicAttachments.map(a => {
+                          const isImg = (a.file_type || '').startsWith('image/');
+                          return (
+                            <a key={a.id} href={a.url || '#'} target="_blank" rel="noreferrer"
+                               className="border border-border/60 rounded-lg overflow-hidden hover:border-primary/50 transition-colors block">
+                              {isImg && a.url ? (
+                                <img src={a.url} alt={a.file_name} className="w-full h-24 object-cover" />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
+                                  <Paperclip className="h-5 w-5" />
+                                  <span className="text-[10px] text-center truncate max-w-full">{a.file_name}</span>
+                                </div>
+                              )}
+                              <div className="p-1.5 border-t border-border/40 bg-muted/30">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[a.kind || 'outro'] || 'Outro'}</Badge>
+                              </div>
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -509,7 +565,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
                       <p className="text-sm text-muted-foreground text-center py-6">Nenhum anexo.</p>
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {attachments.map(a => <AttachmentThumb key={a.id} att={a} />)}
+                        {attachments.map(a => <AttachmentThumb key={a.id} att={a} canEdit={canEdit} onUpdate={updateAttachment} />)}
                       </div>
                     )}
                   </CardContent></Card>
@@ -553,32 +609,69 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function AttachmentThumb({ att }: { att: TicketAttachment }) {
+function AttachmentThumb({ att, canEdit, onUpdate }: {
+  att: TicketAttachment;
+  canEdit?: boolean;
+  onUpdate?: (attId: string, patch: { visibility?: string; kind?: string }) => Promise<void>;
+}) {
   const [url, setUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     supabase.storage.from('ticket-attachments').createSignedUrl(att.file_path, 300).then(({ data }) => {
       setUrl(data?.signedUrl || null);
     });
   }, [att.file_path]);
   const isImg = (att.file_type || '').startsWith('image/');
+  const isPublic = att.visibility === 'publica';
+
+  const change = async (patch: { visibility?: string; kind?: string }) => {
+    if (!onUpdate || saving) return;
+    setSaving(true);
+    await onUpdate(att.id, patch);
+    setSaving(false);
+  };
+
   return (
-    <a href={url || '#'} target="_blank" rel="noreferrer" className="border border-border/60 rounded-lg overflow-hidden hover:border-primary/50 transition-colors block">
-      {isImg && url ? (
-        <img src={url} alt={att.file_name} className="w-full h-24 object-cover" />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
-          <Paperclip className="h-5 w-5" />
-          <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
-        </div>
-      )}
+    <div className="border border-border/60 rounded-lg overflow-hidden">
+      <a href={url || '#'} target="_blank" rel="noreferrer" className="block hover:opacity-90 transition-opacity">
+        {isImg && url ? (
+          <img src={url} alt={att.file_name} className="w-full h-24 object-cover" />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-24 gap-1 text-muted-foreground p-2">
+            <Paperclip className="h-5 w-5" />
+            <span className="text-[10px] text-center truncate max-w-full">{att.file_name}</span>
+          </div>
+        )}
+      </a>
       <div className="flex items-center gap-1 flex-wrap p-1.5 border-t border-border/40 bg-muted/30">
         <Badge variant="outline" className="text-[9px] px-1 py-0">{ATTACHMENT_KIND_LABEL[att.kind || 'outro'] || 'Outro'}</Badge>
-        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${att.visibility === 'publica' ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
-          {att.visibility === 'publica' ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
-          {att.visibility === 'publica' ? 'Público' : 'Interno'}
+        <Badge variant="outline" className={`text-[9px] px-1 py-0 ${isPublic ? 'text-success border-success/40' : 'text-muted-foreground'}`}>
+          {isPublic ? <Globe className="h-2.5 w-2.5 mr-0.5" /> : <Lock className="h-2.5 w-2.5 mr-0.5" />}
+          {isPublic ? 'Público' : 'Interno'}
         </Badge>
       </div>
-    </a>
+      {canEdit && onUpdate && (
+        <div className="p-1.5 space-y-1.5 border-t border-border/40">
+          <Select value={att.kind || 'outro'} onValueChange={(v) => change({ kind: v })} disabled={saving}>
+            <SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {ATTACHMENT_KINDS.map(k => <SelectItem key={k} value={k} className="text-xs">{ATTACHMENT_KIND_LABEL[k]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-[11px]"
+            disabled={saving}
+            onClick={() => change({ visibility: isPublic ? 'interna' : 'publica' })}
+          >
+            {saving ? 'Salvando...' : isPublic
+              ? (<><Lock className="h-3 w-3 mr-1" />Tornar interno</>)
+              : (<><Globe className="h-3 w-3 mr-1" />Tornar público</>)}
+          </Button>
+        </div>
+      )}
+    </div>
   );
-
 }
+
