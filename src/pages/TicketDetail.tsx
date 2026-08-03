@@ -310,6 +310,26 @@ export default function TicketDetail({ publicMode = false }: Props) {
                     {slaState.overdue && <Badge variant="outline" className="ml-auto border-destructive/50 text-destructive text-[10px]">Atrasado</Badge>}
                   </div>
                 )}
+                {slaCfg && (
+                  <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs flex items-center gap-2 text-muted-foreground">
+                    <Timer className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Primeira resposta:{' '}
+                      {ticket.first_response_at
+                        ? <strong>{new Date(ticket.first_response_at).toLocaleString('pt-BR')}</strong>
+                        : <strong>pendente</strong>}
+                      {' '}· prazo {slaCfg.response_minutes} min
+                    </span>
+                    {(() => {
+                      const limit = new Date(ticket.created_at).getTime() + slaCfg.response_minutes * 60000;
+                      const ref = ticket.first_response_at ? new Date(ticket.first_response_at).getTime() : Date.now();
+                      if (ref > limit) return <Badge variant="outline" className="ml-auto border-destructive/50 text-destructive text-[10px]">Fora do prazo</Badge>;
+                      if (!ticket.first_response_at && ref > limit - slaCfg.response_minutes * 60000 * 0.2)
+                        return <Badge variant="outline" className="ml-auto border-orange-500/50 text-orange-500 text-[10px]">Próximo do vencimento</Badge>;
+                      return <Badge variant="outline" className="ml-auto border-emerald-500/50 text-emerald-600 text-[10px]">No prazo</Badge>;
+                    })()}
+                  </div>
+                )}
               </CardContent>
 
             </Card>
