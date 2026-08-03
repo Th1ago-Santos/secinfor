@@ -132,6 +132,13 @@ export default function Tickets() {
       return;
     }
     toast.success(`Chamado ${data || target?.ticket_number || ''} excluído com sucesso.`);
+    void logAudit({
+      action: 'ticket.soft_delete',
+      entityType: 'ticket',
+      entityId: deleteId,
+      entityLabel: (data as string) || target?.ticket_number || null,
+      details: { subject: target?.subject ?? null, section: target?.client_section_name ?? null },
+    });
     setTickets(prev => prev.filter(t => t.id !== deleteId));
     setDeleteId(null);
   };
