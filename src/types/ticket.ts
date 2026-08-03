@@ -91,6 +91,7 @@ export type Ticket = {
   plate_name: string | null;
   subject: string;
   description: string;
+  public_summary?: string | null;
   category?: string | null;
   checklist?: TicketChecklist | null;
   first_response_at?: string | null;

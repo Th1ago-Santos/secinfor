@@ -598,6 +598,7 @@ export type Database = {
           id: string
           plate_name: string | null
           priority: string
+          public_summary: string | null
           public_token: string
           queue_id: string | null
           status_id: string | null
@@ -625,6 +626,7 @@ export type Database = {
           id?: string
           plate_name?: string | null
           priority?: string
+          public_summary?: string | null
           public_token?: string
           queue_id?: string | null
           status_id?: string | null
@@ -652,6 +654,7 @@ export type Database = {
           id?: string
           plate_name?: string | null
           priority?: string
+          public_summary?: string | null
           public_token?: string
           queue_id?: string | null
           status_id?: string | null
