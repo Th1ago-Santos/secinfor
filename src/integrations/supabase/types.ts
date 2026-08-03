@@ -59,6 +59,42 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string
+          id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type: string
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string
+          id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       computer_priorities: {
         Row: {
           created_at: string
@@ -759,7 +795,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "operador" | "visualizador"
+      app_role: "admin" | "operador" | "visualizador" | "chefe_secao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -887,7 +923,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "operador", "visualizador"],
+      app_role: ["admin", "operador", "visualizador", "chefe_secao"],
     },
   },
 } as const
