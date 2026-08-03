@@ -32,6 +32,8 @@ const ticketSchema = z.object({
   description: z.string().trim().min(1, 'Informe a descrição').max(5000),
   queue_id: z.string().uuid('Selecione uma fila'),
   priority: z.enum(['Baixa', 'Normal', 'Alta', 'Urgente']),
+  category: z.enum(TICKET_CATEGORIES, { errorMap: () => ({ message: 'Selecione a categoria do chamado' }) }),
+  public_summary: z.string().trim().max(500, 'Resumo público muito longo').optional(),
   equipment_id: z.string().optional().nullable(),
 });
 
@@ -65,6 +67,7 @@ export default function TicketForm() {
     subject: '',
     description: '',
     category: '',
+    public_summary: '',
     queue_id: '',
     priority: 'Normal' as 'Baixa' | 'Normal' | 'Alta' | 'Urgente',
     status_id: '',
@@ -117,6 +120,7 @@ export default function TicketForm() {
           subject: data.subject || '',
           description: data.description || '',
           category: data.category || '',
+          public_summary: data.public_summary || '',
 
           queue_id: data.queue_id || '',
           priority: data.priority || 'Normal',
@@ -161,6 +165,8 @@ export default function TicketForm() {
       description: form.description,
       queue_id: form.queue_id,
       priority: form.priority,
+      category: form.category,
+      public_summary: form.public_summary || undefined,
       equipment_id: form.equipment_id || null,
     });
     if (!parsed.success) {
@@ -176,6 +182,7 @@ export default function TicketForm() {
       subject: form.subject.trim(),
       description: form.description.trim(),
       category: form.category || null,
+      public_summary: form.public_summary?.trim() || null,
 
       queue_id: form.queue_id,
       priority: form.priority,
@@ -325,13 +332,20 @@ export default function TicketForm() {
 
             {/* Categoria */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Categoria</Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Categoria <span className="text-destructive">*</span></Label>
               <Select value={form.category} onValueChange={(v) => setForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger className="h-10"><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger>
                 <SelectContent>
                   {TICKET_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Resumo público */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Resumo público (QR Code)</Label>
+              <Textarea value={form.public_summary} onChange={(e) => setForm(f => ({ ...f, public_summary: e.target.value }))} rows={3} maxLength={500} placeholder="Texto exibido na consulta pública. Não inclua dados internos." />
+              <p className="text-[10px] text-muted-foreground">Se vazio, a consulta pública mostra apenas assunto e status. A descrição interna nunca é exibida publicamente.</p>
             </div>
 
             {/* Fila, Prioridade, Status */}

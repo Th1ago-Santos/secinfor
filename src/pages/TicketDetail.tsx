@@ -168,7 +168,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
           public_token: d.public_token,
           ticket_number: d.ticket_number,
           subject: d.subject,
-          description: d.description,
+          description: d.public_summary || '',
           category: d.category,
           priority: d.priority,
 
