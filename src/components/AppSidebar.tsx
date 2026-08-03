@@ -22,7 +22,7 @@ import {
   LogOut, Monitor, Printer, Package, ClipboardCheck,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
   Ticket, SlidersHorizontal,
-} ScrollText,
+  ScrollText,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
