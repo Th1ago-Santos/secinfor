@@ -18,6 +18,7 @@ import {
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import TicketsSubNav from '@/components/TicketsSubNav';
+import SlaPanel from '@/components/tickets/SlaPanel';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
 import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketHistory, type TicketPriority } from '@/types/ticket';
 
@@ -366,6 +367,8 @@ export default function TicketsDashboard() {
             </div>
           ))}
         </div>
+
+        <SlaPanel tickets={tickets.filter(t => !t.closed_at)} />
 
         {kpis.oldest && (
           <Card className="mb-5 shadow-card border-border/60 border-l-4 border-l-orange-500">

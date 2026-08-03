@@ -30,12 +30,14 @@ type ManagedUser = {
 const roleLabels: Record<string, string> = {
   admin: 'Administrador',
   operador: 'Operador',
+  chefe_secao: 'Chefe de Seção',
   visualizador: 'Visualizador',
 };
 
 const roleIcons: Record<string, typeof ShieldCheck> = {
   admin: ShieldCheck,
   operador: ShieldAlert,
+  chefe_secao: ShieldAlert,
   visualizador: Eye,
 };
 
@@ -249,6 +251,7 @@ export default function UserManagement() {
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
                     <SelectItem value="operador">Operador</SelectItem>
+                    <SelectItem value="chefe_secao">Chefe de Seção</SelectItem>
                     <SelectItem value="visualizador">Visualizador</SelectItem>
                   </SelectContent>
                 </Select>
@@ -271,6 +274,7 @@ export default function UserManagement() {
                 <SelectContent>
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="operador">Operador</SelectItem>
+                    <SelectItem value="chefe_secao">Chefe de Seção</SelectItem>
                   <SelectItem value="visualizador">Visualizador</SelectItem>
                 </SelectContent>
               </Select>

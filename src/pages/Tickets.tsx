@@ -17,6 +17,7 @@ import PageHeader from '@/components/PageHeader';
 import TicketsSubNav from '@/components/TicketsSubNav';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
 import { useUserRole } from '@/hooks/useUserRole';
+import { logAudit } from '@/lib/audit';
 import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketPriority } from '@/types/ticket';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
