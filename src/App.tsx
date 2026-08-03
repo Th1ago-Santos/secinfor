@@ -25,6 +25,7 @@ import Alerts from "./pages/Alerts";
 import SectionMap from "./pages/SectionMap";
 import Priorities from "./pages/Priorities";
 import UserManagement from "./pages/UserManagement";
+import AuditLog from "./pages/AuditLog";
 import Tickets from "./pages/Tickets";
 import TicketForm from "./pages/TicketForm";
 import TicketDetail from "./pages/TicketDetail";
@@ -64,6 +65,7 @@ function AnimatedRoutes() {
         <Route path="/secoes" element={<ProtectedRoute><Sections /></ProtectedRoute>} />
         <Route path="/impressao" element={<ProtectedRoute><PrintView /></ProtectedRoute>} />
         <Route path="/usuarios" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+        <Route path="/auditoria" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
         {/* Tickets */}
         <Route path="/chamados" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
         <Route path="/chamados/dashboard" element={<ProtectedRoute><TicketsDashboard /></ProtectedRoute>} />
