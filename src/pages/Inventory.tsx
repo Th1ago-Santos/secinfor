@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ClipboardCheck, CheckCircle, XCircle, AlertTriangle, Printer, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSections } from '@/hooks/useSections';
+import { useUserRole } from '@/hooks/useUserRole';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 
@@ -24,11 +25,14 @@ type InventoryItem = {
 export default function Inventory() {
   const { user } = useAuth();
   const { sections } = useSections();
+  const { sectionScope } = useUserRole();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [secaoAlvo, setSecaoAlvo] = useState('all');
+  // Chefe de seção: sessão sempre travada na própria seção
+  const effectiveSecao = sectionScope || (secaoAlvo !== 'all' ? secaoAlvo : null);
   const [patrimonio, setPatrimonio] = useState('');
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +45,7 @@ export default function Inventory() {
     setLoading(true);
     const { data, error } = await supabase
       .from('inventory_sessions')
-      .insert([{ usuario_id: user.id, secao_alvo: secaoAlvo !== 'all' ? secaoAlvo : null, status: 'em_andamento' }] as any)
+      .insert([{ usuario_id: user.id, secao_alvo: effectiveSecao, status: 'em_andamento' }] as any)
       .select().single();
     if (error) { toast.error('Erro ao iniciar sessão.'); }
     else {
@@ -94,11 +98,12 @@ export default function Inventory() {
   const finishSession = async () => {
     if (!sessionId) return;
     await supabase.from('inventory_sessions').update({ status: 'finalizado', data_fim: new Date().toISOString() } as any).eq('id', sessionId);
-    const secFilter = secaoAlvo !== 'all' ? secaoAlvo : null;
+    const secFilter = effectiveSecao;
     let nbQuery = supabase.from('notebooks').select('patrimonio');
     if (secFilter) nbQuery = nbQuery.eq('secao', secFilter);
     const { data: nbs } = await nbQuery;
-    const { data: mats } = await supabase.from('materials').select('patrimonio');
+    // Material Carga não possui vínculo de seção; no escopo por seção é omitido
+    const { data: mats } = secFilter ? { data: [] as any[] } : await supabase.from('materials').select('patrimonio');
     setExpectedNotebooks((nbs || []).map((n: any) => n.patrimonio));
     setExpectedMaterials((mats || []).map((m: any) => m.patrimonio));
     setSessionActive(false);
@@ -134,14 +139,22 @@ export default function Inventory() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 items-end">
                   <div className="flex-1 w-full">
-                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5 block">Seção alvo (opcional)</label>
-                    <Select value={secaoAlvo} onValueChange={setSecaoAlvo}>
-                      <SelectTrigger className="h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Todas" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas as seções</SelectItem>
-                        {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
+                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1.5 block">
+                      {sectionScope ? 'Seção alvo' : 'Seção alvo (opcional)'}
+                    </label>
+                    {sectionScope ? (
+                      <div className="h-9 flex items-center rounded-md border border-border/50 bg-muted/30 px-3 text-sm">
+                        {sectionScope}
+                      </div>
+                    ) : (
+                      <Select value={secaoAlvo} onValueChange={setSecaoAlvo}>
+                        <SelectTrigger className="h-9 bg-muted/30 border-border/50"><SelectValue placeholder="Todas" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas as seções</SelectItem>
+                          {sections.map((s) => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <Button onClick={startSession} disabled={loading} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
                     <Play className="h-4 w-4 mr-1.5" />

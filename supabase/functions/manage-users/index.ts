@@ -65,6 +65,8 @@ Deno.serve(async (req) => {
           display_name: profile?.display_name || u.email,
           role: userRole?.role || "visualizador",
           role_id: userRole?.id || null,
+          section_id: profile?.section_id || null,
+          section_name: profile?.section_name || null,
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at,
           banned: u.banned_until ? true : false,
@@ -77,7 +79,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { email, password, display_name, role } = await req.json();
+      const { email, password, display_name, role, section_id, section_name } = await req.json();
       if (!email || !password) {
         return new Response(JSON.stringify({ error: "Email e senha são obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -97,6 +99,12 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (newUser.user) {
+        await adminClient.from("profiles")
+          .update({ section_id: section_id || null, section_name: section_name || null })
+          .eq("user_id", newUser.user.id);
+      }
+
       // Update role if not admin (default trigger creates admin)
       if (role && role !== "admin" && newUser.user) {
         await adminClient.from("user_roles")
@@ -110,7 +118,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update_role") {
-      const { user_id, role } = await req.json();
+      const { user_id, role, section_id, section_name } = await req.json();
       if (!user_id || !role) {
         return new Response(JSON.stringify({ error: "user_id e role são obrigatórios" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -123,6 +131,16 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
+
+      if (role === "chefe_secao" && !section_name) {
+        return new Response(JSON.stringify({ error: "Chefe de Seção precisa ter uma seção vinculada." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      await adminClient.from("profiles")
+        .update({ section_id: section_id || null, section_name: section_name || null })
+        .eq("user_id", user_id);
 
       await adminClient.from("user_roles")
         .upsert({ user_id, role }, { onConflict: "user_id,role" });

@@ -340,6 +340,8 @@ export type Database = {
           display_name: string | null
           id: string
           role: string
+          section_id: string | null
+          section_name: string | null
           user_id: string
         }
         Insert: {
@@ -347,6 +349,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           role?: string
+          section_id?: string | null
+          section_name?: string | null
           user_id: string
         }
         Update: {
@@ -354,9 +358,19 @@ export type Database = {
           display_name?: string | null
           id?: string
           role?: string
+          section_id?: string | null
+          section_name?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sections: {
         Row: {
@@ -767,6 +781,7 @@ export type Database = {
         Args: { ids: string[]; orders: number[] }
         Returns: undefined
       }
+      get_user_section: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

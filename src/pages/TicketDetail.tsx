@@ -24,6 +24,7 @@ import {
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import AccessDenied from '@/components/AccessDenied';
 import { useTicketQueues, useTicketStatuses, useTicketSla } from '@/hooks/useTicketMeta';
 
 
@@ -35,7 +36,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const params = useParams<{ id?: string; token?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canEdit } = useUserRole();
+  const { canEdit, sectionScope } = useUserRole();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
   const { sla } = useTicketSla();
@@ -55,6 +56,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const [assigning, setAssigning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [denied, setDenied] = useState(false);
 
   // Composer
   const [msgContent, setMsgContent] = useState('');
@@ -69,6 +71,10 @@ export default function TicketDetail({ publicMode = false }: Props) {
   const loadAuthenticated = async (ticketId: string) => {
     const { data: t } = await (supabase as any).from('tickets').select('*').eq('id', ticketId).is('deleted_at', null).maybeSingle();
     if (!t) { setNotFound(true); setLoading(false); return; }
+    // Chefe de seção só acessa chamados da própria seção
+    if (sectionScope && t.client_section_name !== sectionScope) {
+      setDenied(true); setLoading(false); return;
+    }
     setTicket(t as Ticket);
     setChecklist((t.checklist as Record<string, boolean>) || {});
     const [q, s, h, a, m] = await Promise.all([
@@ -229,6 +235,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   };
 
   if (loading) return <div className="p-10 text-center text-muted-foreground">Carregando chamado...</div>;
+  if (denied) return <AccessDenied message="Este chamado pertence a outra seção." />;
   if (notFound || !ticket) return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="max-w-md w-full"><CardContent className="pt-6 text-center space-y-3">

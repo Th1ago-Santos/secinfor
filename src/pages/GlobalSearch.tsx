@@ -17,26 +17,32 @@ export default function GlobalSearch() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
+  const { sectionScope } = useUserRole();
 
   useEffect(() => {
     if (!q.trim()) { setNotebooks([]); setMaterials([]); setLoading(false); return; }
     const search = async () => {
       setLoading(true);
       const term = `%${q.trim()}%`;
+      let nbQuery = supabase.from('notebooks').select('id, patrimonio, modelo, secao, militar, status')
+        .or(`patrimonio.ilike.${term},modelo.ilike.${term},secao.ilike.${term},militar.ilike.${term},status.ilike.${term}`)
+        .limit(50);
+      // Chefe de seção: busca restrita à própria seção
+      if (sectionScope) nbQuery = nbQuery.eq('secao', sectionScope);
       const [nbRes, matRes] = await Promise.all([
-        supabase.from('notebooks').select('id, patrimonio, modelo, secao, militar, status')
-          .or(`patrimonio.ilike.${term},modelo.ilike.${term},secao.ilike.${term},militar.ilike.${term},status.ilike.${term}`)
-          .limit(50),
-        supabase.from('materials').select('id, patrimonio, codigo_material, numero_ficha, nome')
-          .or(`patrimonio.ilike.${term},codigo_material.ilike.${term},numero_ficha.ilike.${term},nome.ilike.${term}`)
-          .limit(50),
+        nbQuery,
+        sectionScope
+          ? Promise.resolve({ data: [] as any[] })
+          : supabase.from('materials').select('id, patrimonio, codigo_material, numero_ficha, nome')
+              .or(`patrimonio.ilike.${term},codigo_material.ilike.${term},numero_ficha.ilike.${term},nome.ilike.${term}`)
+              .limit(50),
       ]);
       setNotebooks((nbRes.data as Notebook[]) || []);
       setMaterials((matRes.data as Material[]) || []);
       setLoading(false);
     };
     search();
-  }, [q]);
+  }, [q, sectionScope]);
 
   const total = notebooks.length + materials.length;
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,7 @@ export default function TicketsDashboard() {
   const navigate = useNavigate();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
+  const { sectionScope } = useUserRole();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [history, setHistory] = useState<TicketHistory[]>([]);
@@ -96,7 +98,9 @@ export default function TicketsDashboard() {
     (async () => {
       setLoading(true);
       const [tRes, hRes] = await Promise.all([
-        (supabase as any).from('tickets').select('*').is('deleted_at', null).order('created_at', { ascending: false }),
+        (sectionScope
+          ? (supabase as any).from('tickets').select('*').is('deleted_at', null).eq('client_section_name', sectionScope).order('created_at', { ascending: false })
+          : (supabase as any).from('tickets').select('*').is('deleted_at', null).order('created_at', { ascending: false })),
         (supabase as any).from('ticket_history').select('*').order('created_at', { ascending: false }).limit(20),
       ]);
       if (!alive) return;
@@ -105,7 +109,7 @@ export default function TicketsDashboard() {
       setLoading(false);
     })();
     return () => { alive = false; };
-  }, []);
+  }, [sectionScope]);
 
   const statusByName = useMemo(() => {
     const m: Record<string, string> = {};

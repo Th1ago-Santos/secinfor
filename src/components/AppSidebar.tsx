@@ -29,13 +29,13 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const allNavItems = [
   { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
-  { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador'] },
-  { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador'] },
+  { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
+  { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador'] },
   { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
-  { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador'] },
-  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador'] },
-  { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador'] },
+  { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador', 'chefe_secao'] },
+  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
+  { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
   { label: 'Seções', path: '/secoes', icon: Settings, roles: ['admin'] },
   { label: 'Filas/Status', path: '/chamados/config', icon: SlidersHorizontal, roles: ['admin'] },
   { label: 'Impressão', path: '/impressao', icon: Printer, roles: ['admin', 'operador'] },
