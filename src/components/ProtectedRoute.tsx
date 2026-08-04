@@ -34,8 +34,12 @@ const roleRoutes: Record<string, string[]> = {
   visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
 
+// Rotas administrativas globais: nunca liberadas fora do admin
+const adminOnlyRoutes = ['/usuarios', '/auditoria', '/secoes', '/chamados/config'];
+
 function isRouteAllowed(pathname: string, role: string | null): boolean {
   if (!role) return true; // still loading
+  if (role !== 'admin' && adminOnlyRoutes.some(r => pathname.startsWith(r))) return false;
   const allowed = roleRoutes[role];
   if (!allowed) return false;
   if (allowed.includes('*')) return true;

@@ -31,7 +31,7 @@ export default function Tickets() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { queues } = useTicketQueues();
   const { statuses } = useTicketStatuses();
-  const { canEdit, isAdmin } = useUserRole();
+  const { canEdit, isAdmin, sectionScope } = useUserRole();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +45,19 @@ export default function Tickets() {
 
   const fetchTickets = async () => {
     setLoading(true);
-    const { data } = await (supabase as any)
+    let query = (supabase as any)
       .from('tickets')
       .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+    // Chefe de seção: apenas chamados da própria seção
+    if (sectionScope) query = query.eq('client_section_name', sectionScope);
+    const { data } = await query;
     setTickets((data as Ticket[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchTickets(); }, []);
+  useEffect(() => { fetchTickets(); }, [sectionScope]);
 
   // Apply URL params (from dashboard card clicks)
   useEffect(() => {
