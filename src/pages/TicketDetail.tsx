@@ -234,6 +234,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
   };
 
   if (loading) return <div className="p-10 text-center text-muted-foreground">Carregando chamado...</div>;
+  if (denied) return <AccessDenied message="Este chamado pertence a outra seção." />;
   if (notFound || !ticket) return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="max-w-md w-full"><CardContent className="pt-6 text-center space-y-3">
