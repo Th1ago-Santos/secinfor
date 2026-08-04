@@ -24,6 +24,7 @@ import {
 import NotebookPhoto from '@/components/NotebookPhoto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import AccessDenied from '@/components/AccessDenied';
 import { useTicketQueues, useTicketStatuses, useTicketSla } from '@/hooks/useTicketMeta';
 
 

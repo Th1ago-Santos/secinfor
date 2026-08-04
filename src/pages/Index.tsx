@@ -42,15 +42,17 @@ export default function Index() {
   const navigate = useNavigate();
   const { sections } = useSections();
   const queryClient = useQueryClient();
-  const { canEdit } = useUserRole();
+  const { canEdit, sectionScope } = useUserRole();
 
   const resetPage = () => setPage(0);
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['notebooks', filterSecao, filterStatus, searchTerm, page],
+    queryKey: ['notebooks', filterSecao, filterStatus, searchTerm, page, sectionScope],
     queryFn: async () => {
       let query = supabase.from('notebooks').select('*', { count: 'exact' }).order('created_at', { ascending: false });
-      if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
+      // Chefe de seção: escopo travado na própria seção
+      if (sectionScope) query = query.eq('secao', sectionScope);
+      else if (filterSecao !== 'all') query = query.eq('secao', filterSecao);
       if (filterStatus !== 'all') {
         if (filterStatus === 'Fora de Carga') {
           query = query.eq('status', 'Fora de Carga');
