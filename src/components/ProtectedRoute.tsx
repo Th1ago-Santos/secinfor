@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/AppSidebar';
 import { Separator } from '@/components/ui/separator';
+import AccessDenied from '@/components/AccessDenied';
 
 const routeTitles: Record<string, string> = {
   '/': 'Dashboard',
@@ -28,6 +29,7 @@ const routeTitles: Record<string, string> = {
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
   admin: ['*'], // all routes
+  chefe_secao: ['/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa'],
   operador: ['/', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
   visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
@@ -61,12 +63,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Redirect unauthorized users to their default page
-  if (!isRouteAllowed(location.pathname, role)) {
-    const defaultRoute = role === 'visualizador' ? '/prioridades' : '/';
-    return <Navigate to={defaultRoute} replace />;
-  }
-
   const currentTitle = routeTitles[location.pathname] || '';
 
   return (
@@ -90,7 +86,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             </div>
           </header>
           <main className="flex-1 overflow-auto">
-            {children}
+            {isRouteAllowed(location.pathname, role) ? children : <AccessDenied />}
           </main>
         </div>
       </div>
