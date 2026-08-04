@@ -15,6 +15,7 @@ import { Users, Plus, Pencil, Trash2, KeyRound, ShieldCheck, ShieldAlert, Eye, B
 import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
+import { useSections } from '@/hooks/useSections';
 
 type ManagedUser = {
   id: string;
@@ -22,6 +23,8 @@ type ManagedUser = {
   display_name: string;
   role: string;
   role_id: string | null;
+  section_id: string | null;
+  section_name: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   banned: boolean;
@@ -43,6 +46,7 @@ const roleIcons: Record<string, typeof ShieldCheck> = {
 
 export default function UserManagement() {
   const { isAdmin } = useUserRole();
+  const { sections } = useSections();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,6 +60,7 @@ export default function UserManagement() {
   const [newPass, setNewPass] = useState('');
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('operador');
+  const [newSection, setNewSection] = useState('none');
   const [saving, setSaving] = useState(false);
 
   const invoke = async (action: string, body?: any) => {
@@ -94,10 +99,19 @@ export default function UserManagement() {
     if (!newEmail || !newPass) { toast.error('Email e senha são obrigatórios.'); return; }
     setSaving(true);
     try {
-      await invoke('create', { email: newEmail, password: newPass, display_name: newName, role: newRole });
+      if (newRole === 'chefe_secao' && newSection === 'none') {
+        toast.error('Selecione a seção do Chefe de Seção.');
+        setSaving(false);
+        return;
+      }
+      const sec = sections.find(s => s.name === newSection);
+      await invoke('create', {
+        email: newEmail, password: newPass, display_name: newName, role: newRole,
+        section_id: sec?.id || null, section_name: sec?.name || null,
+      });
       toast.success('Usuário criado com sucesso.');
       setCreateOpen(false);
-      setNewEmail(''); setNewPass(''); setNewName(''); setNewRole('operador');
+      setNewEmail(''); setNewPass(''); setNewName(''); setNewRole('operador'); setNewSection('none');
       fetchUsers();
     } catch (err: any) { toast.error(err.message); }
     setSaving(false);
@@ -107,7 +121,17 @@ export default function UserManagement() {
     if (!editUser) return;
     setSaving(true);
     try {
-      await invoke('update_role', { user_id: editUser.id, role: editUser.role });
+      if (editUser.role === 'chefe_secao' && !editUser.section_name) {
+        toast.error('Chefe de Seção precisa de uma seção vinculada.');
+        setSaving(false);
+        return;
+      }
+      await invoke('update_role', {
+        user_id: editUser.id,
+        role: editUser.role,
+        section_id: editUser.section_id,
+        section_name: editUser.section_name,
+      });
       toast.success('Perfil atualizado.');
       setEditUser(null);
       fetchUsers();
@@ -179,6 +203,7 @@ export default function UserManagement() {
                     <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
                       <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Usuário</TableHead>
                       <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Perfil</TableHead>
+                      <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Seção</TableHead>
                       <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
                       <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Último Acesso</TableHead>
                       <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground text-right">Ações</TableHead>
@@ -200,6 +225,9 @@ export default function UserManagement() {
                               <RoleIcon className="h-3 w-3" />
                               {roleLabels[u.role] || u.role}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {u.section_name || '—'}
                           </TableCell>
                           <TableCell>
                             <Badge variant={u.banned ? 'destructive' : 'default'} className="text-[10px]">
@@ -256,6 +284,18 @@ export default function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Seção {newRole === 'chefe_secao' ? '*' : '(opcional)'}
+                </Label>
+                <Select value={newSection} onValueChange={setNewSection}>
+                  <SelectTrigger className="h-10 bg-muted/30 border-border/60"><SelectValue placeholder="Sem seção" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem seção</SelectItem>
+                    {sections.map(s => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
@@ -278,6 +318,25 @@ export default function UserManagement() {
                   <SelectItem value="visualizador">Visualizador</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Seção {editUser?.role === 'chefe_secao' ? '*' : '(opcional)'}
+                </Label>
+                <Select
+                  value={editUser?.section_name || 'none'}
+                  onValueChange={v => {
+                    if (!editUser) return;
+                    const sec = sections.find(s => s.name === v);
+                    setEditUser({ ...editUser, section_id: sec?.id || null, section_name: sec?.name || null });
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-muted/30 border-border/60"><SelectValue placeholder="Sem seção" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem seção</SelectItem>
+                    {sections.map(s => (<SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditUser(null)}>Cancelar</Button>
