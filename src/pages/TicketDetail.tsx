@@ -183,11 +183,9 @@ export default function TicketDetail({ publicMode = false }: Props) {
         if (d.queue_name) setQueue({ id: '', name: d.queue_name } as TicketQueue);
         if (d.status_name) setStatus({ id: '', name: d.status_name, color: d.status_color } as TicketStatus);
         setPublicMessages(Array.isArray(msgs) ? (msgs as PublicMsg[]) : []);
-        const heroImg =
-          pubAtts.find(a => a.kind === 'foto_problema' && (a.file_type || '').startsWith('image/') && a.url) ||
-          pubAtts.find(a => a.kind === 'foto_equipamento' && (a.file_type || '').startsWith('image/') && a.url) ||
-          pubAtts.find(a => (a.file_type || '').startsWith('image/') && a.url);
-        setEquipmentPhoto(heroImg?.url ?? null);
+        // Modo público: não reaproveitar anexos públicos como foto do equipamento
+        // (evita imagem duplicada em "Equipamento vinculado" e "Anexos públicos").
+        setEquipmentPhoto(null);
         setLoading(false);
         return;
       }
@@ -364,12 +362,8 @@ export default function TicketDetail({ publicMode = false }: Props) {
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Equipamento vinculado</p>
                       <div className="flex items-center gap-3">
                         <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 border border-border/50">
-                          {equipmentPhoto ? (
-                            publicMode ? (
-                              <img src={equipmentPhoto} alt="Foto pública do chamado" className="w-full h-full object-cover" />
-                            ) : (
-                              <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
-                            )
+                          {equipmentPhoto && !publicMode ? (
+                            <NotebookPhoto value={equipmentPhoto} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImageOff className="h-6 w-6" /></div>} />
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
                               <ImageOff className="h-6 w-6" />
