@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Laptop, Package, Search, Pencil } from 'lucide-react';
 import { type Notebook, type Material, statusColor } from '@/types';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export default function GlobalSearch() {
   const [searchParams] = useSearchParams();
