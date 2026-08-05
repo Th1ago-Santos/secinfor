@@ -781,7 +781,9 @@ export type Database = {
         Args: { ids: string[]; orders: number[] }
         Returns: undefined
       }
+      can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       get_user_section: { Args: { _user_id: string }; Returns: string }
+      get_user_section_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
