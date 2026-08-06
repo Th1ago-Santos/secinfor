@@ -1,0 +1,9 @@
+REVOKE ALL ON FUNCTION public.audit_tickets() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_ticket_messages() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_ticket_attachments() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_notebooks() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_materials() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_inventory_sessions() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_inventory_items() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_profiles() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.audit_user_roles() FROM PUBLIC, anon, authenticated;
