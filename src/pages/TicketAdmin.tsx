@@ -14,19 +14,22 @@ import { toast } from 'sonner';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
+import SlaTab from '@/components/tickets/SlaTab';
 
 export default function TicketAdmin() {
   return (
     <PageTransition>
       <div className="container mx-auto py-6 px-4 max-w-4xl">
-        <PageHeader icon={Settings} title="Configurações de Chamados" description="Gerencie filas e status" />
+        <PageHeader icon={Settings} title="Configurações de Chamados" description="Gerencie filas, status e SLA" />
         <Tabs defaultValue="queues">
           <TabsList>
             <TabsTrigger value="queues">Filas</TabsTrigger>
             <TabsTrigger value="statuses">Status</TabsTrigger>
+            <TabsTrigger value="sla">SLA</TabsTrigger>
           </TabsList>
           <TabsContent value="queues"><QueuesTab /></TabsContent>
           <TabsContent value="statuses"><StatusesTab /></TabsContent>
+          <TabsContent value="sla"><SlaTab /></TabsContent>
         </Tabs>
       </div>
     </PageTransition>

@@ -45,6 +45,7 @@ export const CHECKLIST_ITEMS: { key: string; label: string }[] = [
 export type TicketSla = {
   id: string;
   priority: string;
+  queue_id?: string | null;
   response_minutes: number;
   resolution_minutes: number;
 };
