@@ -67,7 +67,12 @@ export type Database = {
           entity_id: string | null
           entity_label: string | null
           entity_type: string
+          event_type: string
           id: string
+          new_value: string | null
+          old_value: string | null
+          section_name: string | null
+          severity: string
           user_id: string | null
           user_name: string | null
         }
@@ -78,7 +83,12 @@ export type Database = {
           entity_id?: string | null
           entity_label?: string | null
           entity_type: string
+          event_type?: string
           id?: string
+          new_value?: string | null
+          old_value?: string | null
+          section_name?: string | null
+          severity?: string
           user_id?: string | null
           user_name?: string | null
         }
@@ -89,7 +99,12 @@ export type Database = {
           entity_id?: string | null
           entity_label?: string | null
           entity_type?: string
+          event_type?: string
           id?: string
+          new_value?: string | null
+          old_value?: string | null
+          section_name?: string | null
+          severity?: string
           user_id?: string | null
           user_name?: string | null
         }
@@ -572,6 +587,7 @@ export type Database = {
           created_at: string
           id: string
           priority: string
+          queue_id: string | null
           resolution_minutes: number
           response_minutes: number
           updated_at: string
@@ -580,6 +596,7 @@ export type Database = {
           created_at?: string
           id?: string
           priority: string
+          queue_id?: string | null
           resolution_minutes?: number
           response_minutes?: number
           updated_at?: string
@@ -588,11 +605,20 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: string
+          queue_id?: string | null
           resolution_minutes?: number
           response_minutes?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ticket_sla_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_queues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_statuses: {
         Row: {
@@ -777,6 +803,21 @@ export type Database = {
         Returns: Json
       }
       assign_ticket_self: { Args: { p_ticket_id: string }; Returns: Json }
+      audit_write: {
+        Args: {
+          p_action: string
+          p_details: Json
+          p_entity_id: string
+          p_entity_label: string
+          p_entity_type: string
+          p_event_type: string
+          p_new_value: string
+          p_old_value: string
+          p_section_name: string
+          p_severity: string
+        }
+        Returns: string
+      }
       batch_update_priority_order: {
         Args: { ids: string[]; orders: number[] }
         Returns: undefined
@@ -798,6 +839,20 @@ export type Database = {
       list_ticket_messages_public: {
         Args: { p_limit?: number; p_token: string }
         Returns: Json
+      }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_label?: string
+          p_entity_type: string
+          p_event_type?: string
+          p_new_value?: string
+          p_old_value?: string
+          p_severity?: string
+        }
+        Returns: string
       }
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
       lookup_ticket_public: { Args: { p_token: string }; Returns: Json }
