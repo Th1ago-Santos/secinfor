@@ -155,6 +155,9 @@ export default function TicketsDashboard() {
     };
   }, [tickets, statuses, statusNameById, now, startToday, period]);
 
+  // Cor dinâmica cadastrada no status (fallback neutro)
+  const colorOfStatus = (name: string) => resolveStatusColor(statuses.find(s => s.name === name));
+
   // Chart data
   const statusData = useMemo(() =>
     statuses.map(s => ({
@@ -321,23 +324,23 @@ export default function TicketsDashboard() {
           <KpiCard loading={loading} icon={TicketIcon} label="Total" value={stats.total}
             color="#3b82f6" onClick={() => goToList({})} description="Todos os chamados" />
           <KpiCard loading={loading} icon={TicketIcon} label="Abertos" value={stats.open}
-            color="#3b82f6" onClick={() => openId && goToList({ status: openId })} />
+            color={colorOfStatus('Aberto')} onClick={() => openId && goToList({ status: openId })} />
           <KpiCard loading={loading} icon={PlayCircle} label="Em atendimento" value={stats.inProgress}
-            color="#7c3aed" onClick={() => inProgId && goToList({ status: inProgId })} />
+            color={colorOfStatus('Em atendimento')} onClick={() => inProgId && goToList({ status: inProgId })} />
           <KpiCard loading={loading} icon={PackageIcon} label="Aguard. material" value={stats.waitingMaterial}
-            color="#f97316" onClick={() => waitMatId && goToList({ status: waitMatId })} />
+            color={colorOfStatus('Aguardando material')} onClick={() => waitMatId && goToList({ status: waitMatId })} />
           <KpiCard loading={loading} icon={UserCheck} label="Aguard. usuário" value={stats.waitingUser}
-            color="#eab308" onClick={() => waitUsrId && goToList({ status: waitUsrId })} />
+            color={colorOfStatus('Aguardando usuário')} onClick={() => waitUsrId && goToList({ status: waitUsrId })} />
           <KpiCard loading={loading} icon={CheckCircle2} label="Concluídos" value={stats.done}
-            color="#22c55e" onClick={() => doneId && goToList({ status: doneId })} />
+            color={colorOfStatus('Concluído')} onClick={() => doneId && goToList({ status: doneId })} />
           <KpiCard loading={loading} icon={AlertTriangle} label="Urgentes" value={stats.urgent}
-            color="#ef4444" onClick={() => goToList({ priority: 'Urgente' })} />
+            color={priorityColor('Urgente')} onClick={() => goToList({ priority: 'Urgente' })} />
           <KpiCard loading={loading} icon={Clock} label="Vencidos" value={stats.overdue}
             color="#dc2626" onClick={() => goToList({ overdue: '1' })} description={`> ${OVERDUE_DAYS} dias em aberto`} />
           <KpiCard loading={loading} icon={CalendarPlus} label="Abertos hoje" value={stats.openedToday}
-            color="#3b82f6" onClick={() => goToList({ today: 'open' })} delta={stats.deltaOpened} />
+            color={colorOfStatus('Aberto')} onClick={() => goToList({ today: 'open' })} delta={stats.deltaOpened} />
           <KpiCard loading={loading} icon={CalendarCheck} label="Concluídos hoje" value={stats.closedToday}
-            color="#22c55e" onClick={() => goToList({ today: 'closed' })} />
+            color={colorOfStatus('Concluído')} onClick={() => goToList({ today: 'closed' })} />
         </div>
 
         {/* PERFORMANCE INDICATORS */}

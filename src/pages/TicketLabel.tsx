@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, Printer, Ticket as TicketIcon, ShieldCheck } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { type Ticket, type TicketQueue, type TicketStatus } from '@/types/ticket';
+import { resolveStatusColor, statusSolidStyle, contrastText, priorityColor } from '@/lib/statusColor';
 
 type Format = 'small' | 'a4';
 
@@ -97,24 +98,19 @@ export default function TicketLabel() {
 }
 
 function LabelCard({ ticket, queue, status, publicUrl }: { ticket: Ticket; queue: TicketQueue | null; status: TicketStatus | null; publicUrl: string }) {
-  const priorityColor: Record<string, string> = {
-    Baixa: '#059669',
-    Normal: '#2563eb',
-    Alta: '#d97706',
-    Urgente: '#dc2626',
-  };
-  const pColor = priorityColor[ticket.priority] || '#111827';
+  const pColor = priorityColor(ticket.priority);
+  const sColor = resolveStatusColor(status);
 
   return (
     <div
       className="relative bg-white text-black w-[340px] print:w-[86mm] print:break-inside-avoid rounded-md overflow-hidden shadow-sm"
-      style={{ border: '1.5px solid #111827' }}
+      style={{ border: `1.5px solid ${sColor}` }}
     >
       {/* Priority side stripe */}
-      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: pColor }} />
+      <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: sColor }} />
 
       {/* Header */}
-      <div className="pl-3 pr-2 py-1.5 flex items-center gap-2 border-b border-black/70" style={{ background: '#111827', color: '#fff' }}>
+      <div className="pl-3 pr-2 py-1.5 flex items-center gap-2 border-b border-black/70" style={statusSolidStyle(status)}>
         <div className="p-1 rounded bg-white/15">
           <ShieldCheck className="h-3.5 w-3.5" />
         </div>
@@ -145,19 +141,22 @@ function LabelCard({ ticket, queue, status, publicUrl }: { ticket: Ticket; queue
 
           <div className="flex gap-1 flex-wrap pt-0.5">
             {queue && (
-              <span className="text-[7.5px] font-semibold px-1.5 py-0.5 rounded border border-black/60">
+              <span className="inline-flex items-center text-[7.5px] font-semibold px-1.5 py-0.5 rounded border border-black/50 leading-none">
                 {queue.name}
               </span>
             )}
             <span
-              className="text-[7.5px] font-bold px-1.5 py-0.5 rounded text-white"
-              style={{ backgroundColor: pColor }}
+              className="inline-flex items-center text-[7.5px] font-bold px-1.5 py-0.5 rounded leading-none border"
+              style={{ color: pColor, borderColor: pColor }}
             >
               {ticket.priority.toUpperCase()}
             </span>
             {status && (
-              <span className="text-[7.5px] font-semibold px-1.5 py-0.5 rounded border border-black/60">
-                {status.name}
+              <span
+                className="inline-flex items-center text-[7.5px] font-bold px-1.5 py-0.5 rounded leading-none"
+                style={{ backgroundColor: sColor, color: contrastText(sColor) }}
+              >
+                {status.name.toUpperCase()}
               </span>
             )}
           </div>
