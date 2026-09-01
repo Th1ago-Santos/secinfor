@@ -16,6 +16,7 @@ import {
   MessageSquare, Send, Lock, Globe, Eye, UserCheck, Timer, ImageOff, ListChecks, FolderTree,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import { resolveStatusColor, statusSolidStyle } from '@/lib/statusColor';
 import {
   formatTicketAge, PRIORITY_COLORS, MESSAGE_TYPES, MESSAGE_TYPE_LABEL,
   CHECKLIST_ITEMS, ATTACHMENT_KIND_LABEL, ATTACHMENT_KINDS, computeSla,
@@ -285,6 +286,7 @@ export default function TicketDetail({ publicMode = false }: Props) {
           <div className="lg:col-span-2 space-y-4">
             {/* Hero */}
             <Card className="shadow-card border-border/50 overflow-hidden">
+              <div className="h-1.5 w-full" style={{ backgroundColor: resolveStatusColor(status) }} />
               <div className="gradient-primary p-5 text-primary-foreground">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
@@ -295,8 +297,19 @@ export default function TicketDetail({ publicMode = false }: Props) {
                     </div>
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {status && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur" style={{ backgroundColor: status.color || undefined }}>{status.name}</Badge>}
-                    <Badge variant="secondary" className={`${PRIORITY_COLORS[ticket.priority as TicketPriority]} border`}>{ticket.priority}</Badge>
+                    {status && (
+                      <span
+                        className="inline-flex h-6 items-center justify-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold leading-none"
+                        style={statusSolidStyle(status)}
+                      >
+                        {status.name}
+                      </span>
+                    )}
+                    <span
+                      className="inline-flex h-6 items-center justify-center rounded-md border border-white/50 bg-white/15 px-2 text-[10px] font-bold uppercase tracking-wider leading-none text-white backdrop-blur"
+                    >
+                      {ticket.priority}
+                    </span>
                     {ticket.category && <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur">{ticket.category}</Badge>}
                   </div>
                 </div>

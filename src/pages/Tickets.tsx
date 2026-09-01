@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { StatusBadge, PriorityBadge } from '@/components/ui/status-badge';
+import EmptyState from '@/components/EmptyState';
+import { resolveStatusColor } from '@/lib/statusColor';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -237,34 +240,35 @@ export default function Tickets() {
                       <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Título</TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Placa</TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Fila</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Status</TableHead>
-                      <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Prio.</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-widest font-semibold text-center">Status</TableHead>
+                      <TableHead className="text-[10px] uppercase tracking-widest font-semibold text-center">Prio.</TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest font-semibold">Idade</TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest font-semibold text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pageData.length === 0 && (
-                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10 text-sm">Nenhum chamado encontrado.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="p-0"><EmptyState icon={Search} title="Nenhum chamado encontrado" description="Ajuste os filtros ou crie um novo chamado." compact /></TableCell></TableRow>
                     )}
                     {pageData.map((t) => {
                       const sMeta = statusMeta(t.status_id);
                       return (
                         <TableRow key={t.id} className="hover:bg-muted/30 group">
-                          <TableCell className="font-mono text-xs font-semibold">{t.ticket_number}</TableCell>
+                          <TableCell className="font-mono text-xs font-semibold align-middle">
+                            <span className="flex items-center gap-2">
+                              <span className="h-6 w-1 rounded-full shrink-0" style={{ backgroundColor: resolveStatusColor(sMeta) }} />
+                              {t.ticket_number}
+                            </span>
+                          </TableCell>
                           <TableCell className="text-sm">{t.client_section_name}</TableCell>
                           <TableCell className="text-sm max-w-[220px] truncate">{t.subject}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">{t.plate_name || <span className="italic">Sem placa</span>}</TableCell>
                           <TableCell className="text-xs">{queueName(t.queue_id)}</TableCell>
-                          <TableCell>
-                            {sMeta ? (
-                              <Badge variant="outline" className="text-[10px]" style={sMeta.color ? { color: sMeta.color, borderColor: sMeta.color } : undefined}>
-                                {sMeta.name}
-                              </Badge>
-                            ) : '—'}
+                          <TableCell className="text-center align-middle">
+                            <StatusBadge status={sMeta} size="xs" />
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={`text-[10px] ${PRIORITY_COLORS[t.priority as TicketPriority] || ''}`}>{t.priority}</Badge>
+                          <TableCell className="text-center align-middle">
+                            <PriorityBadge priority={t.priority} size="xs" />
                           </TableCell>
                           <TableCell className="text-xs font-mono">{formatTicketAge(t.created_at, t.closed_at)}</TableCell>
                           <TableCell className="text-right">

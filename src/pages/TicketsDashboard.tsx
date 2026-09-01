@@ -18,6 +18,8 @@ import {
 } from 'recharts';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
+import { StatusBadge, PriorityBadge } from '@/components/ui/status-badge';
+import { resolveStatusColor, priorityColor } from '@/lib/statusColor';
 import TicketsSubNav from '@/components/TicketsSubNav';
 import SlaPanel from '@/components/tickets/SlaPanel';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
@@ -25,19 +27,6 @@ import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketHistory, type
 
 type Period = '7' | '30' | '90';
 
-// Map status names to functional colors (tailwind semantic-ish, but using safe hex for charts)
-const STATUS_COLOR: Record<string, string> = {
-  'Aberto': '#3b82f6',
-  'Em atendimento': '#7c3aed',
-  'Aguardando material': '#f97316',
-  'Aguardando usuário': '#eab308',
-  'Concluído': '#22c55e',
-  'Cancelado': '#94a3b8',
-};
-
-const PRIORITY_HEX: Record<string, string> = {
-  Baixa: '#64748b', Normal: '#3b82f6', Alta: '#f97316', Urgente: '#ef4444',
-};
 
 const STALE_DAYS = 7; // "muito tempo sem atualização"
 const OVERDUE_DAYS = 14; // vencido/antigo
@@ -166,12 +155,15 @@ export default function TicketsDashboard() {
     };
   }, [tickets, statuses, statusNameById, now, startToday, period]);
 
+  // Cor dinâmica cadastrada no status (fallback neutro)
+  const colorOfStatus = (name: string) => resolveStatusColor(statuses.find(s => s.name === name));
+
   // Chart data
   const statusData = useMemo(() =>
     statuses.map(s => ({
       name: s.name,
       value: tickets.filter(t => t.status_id === s.id).length,
-      color: STATUS_COLOR[s.name] || s.color || '#94a3b8',
+      color: resolveStatusColor(s),
     })).filter(x => x.value > 0),
   [statuses, tickets]);
 
@@ -188,7 +180,7 @@ export default function TicketsDashboard() {
     return prios.map(p => ({
       name: p,
       value: tickets.filter(t => t.priority === p).length,
-      color: PRIORITY_HEX[p],
+      color: priorityColor(p),
     })).filter(x => x.value > 0);
   }, [tickets]);
 
@@ -332,23 +324,23 @@ export default function TicketsDashboard() {
           <KpiCard loading={loading} icon={TicketIcon} label="Total" value={stats.total}
             color="#3b82f6" onClick={() => goToList({})} description="Todos os chamados" />
           <KpiCard loading={loading} icon={TicketIcon} label="Abertos" value={stats.open}
-            color="#3b82f6" onClick={() => openId && goToList({ status: openId })} />
+            color={colorOfStatus('Aberto')} onClick={() => openId && goToList({ status: openId })} />
           <KpiCard loading={loading} icon={PlayCircle} label="Em atendimento" value={stats.inProgress}
-            color="#7c3aed" onClick={() => inProgId && goToList({ status: inProgId })} />
+            color={colorOfStatus('Em atendimento')} onClick={() => inProgId && goToList({ status: inProgId })} />
           <KpiCard loading={loading} icon={PackageIcon} label="Aguard. material" value={stats.waitingMaterial}
-            color="#f97316" onClick={() => waitMatId && goToList({ status: waitMatId })} />
+            color={colorOfStatus('Aguardando material')} onClick={() => waitMatId && goToList({ status: waitMatId })} />
           <KpiCard loading={loading} icon={UserCheck} label="Aguard. usuário" value={stats.waitingUser}
-            color="#eab308" onClick={() => waitUsrId && goToList({ status: waitUsrId })} />
+            color={colorOfStatus('Aguardando usuário')} onClick={() => waitUsrId && goToList({ status: waitUsrId })} />
           <KpiCard loading={loading} icon={CheckCircle2} label="Concluídos" value={stats.done}
-            color="#22c55e" onClick={() => doneId && goToList({ status: doneId })} />
+            color={colorOfStatus('Concluído')} onClick={() => doneId && goToList({ status: doneId })} />
           <KpiCard loading={loading} icon={AlertTriangle} label="Urgentes" value={stats.urgent}
-            color="#ef4444" onClick={() => goToList({ priority: 'Urgente' })} />
+            color={priorityColor('Urgente')} onClick={() => goToList({ priority: 'Urgente' })} />
           <KpiCard loading={loading} icon={Clock} label="Vencidos" value={stats.overdue}
             color="#dc2626" onClick={() => goToList({ overdue: '1' })} description={`> ${OVERDUE_DAYS} dias em aberto`} />
           <KpiCard loading={loading} icon={CalendarPlus} label="Abertos hoje" value={stats.openedToday}
-            color="#3b82f6" onClick={() => goToList({ today: 'open' })} delta={stats.deltaOpened} />
+            color={colorOfStatus('Aberto')} onClick={() => goToList({ today: 'open' })} delta={stats.deltaOpened} />
           <KpiCard loading={loading} icon={CalendarCheck} label="Concluídos hoje" value={stats.closedToday}
-            color="#22c55e" onClick={() => goToList({ today: 'closed' })} />
+            color={colorOfStatus('Concluído')} onClick={() => goToList({ today: 'closed' })} />
         </div>
 
         {/* PERFORMANCE INDICATORS */}
@@ -560,11 +552,9 @@ export default function TicketsDashboard() {
                         </p>
                       </div>
                       {sMeta && (
-                        <Badge variant="outline" className="text-[10px] hidden md:inline-flex" style={{ color: sMeta.color || undefined, borderColor: sMeta.color || undefined }}>
-                          {sMeta.name}
-                        </Badge>
+                        <StatusBadge status={sMeta} size="xs" className="hidden md:inline-flex" />
                       )}
-                      <Badge variant="outline" className={`text-[10px] hidden sm:inline-flex ${PRIORITY_COLORS[t.priority as TicketPriority] || ''}`}>{t.priority}</Badge>
+                      <PriorityBadge priority={t.priority} size="xs" className="hidden sm:inline-flex" />
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/chamados/${t.id}`)}>
                         Abrir <ArrowRight className="h-3 w-3 ml-1" />
                       </Button>
