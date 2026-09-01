@@ -18,6 +18,8 @@ import {
 } from 'recharts';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
+import { StatusBadge, PriorityBadge } from '@/components/ui/status-badge';
+import { resolveStatusColor, priorityColor } from '@/lib/statusColor';
 import TicketsSubNav from '@/components/TicketsSubNav';
 import SlaPanel from '@/components/tickets/SlaPanel';
 import { useTicketQueues, useTicketStatuses } from '@/hooks/useTicketMeta';
@@ -25,19 +27,6 @@ import { formatTicketAge, PRIORITY_COLORS, type Ticket, type TicketHistory, type
 
 type Period = '7' | '30' | '90';
 
-// Map status names to functional colors (tailwind semantic-ish, but using safe hex for charts)
-const STATUS_COLOR: Record<string, string> = {
-  'Aberto': '#3b82f6',
-  'Em atendimento': '#7c3aed',
-  'Aguardando material': '#f97316',
-  'Aguardando usuário': '#eab308',
-  'Concluído': '#22c55e',
-  'Cancelado': '#94a3b8',
-};
-
-const PRIORITY_HEX: Record<string, string> = {
-  Baixa: '#64748b', Normal: '#3b82f6', Alta: '#f97316', Urgente: '#ef4444',
-};
 
 const STALE_DAYS = 7; // "muito tempo sem atualização"
 const OVERDUE_DAYS = 14; // vencido/antigo
@@ -171,7 +160,7 @@ export default function TicketsDashboard() {
     statuses.map(s => ({
       name: s.name,
       value: tickets.filter(t => t.status_id === s.id).length,
-      color: STATUS_COLOR[s.name] || s.color || '#94a3b8',
+      color: resolveStatusColor(s),
     })).filter(x => x.value > 0),
   [statuses, tickets]);
 
@@ -188,7 +177,7 @@ export default function TicketsDashboard() {
     return prios.map(p => ({
       name: p,
       value: tickets.filter(t => t.priority === p).length,
-      color: PRIORITY_HEX[p],
+      color: priorityColor(p),
     })).filter(x => x.value > 0);
   }, [tickets]);
 
@@ -560,11 +549,9 @@ export default function TicketsDashboard() {
                         </p>
                       </div>
                       {sMeta && (
-                        <Badge variant="outline" className="text-[10px] hidden md:inline-flex" style={{ color: sMeta.color || undefined, borderColor: sMeta.color || undefined }}>
-                          {sMeta.name}
-                        </Badge>
+                        <StatusBadge status={sMeta} size="xs" className="hidden md:inline-flex" />
                       )}
-                      <Badge variant="outline" className={`text-[10px] hidden sm:inline-flex ${PRIORITY_COLORS[t.priority as TicketPriority] || ''}`}>{t.priority}</Badge>
+                      <PriorityBadge priority={t.priority} size="xs" className="hidden sm:inline-flex" />
                       <Button size="sm" variant="ghost" onClick={() => navigate(`/chamados/${t.id}`)}>
                         Abrir <ArrowRight className="h-3 w-3 ml-1" />
                       </Button>
