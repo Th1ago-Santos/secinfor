@@ -314,32 +314,50 @@ export default function Priorities() {
 
     generatePDFReport({
       title: 'Ranking de Prioridades de Computadores',
-      subtitle: `Filtro: ${filterLabel} — Total: ${items.length} prioridade(s)`,
+      subtitle: `${items.length} prioridade(s) nesta emissão`,
+      emitter: user?.email || null,
+      filters: [`Situação: ${filterLabel}`],
+      summary: [
+        { label: 'Total listado', value: items.length },
+        { label: 'Abertas', value: activePriorities.length },
+        { label: 'Concluídas', value: completedPriorities.length },
+      ],
       columns: ['#', 'Seção', 'Responsável', 'Motivo', 'Observações', 'Abertura', 'Encerramento', 'Status'],
       rows: items.map((p) => [
         p.status === 'aberta' ? String(activePriorities.indexOf(p) + 1) : '—',
-        p.secao, p.responsavel || '-', p.motivo || '-', p.observacoes || '-',
-        p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
-        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
+        p.secao, p.responsavel || '', p.motivo || '', p.observacoes || '',
+        p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '',
+        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '',
         p.status === 'aberta' ? 'Aberta' : 'Concluída',
       ]),
+      colorColumnIndex: 7,
+      colorMap: { Aberta: [217, 119, 6], 'Concluída': [22, 163, 74] },
+      columnWidths: { 0: 10 },
       filename: 'ranking_prioridades',
+      orientation: 'landscape',
     });
   };
 
   const handleExportCompleted = () => {
     generatePDFReport({
       title: 'Prioridades Concluídas',
-      subtitle: `Total: ${completedPriorities.length} prioridade(s) concluída(s)`,
+      subtitle: `${completedPriorities.length} prioridade(s) concluída(s)`,
+      emitter: user?.email || null,
+      filters: ['Situação: Concluídas'],
+      summary: [
+        { label: 'Concluídas', value: completedPriorities.length },
+        { label: 'Ainda abertas', value: activePriorities.length },
+      ],
       columns: ['Seção', 'Responsável', 'Motivo', 'Observações', 'Abertura', 'Encerramento'],
       rows: completedPriorities.map((p) => [
-        p.secao, p.responsavel || '-', p.motivo || '-', p.observacoes || '-',
-        p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '-',
-        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '-',
+        p.secao, p.responsavel || '', p.motivo || '', p.observacoes || '',
+        p.data_solicitacao ? format(new Date(p.data_solicitacao + 'T00:00:00'), 'dd/MM/yyyy') : '',
+        p.data_encerramento ? format(new Date(p.data_encerramento), 'dd/MM/yyyy') : '',
       ]),
       filename: 'prioridades_concluidas',
     });
   };
+
 
   const topPriority = activePriorities[0];
   const lastAdded = [...allPriorities].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
