@@ -212,29 +212,40 @@ export default function AuditLog() {
             {filtered.map(r => (
               <Card
                 key={r.id}
-                className="border-border/60 shadow-card cursor-pointer hover:border-primary/40 transition-colors"
+                className="border-border/60 shadow-card cursor-pointer hover:border-primary/40 hover:bg-muted/20 transition-colors"
                 onClick={() => setDetail(r)}
               >
-                <CardContent className="py-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] ${SEVERITY_CLASS[r.severity || 'baixo']}`}>
-                    {SEVERITY_LABEL[r.severity || 'baixo']}
-                  </Badge>
-                  <Badge variant="secondary" className="text-[10px]">{EVENT_LABEL[r.event_type || 'sistema']}</Badge>
-                  <span className="text-sm font-medium">{r.action}</span>
-                  {r.entity_label && <span className="text-sm text-muted-foreground">· {r.entity_label}</span>}
-                  {(r.old_value || r.new_value) && (
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {r.old_value || '—'} → {r.new_value || '—'}
-                    </span>
-                  )}
-                  <span className="text-xs text-muted-foreground ml-auto text-right">
-                    {r.user_name || 'Sistema'}
-                    {r.section_name ? ` · ${r.section_name}` : ''} · {new Date(r.created_at).toLocaleString('pt-BR')}
-                  </span>
+                <CardContent className="py-3 flex flex-col gap-2 md:flex-row md:items-center">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="outline" className={`h-5 px-2 text-[10px] leading-none inline-flex items-center ${SEVERITY_CLASS[r.severity || 'baixo']}`}>
+                      {SEVERITY_LABEL[r.severity || 'baixo']}
+                    </Badge>
+                    <Badge variant="secondary" className="h-5 px-2 text-[10px] leading-none inline-flex items-center">
+                      {EVENT_LABEL[r.event_type || 'sistema']}
+                    </Badge>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-tight truncate">
+                      {r.action}
+                      {r.entity_label && <span className="text-muted-foreground font-normal"> · {r.entity_label}</span>}
+                    </p>
+                    {(r.old_value || r.new_value) && (
+                      <p className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+                        {r.old_value || '—'} → {r.new_value || '—'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="shrink-0 md:text-right">
+                    <p className="text-xs font-medium truncate">{r.user_name || 'Sistema'}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">
+                      {r.section_name ? `${r.section_name} · ` : ''}{new Date(r.created_at).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+
         )}
 
         <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
