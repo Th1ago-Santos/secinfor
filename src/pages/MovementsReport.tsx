@@ -78,20 +78,43 @@ export default function MovementsReport() {
   };
 
   const exportPDF = () => {
+    const filters: string[] = [
+      `Período: ${dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'início'} até ${dateTo ? format(dateTo, 'dd/MM/yyyy') : 'hoje'}`,
+      `Tipo: ${filterTipo === 'all' ? 'Todos' : filterTipo}`,
+      `Evento: ${filterEvento === 'all' ? 'Todos' : filterEvento}`,
+      `Seção: ${filterSecao === 'all' ? 'Todas' : filterSecao}`,
+    ];
+    if (searchText.trim()) filters.push(`Busca: "${searchText.trim()}"`);
+
+    const transferencias = filtered.filter(m => m.tipo_evento.includes('Transferência')).length;
+    const manutencoes = filtered.filter(m => m.tipo_evento.includes('Manutenção')).length;
+    const baixas = filtered.filter(m => m.tipo_evento.includes('Baixa')).length;
+
     generatePDFReport({
       title: 'Relatório de Movimentações',
-      subtitle: `${filtered.length} registro(s) — Filtros aplicados`,
+      subtitle: `${filtered.length} registro(s) nesta emissão · ${totalCount} no total filtrado`,
+      emitter: null,
+      section: filterSecao === 'all' ? null : filterSecao,
+      filters,
+      summary: [
+        { label: 'Movimentações', value: filtered.length },
+        { label: 'Transferências', value: transferencias },
+        { label: 'Manutenções', value: manutencoes },
+        { label: 'Baixas', value: baixas },
+      ],
       columns: ['Data/Hora', 'Tipo', 'Evento', 'Origem', 'Destino', 'Resp. Ant.', 'Resp. Novo', 'Obs.'],
       rows: filtered.map(m => [
         new Date(m.data_hora).toLocaleString('pt-BR'), m.item_tipo, m.tipo_evento,
-        m.secao_origem || '—', m.secao_destino || '—', m.responsavel_anterior || '—',
-        m.responsavel_novo || '—', m.observacao || '—',
+        m.secao_origem || '', m.secao_destino || '', m.responsavel_anterior || '',
+        m.responsavel_novo || '', m.observacao || '',
       ]),
+      columnWidths: { 0: 32 },
       filename: 'movimentacoes',
       orientation: 'landscape',
     });
     toast.success('PDF exportado com sucesso.');
   };
+
 
   const eventColor = (tipo: string) => {
     if (tipo.includes('Manutenção iniciada')) return 'destructive';
