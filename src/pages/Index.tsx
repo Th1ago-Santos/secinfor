@@ -21,9 +21,23 @@ import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import { Notebook, statusColor } from '@/types';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/hooks/useAuth';
+
 import CautelaPrint from '@/components/CautelaPrint';
 import MaterialLabel from '@/components/MaterialLabel';
 import NotebookPhoto from '@/components/NotebookPhoto';
+import type { CellColorMap } from '@/lib/pdfExport';
+
+/** Cores executivas por status de patrimônio (PDF). */
+const NOTEBOOK_STATUS_RGB: CellColorMap = {
+  'Em uso': [22, 163, 74],
+  'Em estoque': [14, 165, 233],
+  'Em manutenção': [217, 119, 6],
+  'Baixado': [107, 114, 128],
+  'Fora de Carga': [220, 38, 38],
+};
+
+
 
 export default function Index() {
   const [searchParams] = useSearchParams();
@@ -43,6 +57,8 @@ export default function Index() {
   const { sections } = useSections();
   const queryClient = useQueryClient();
   const { canEdit, sectionScope } = useUserRole();
+  const { user } = useAuth();
+
 
   const resetPage = () => setPage(0);
 
@@ -88,14 +104,40 @@ export default function Index() {
   };
 
   const exportPDF = () => {
+    const emUso = notebooks.filter(n => n.status === 'Em uso').length;
+    const foraCarga = notebooks.filter(n => n.status === 'Fora de Carga').length;
+    const baixado = notebooks.filter(n => n.status === 'Baixado').length;
+    const semMilitar = notebooks.filter(n => !n.militar || !String(n.militar).trim()).length;
+
+    const filters: string[] = [
+      `Seção: ${sectionScope || (filterSecao === 'all' ? 'Todas' : filterSecao)}`,
+      `Status: ${filterStatus === 'all' ? 'Todos' : filterStatus}`,
+    ];
+    if (searchTerm.trim()) filters.push(`Busca: "${searchTerm.trim()}"`);
+    if (totalPages > 1) filters.push(`Página ${page + 1} de ${totalPages}`);
+
     generatePDFReport({
       title: 'Relatório de Notebooks',
-      subtitle: `${totalCount} registro(s)`,
+      subtitle: `${notebooks.length} registro(s) nesta emissão · ${totalCount} no total filtrado`,
+      section: sectionScope || (filterSecao === 'all' ? null : filterSecao),
+      emitter: user?.email || null,
+      filters,
+      summary: [
+        { label: 'Total de notebooks', value: totalCount },
+        { label: 'Em uso', value: emUso },
+        { label: 'Fora de carga', value: foraCarga },
+        { label: 'Baixados', value: baixado },
+        { label: 'Sem responsável', value: semMilitar },
+      ],
       columns: ['Patrimônio', 'Modelo', 'Seção', 'Militar', 'Status'],
       rows: notebooks.map(n => [n.patrimonio, n.modelo, n.secao, n.militar, n.status]),
+      colorColumnIndex: 4,
+      colorMap: NOTEBOOK_STATUS_RGB,
+      columnWidths: { 0: 28, 4: 30 },
       filename: 'notebooks',
     });
     toast.success('PDF exportado.');
+
   };
 
   const handleDelete = async () => {

@@ -103,18 +103,38 @@ export default function Alerts() {
   };
 
   const exportPDF = () => {
+    const criticos = alerts.filter(a => a.nivel === 'critico' || a.nivel === 'alto').length;
+    const abertos = alerts.filter(a => a.status !== 'resolvido').length;
+    const resolvidos = alerts.filter(a => a.status === 'resolvido').length;
+
     generatePDFReport({
       title: 'Relatório de Alertas',
-      subtitle: `${alerts.length} alerta(s) — Status: ${filterStatus === 'all' ? 'Todos' : filterStatus}`,
+      subtitle: `${alerts.length} alerta(s) na emissão`,
+      emitter: user?.email || null,
+      filters: [`Status: ${filterStatus === 'all' ? 'Todos' : filterStatus}`],
+      summary: [
+        { label: 'Total de alertas', value: alerts.length },
+        { label: 'Em aberto', value: abertos },
+        { label: 'Críticos/Altos', value: criticos },
+        { label: 'Resolvidos', value: resolvidos },
+      ],
       columns: ['Data', 'Nível', 'Tipo', 'Mensagem', 'Patrimônio', 'Seção', 'Status'],
       rows: alerts.map(a => [
         new Date(a.created_at).toLocaleString('pt-BR'), a.nivel, a.tipo, a.mensagem,
-        a.item_patrimonio || '—', a.secao || '—', a.status,
+        a.item_patrimonio || '', a.secao || '', a.status,
       ]),
+      colorColumnIndex: 1,
+      colorMap: {
+        critico: [220, 38, 38],
+        alto: [220, 38, 38],
+        medio: [217, 119, 6],
+        baixo: [107, 114, 128],
+      },
       filename: 'alertas',
     });
     toast.success('PDF exportado com sucesso.');
   };
+
 
   return (
     <PageTransition>
