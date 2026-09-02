@@ -294,14 +294,16 @@ function StatCard({ icon: Icon, label, value, tone, small }: {
 }) {
   return (
     <Card className="border-border/60 shadow-card">
-      <CardContent className="py-3">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5">
-          <Icon className="h-3 w-3" /> {label}
+      <CardContent className="py-3 space-y-1">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 leading-none">
+          <Icon className="h-3 w-3 shrink-0" />
+          <span className="truncate">{label}</span>
         </p>
-        <p className={`font-bold tabular-nums ${small ? 'text-sm truncate' : 'text-2xl'} ${tone === 'destructive' ? 'text-destructive' : ''}`}>
+        <p className={`font-bold tabular-nums leading-tight ${small ? 'text-sm truncate' : 'text-2xl'} ${tone === 'destructive' ? 'text-destructive' : ''}`}>
           {value}
         </p>
       </CardContent>
     </Card>
   );
 }
+
