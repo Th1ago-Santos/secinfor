@@ -45,6 +45,8 @@ export default function Index() {
   const { sections } = useSections();
   const queryClient = useQueryClient();
   const { canEdit, sectionScope } = useUserRole();
+  const { user } = useAuth();
+
 
   const resetPage = () => setPage(0);
 
