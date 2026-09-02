@@ -26,6 +26,18 @@ import { useAuth } from '@/hooks/useAuth';
 import CautelaPrint from '@/components/CautelaPrint';
 import MaterialLabel from '@/components/MaterialLabel';
 import NotebookPhoto from '@/components/NotebookPhoto';
+import type { CellColorMap } from '@/lib/pdfExport';
+
+/** Cores executivas por status de patrimônio (PDF). */
+const NOTEBOOK_STATUS_RGB: CellColorMap = {
+  'Em uso': [22, 163, 74],
+  'Em estoque': [14, 165, 233],
+  'Em manutenção': [217, 119, 6],
+  'Baixado': [107, 114, 128],
+  'Fora de Carga': [220, 38, 38],
+};
+
+
 
 export default function Index() {
   const [searchParams] = useSearchParams();
