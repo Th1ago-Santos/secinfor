@@ -20,6 +20,17 @@ export type Material = {
   codigo_material: string;
   numero_ficha: string;
   nome: string;
+  section_id: string | null;
+  section_name: string | null;
+  responsavel: string | null;
+  situacao: string | null;
+  quantidade: number;
+  unidade: string | null;
+  valor_unitario: number | string | null;
+  data_aquisicao: string | null;
+  nota_fiscal: string | null;
+  estado_conservacao: string | null;
+  observacoes: string | null;
   created_at: string;
   updated_at: string;
 };
