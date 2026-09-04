@@ -102,8 +102,10 @@ export default function Inventory() {
     let nbQuery = supabase.from('notebooks').select('patrimonio');
     if (secFilter) nbQuery = nbQuery.eq('secao', secFilter);
     const { data: nbs } = await nbQuery;
-    // Material Carga não possui vínculo de seção; no escopo por seção é omitido
-    const { data: mats } = secFilter ? { data: [] as any[] } : await supabase.from('materials').select('patrimonio');
+    // Material Carga já possui vínculo de seção (section_name); RLS limita chefe_secao
+    let matQuery = supabase.from('materials').select('patrimonio');
+    if (secFilter) matQuery = matQuery.eq('section_name', secFilter);
+    const { data: mats } = await matQuery;
     setExpectedNotebooks((nbs || []).map((n: any) => n.patrimonio));
     setExpectedMaterials((mats || []).map((m: any) => m.patrimonio));
     setSessionActive(false);
