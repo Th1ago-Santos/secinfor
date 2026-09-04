@@ -32,6 +32,7 @@ const allNavItems = [
   { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
   { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador'] },
+  { label: 'Controle Financeiro', path: '/materiais/financeiro', icon: Wallet, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
   { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
