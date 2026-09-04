@@ -16,6 +16,7 @@ import PrintView from "./pages/PrintView";
 import NotebookLabel from "./pages/NotebookLabel";
 import Materials from "./pages/Materials";
 import MaterialForm from "./pages/MaterialForm";
+import MaterialsFinance from "./pages/MaterialsFinance";
 import MovementHistory from "./pages/MovementHistory";
 import MovementsReport from "./pages/MovementsReport";
 import QuickLookup from "./pages/QuickLookup";
