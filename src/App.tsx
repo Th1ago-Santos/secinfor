@@ -16,6 +16,7 @@ import PrintView from "./pages/PrintView";
 import NotebookLabel from "./pages/NotebookLabel";
 import Materials from "./pages/Materials";
 import MaterialForm from "./pages/MaterialForm";
+import MaterialsFinance from "./pages/MaterialsFinance";
 import MovementHistory from "./pages/MovementHistory";
 import MovementsReport from "./pages/MovementsReport";
 import QuickLookup from "./pages/QuickLookup";
@@ -54,6 +55,7 @@ function AnimatedRoutes() {
         <Route path="/notebooks/:id/ficha" element={<ProtectedRoute><NotebookLabel /></ProtectedRoute>} />
         <Route path="/materiais" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
         <Route path="/materiais/novo" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
+        <Route path="/materiais/financeiro" element={<ProtectedRoute><MaterialsFinance /></ProtectedRoute>} />
         <Route path="/materiais/:id/editar" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
         <Route path="/materiais/:id/historico" element={<ProtectedRoute><MovementHistory /></ProtectedRoute>} />
         <Route path="/movimentacoes" element={<ProtectedRoute><MovementsReport /></ProtectedRoute>} />
