@@ -226,6 +226,149 @@ export type Database = {
         }
         Relationships: []
       }
+      material_conference_items: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          codigo_material: string | null
+          conference_id: string
+          created_at: string
+          id: string
+          material_id: string | null
+          nome_material: string | null
+          numero_ficha: string | null
+          observation: string | null
+          patrimonio: string | null
+          quantidade: number
+          responsavel: string | null
+          section_id: string | null
+          section_name: string | null
+          situacao_material: string | null
+          status: string
+          updated_at: string
+          valor_unitario: number | null
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          codigo_material?: string | null
+          conference_id: string
+          created_at?: string
+          id?: string
+          material_id?: string | null
+          nome_material?: string | null
+          numero_ficha?: string | null
+          observation?: string | null
+          patrimonio?: string | null
+          quantidade?: number
+          responsavel?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          situacao_material?: string | null
+          status?: string
+          updated_at?: string
+          valor_unitario?: number | null
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          codigo_material?: string | null
+          conference_id?: string
+          created_at?: string
+          id?: string
+          material_id?: string | null
+          nome_material?: string | null
+          numero_ficha?: string | null
+          observation?: string | null
+          patrimonio?: string | null
+          quantidade?: number
+          responsavel?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          situacao_material?: string | null
+          status?: string
+          updated_at?: string
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_conference_items_conference_id_fkey"
+            columns: ["conference_id"]
+            isOneToOne: false
+            referencedRelation: "material_conferences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_conference_items_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_conferences: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          final_report_url: string | null
+          id: string
+          notes: string | null
+          reopened_at: string | null
+          responsible_name: string | null
+          responsible_user_id: string | null
+          section_id: string | null
+          section_name: string | null
+          started_at: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          final_report_url?: string | null
+          id?: string
+          notes?: string | null
+          reopened_at?: string | null
+          responsible_name?: string | null
+          responsible_user_id?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          started_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          final_report_url?: string | null
+          id?: string
+          notes?: string | null
+          reopened_at?: string | null
+          responsible_name?: string | null
+          responsible_user_id?: string | null
+          section_id?: string | null
+          section_name?: string | null
+          started_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_conferences_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           codigo_material: string
@@ -868,6 +1011,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_material: { Args: { _material_id: string }; Returns: boolean }
+      can_access_material_conference: {
+        Args: { _conference_id: string }
+        Returns: boolean
+      }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       get_user_section: { Args: { _user_id: string }; Returns: string }
       get_user_section_id: { Args: { _user_id: string }; Returns: string }

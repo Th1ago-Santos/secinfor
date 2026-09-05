@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.can_access_material_conference(uuid) FROM anon, authenticated, public;
