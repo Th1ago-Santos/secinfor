@@ -19,7 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LogOut, Monitor, Printer, Package, ClipboardCheck,
+  LogOut, Monitor, Printer, Package, ClipboardCheck, ClipboardList,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
   Ticket, SlidersHorizontal, Wallet,
   ScrollText,
