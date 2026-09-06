@@ -17,6 +17,8 @@ import NotebookLabel from "./pages/NotebookLabel";
 import Materials from "./pages/Materials";
 import MaterialForm from "./pages/MaterialForm";
 import MaterialsFinance from "./pages/MaterialsFinance";
+import MaterialConferences from "./pages/MaterialConferences";
+import MaterialConferenceDetail from "./pages/MaterialConferenceDetail";
 import MovementHistory from "./pages/MovementHistory";
 import MovementsReport from "./pages/MovementsReport";
 import QuickLookup from "./pages/QuickLookup";
