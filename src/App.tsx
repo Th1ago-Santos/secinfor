@@ -58,6 +58,8 @@ function AnimatedRoutes() {
         <Route path="/materiais" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
         <Route path="/materiais/novo" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
         <Route path="/materiais/financeiro" element={<ProtectedRoute><MaterialsFinance /></ProtectedRoute>} />
+        <Route path="/materiais/conferencias" element={<ProtectedRoute><MaterialConferences /></ProtectedRoute>} />
+        <Route path="/materiais/conferencias/:id" element={<ProtectedRoute><MaterialConferenceDetail /></ProtectedRoute>} />
         <Route path="/materiais/:id/editar" element={<ProtectedRoute><MaterialForm /></ProtectedRoute>} />
         <Route path="/materiais/:id/historico" element={<ProtectedRoute><MovementHistory /></ProtectedRoute>} />
         <Route path="/movimentacoes" element={<ProtectedRoute><MovementsReport /></ProtectedRoute>} />
