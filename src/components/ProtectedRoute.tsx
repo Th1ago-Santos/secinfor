@@ -29,7 +29,7 @@ const routeTitles: Record<string, string> = {
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
   admin: ['*'], // all routes
-  chefe_secao: ['/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa'],
+  chefe_secao: ['/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa', '/materiais'],
   operador: ['/', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
   visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
@@ -37,9 +37,13 @@ const roleRoutes: Record<string, string[]> = {
 // Rotas administrativas globais: nunca liberadas fora do admin
 const adminOnlyRoutes = ['/usuarios', '/auditoria', '/secoes', '/chamados/config'];
 
+// Rotas de escrita bloqueadas para perfis somente leitura
+const writeRoutePattern = /^\/materiais\/(novo|[^/]+\/editar)$/;
+
 function isRouteAllowed(pathname: string, role: string | null): boolean {
   if (!role) return true; // still loading
   if (role !== 'admin' && adminOnlyRoutes.some(r => pathname.startsWith(r))) return false;
+  if ((role === 'chefe_secao' || role === 'visualizador') && writeRoutePattern.test(pathname)) return false;
   const allowed = roleRoutes[role];
   if (!allowed) return false;
   if (allowed.includes('*')) return true;
