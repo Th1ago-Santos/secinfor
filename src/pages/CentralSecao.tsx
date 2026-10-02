@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, RefreshCw, Ticket, Clock, CheckCircle2, AlertTriangle, Package, Wallet,
-  ClipboardList, AlertOctagon, Laptop, Wrench, ArrowRightLeft, UserX, ShieldAlert,
+  ClipboardList, AlertOctagon, Laptop, ArrowRightLeft, ShieldAlert,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole, ROLE_LABELS } from '@/hooks/useUserRole';

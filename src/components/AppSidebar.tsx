@@ -19,7 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LogOut, Monitor, Printer, Package, ClipboardCheck, ClipboardList,
+  Building2, LogOut, Monitor, Printer, Package, ClipboardCheck, ClipboardList,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
   Ticket, SlidersHorizontal, Wallet,
   ScrollText,
@@ -29,6 +29,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const allNavItems = [
   { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
+  { label: 'Central da Seção', path: '/central-secao', icon: Building2, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
   { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
   { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador', 'chefe_secao'] },

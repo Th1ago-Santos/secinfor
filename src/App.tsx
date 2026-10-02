@@ -35,6 +35,7 @@ import TicketDetail from "./pages/TicketDetail";
 import TicketLabel from "./pages/TicketLabel";
 import TicketAdmin from "./pages/TicketAdmin";
 import TicketsDashboard from "./pages/TicketsDashboard";
+import CentralSecao from "./pages/CentralSecao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function AnimatedRoutes() {
         <Route path="/chamado/publico/:token" element={<TicketDetail publicMode />} />
         <Route path="/chamados/:id/publico" element={<TicketDetail publicMode />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/central-secao" element={<ProtectedRoute><CentralSecao /></ProtectedRoute>} />
         <Route path="/notebooks" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/itens/novo" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
         <Route path="/itens/:id/editar" element={<ProtectedRoute><NotebookForm /></ProtectedRoute>} />
