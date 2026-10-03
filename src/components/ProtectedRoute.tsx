@@ -38,12 +38,22 @@ const roleRoutes: Record<string, string[]> = {
 // Rotas administrativas globais: nunca liberadas fora do admin
 const adminOnlyRoutes = ['/usuarios', '/auditoria', '/secoes', '/chamados/config'];
 
+// Rotas restritas a admin/operador (fora do menu dos demais perfis)
+const staffOnlyRoutes = ['/chamados/dashboard'];
+
+// Página inicial de cada perfil (quando "/" não é permitido)
+const roleHome: Record<string, string> = {
+  chefe_secao: '/central-secao',
+  visualizador: '/chamados',
+};
+
 // Rotas de escrita bloqueadas para perfis somente leitura
 const writeRoutePattern = /^\/materiais\/(novo|[^/]+\/editar)$/;
 
 function isRouteAllowed(pathname: string, role: string | null): boolean {
   if (!role) return true; // still loading
   if (role !== 'admin' && adminOnlyRoutes.some(r => pathname.startsWith(r))) return false;
+  if (role !== 'admin' && role !== 'operador' && staffOnlyRoutes.some(r => pathname.startsWith(r))) return false;
   if ((role === 'chefe_secao' || role === 'visualizador') && writeRoutePattern.test(pathname)) return false;
   const allowed = roleRoutes[role];
   if (!allowed) return false;
@@ -71,6 +81,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  if (location.pathname === '/' && role && roleHome[role]) {
+    return <Navigate to={roleHome[role]} replace />;
+  }
 
   const currentTitle = routeTitles[location.pathname] || '';
 
