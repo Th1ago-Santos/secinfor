@@ -12,6 +12,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -21,30 +22,45 @@ import {
 import {
   Building2, LogOut, Monitor, Printer, Package, ClipboardCheck, ClipboardList,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
-  Ticket, SlidersHorizontal, Wallet,
+  Ticket, SlidersHorizontal, Wallet, PieChart,
   ScrollText,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 
-const allNavItems = [
-  { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
-  { label: 'Central da Seção', path: '/central-secao', icon: Building2, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
-  { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Controle Financeiro', path: '/materiais/financeiro', icon: Wallet, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Conferência de Carga', path: '/materiais/conferencias', icon: ClipboardList, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
-  { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador', 'chefe_secao'] },
-  { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
-  { label: 'Mapa Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
-  { label: 'Seções', path: '/secoes', icon: Settings, roles: ['admin'] },
-  { label: 'Filas/Status', path: '/chamados/config', icon: SlidersHorizontal, roles: ['admin'] },
-  { label: 'Impressão', path: '/impressao', icon: Printer, roles: ['admin', 'operador'] },
-  { label: 'Usuários', path: '/usuarios', icon: Users, roles: ['admin'] },
-  { label: 'Auditoria', path: '/auditoria', icon: ScrollText, roles: ['admin'] },
+type NavItem = { label: string; path: string; icon: any; roles: string[] };
+const navGroups: { title: string; items: NavItem[] }[] = [
+  { title: 'Visão Geral', items: [
+    { label: 'Dashboard', path: '/', icon: BarChart3, roles: ['admin', 'operador'] },
+    { label: 'Central da Seção', path: '/central-secao', icon: Building2, roles: ['admin', 'operador', 'chefe_secao'] },
+  ]},
+  { title: 'Chamados', items: [
+    { label: 'Chamados', path: '/chamados', icon: Ticket, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
+    { label: 'Painel de Chamados', path: '/chamados/dashboard', icon: PieChart, roles: ['admin', 'operador'] },
+  ]},
+  { title: 'Patrimônio', items: [
+    { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
+    { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador', 'chefe_secao'] },
+    { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
+    { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
+    { label: 'Mapa de Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
+  ]},
+  { title: 'Material Carga', items: [
+    { label: 'Material Carga', path: '/materiais', icon: Package, roles: ['admin', 'operador', 'chefe_secao'] },
+    { label: 'Controle Financeiro', path: '/materiais/financeiro', icon: Wallet, roles: ['admin', 'operador', 'chefe_secao'] },
+    { label: 'Conferência de Carga', path: '/materiais/conferencias', icon: ClipboardList, roles: ['admin', 'operador', 'chefe_secao'] },
+  ]},
+  { title: 'Relatórios e Auditoria', items: [
+    { label: 'Impressão', path: '/impressao', icon: Printer, roles: ['admin', 'operador'] },
+    { label: 'Auditoria', path: '/auditoria', icon: ScrollText, roles: ['admin'] },
+  ]},
+  { title: 'Administração', items: [
+    { label: 'Usuários', path: '/usuarios', icon: Users, roles: ['admin'] },
+    { label: 'Seções', path: '/secoes', icon: Settings, roles: ['admin'] },
+    { label: 'Configurações de Chamados', path: '/chamados/config', icon: SlidersHorizontal, roles: ['admin'] },
+  ]},
 ];
+const allPaths = navGroups.flatMap(g => g.items.map(i => i.path));
 
 export default function AppSidebar() {
   const { user, signOut } = useAuth();
@@ -55,7 +71,9 @@ export default function AppSidebar() {
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
 
-  const navItems = allNavItems.filter(item => !role || item.roles.includes(role));
+  const groups = navGroups
+    .map(g => ({ ...g, items: g.items.filter(i => !role || i.roles.includes(role)) }))
+    .filter(g => g.items.length > 0);
 
   const fetchAlertCount = () => {
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'ativo')
@@ -78,8 +96,11 @@ export default function AppSidebar() {
   }, []);
 
   const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
+    const p = location.pathname;
+    if (path === '/') return p === '/';
+    if (!(p === path || p.startsWith(path + '/'))) return false;
+    // não destacar o pai quando um item mais específico do menu corresponde
+    return !allPaths.some(o => o !== path && o.startsWith(path + '/') && (p === o || p.startsWith(o + '/')));
   };
 
   const handleLogout = async () => {
@@ -111,10 +132,17 @@ export default function AppSidebar() {
       <SidebarContent className="px-2 py-2.5">
         {!collapsed && <SidebarSearch />}
 
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
+        {groups.map((group, gi) => (
+          <SidebarGroup key={group.title} className="py-1">
+            {!collapsed && (
+              <SidebarGroupLabel className="h-6 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                {group.title}
+              </SidebarGroupLabel>
+            )}
+            {collapsed && gi > 0 && <div className="mx-2 my-1 h-px bg-sidebar-border/60" />}
+            <SidebarGroupContent>
+              <SidebarMenu>
+              {group.items.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -142,7 +170,7 @@ export default function AppSidebar() {
               ))}
 
               {/* Alerts - only for admin/operador */}
-              {showAlerts && (
+              {showAlerts && group.title === 'Visão Geral' && (
                 <SidebarMenuItem>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -184,9 +212,10 @@ export default function AppSidebar() {
                   </Tooltip>
                 </SidebarMenuItem>
               )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/60 px-3 py-3">
