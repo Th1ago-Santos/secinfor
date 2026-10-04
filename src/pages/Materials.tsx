@@ -192,6 +192,9 @@ export default function Materials() {
               <Input placeholder="Nr Ficha" value={ficha} onChange={(e) => { setFicha(e.target.value); resetPage(); }} className={`font-mono ${inputCls}`} />
               <Input placeholder="Cod Material" value={codigo} onChange={(e) => { setCodigo(e.target.value); resetPage(); }} className={`font-mono ${inputCls}`} />
 
+              {sectionScope ? (
+                <Input value={sectionScope} disabled className={inputCls} aria-label="Seção" />
+              ) : (
               <Select value={secao} onValueChange={(v) => { setSecao(v); resetPage(); }}>
                 <SelectTrigger className={inputCls}><SelectValue placeholder="Seção" /></SelectTrigger>
                 <SelectContent>
@@ -199,6 +202,7 @@ export default function Materials() {
                   {sections.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              )}
               <Input placeholder="Responsável" value={responsavel} onChange={(e) => { setResponsavel(e.target.value); resetPage(); }} className={inputCls} />
               <Select value={situacao} onValueChange={(v) => { setSituacao(v); resetPage(); }}>
                 <SelectTrigger className={inputCls}><SelectValue placeholder="Situação" /></SelectTrigger>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, RefreshCw, Ticket, Clock, CheckCircle2, AlertTriangle, Package, Wallet,
-  ClipboardList, AlertOctagon, Laptop, ArrowRightLeft, ShieldAlert,
+  ClipboardList, AlertOctagon, Laptop, ArrowRightLeft, ShieldAlert, FileDown, Loader2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole, ROLE_LABELS } from '@/hooks/useUserRole';
@@ -17,8 +17,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatusBadge, PriorityBadge } from '@/components/ui/status-badge';
-import { formatCurrencyStrict, totalValue } from '@/lib/currency';
+import { formatCurrency, formatCurrencyStrict, totalValue } from '@/lib/currency';
 import { CONFERENCE_STATUS_LABELS, conferenceBadgeClass } from '@/lib/conferenceStatus';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { logAudit } from '@/lib/audit';
+import { statusColorRgb } from '@/lib/statusColor';
+import { generateCentralPDF } from '@/lib/centralPdf';
 
 const ALL = '__all__';
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—');
@@ -39,6 +44,8 @@ export default function CentralSecao() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const { user } = useAuth();
 
   // chefe_secao: seção fixa (RLS também restringe no banco)
   const section = isChefeSecao ? sectionName : selected === ALL ? null : selected;
@@ -143,6 +150,109 @@ export default function CentralSecao() {
     { label: 'Divergências de carga', value: stats.falt + stats.div, icon: AlertOctagon, warn: stats.falt + stats.div > 0 },
   ] : [];
 
+  const exportPdf = async () => {
+    if (!stats || !data) return;
+    setExporting(true);
+    try {
+      const label = section || 'Todas as seções';
+      const roleLabel = role ? ROLE_LABELS[role] : 'Não informado';
+      const colorMap: Record<string, [number, number, number]> = {};
+      statuses.forEach(s => { colorMap[s.name] = statusColorRgb(s); });
+      const pr: Record<string, [number, number, number]> = { Urgente: [220, 38, 38], Alta: [234, 88, 12], Normal: [37, 99, 235], Baixa: [100, 116, 139] };
+      const multi = !section;
+      const last = data.conferences[0];
+      generateCentralPDF({
+        section: label, emitter: user?.email || '', role: roleLabel,
+        filename: `central_secao_${(section || 'todas').replace(/\s+/g, '_').toLowerCase()}`,
+        summary: kpis.map(k => ({ label: k.label, value: k.value })),
+        blocks: [
+          {
+            title: 'Resumo de Chamados',
+            metrics: [
+              { label: 'Críticos (Alta/Urgente)', value: stats.critical.length },
+              { label: 'Atrasados (SLA)', value: stats.overdue.length },
+              { label: 'Em andamento', value: stats.inProgress.length },
+              { label: 'Abertos', value: stats.open.length },
+            ],
+            table: {
+              caption: 'Chamados abertos (mais recentes)',
+              columns: ['Número', 'Assunto', ...(multi ? ['Seção'] : []), 'Status', 'Prioridade', 'SLA', 'Responsável', 'Abertura'],
+              rows: stats.open.slice(0, 30).map(tk => [
+                tk.ticket_number, tk.subject, ...(multi ? [tk.client_section_name] : []),
+                statusMap[tk.status_id]?.name, tk.priority,
+                stats.overdue.includes(tk) ? 'Atrasado' : 'No prazo',
+                tk.assigned_user_name || 'Sem responsável', fmtDate(tk.created_at),
+              ]),
+              colorColumnIndex: multi ? 3 : 2, colorMap,
+              emptyText: 'Nenhum chamado aberto.',
+            },
+          },
+          {
+            title: 'Resumo Patrimonial',
+            metrics: [
+              { label: 'Total de materiais', value: data.materials.length },
+              { label: 'Valor total', value: formatCurrencyStrict(stats.valor) },
+              { label: 'Sem responsável', value: stats.semResp.length },
+              { label: 'Sem valor', value: stats.semValor.length },
+              { label: 'Cadastro incompleto', value: stats.incompleto.length },
+            ],
+            table: {
+              caption: 'Últimos materiais atualizados',
+              columns: ['Patrimônio', 'Material', ...(multi ? ['Seção'] : []), 'Responsável', 'Valor total', 'Atualizado'],
+              rows: data.materials.slice(0, 10).map(x => [
+                x.patrimonio, x.nome, ...(multi ? [x.section_name] : []), x.responsavel,
+                formatCurrency(totalValue(x.valor_unitario, x.quantidade)), fmtDate(x.updated_at),
+              ]),
+              emptyText: 'Nenhum material cadastrado.',
+            },
+          },
+          {
+            title: 'Resumo de Conferências',
+            metrics: [
+              { label: 'Abertas', value: stats.confOpen.length },
+              { label: 'Concluídas', value: stats.confDone },
+              { label: 'Canceladas', value: stats.confCanc },
+              { label: 'Itens pendentes', value: stats.pend },
+              { label: 'Itens faltando', value: stats.falt },
+              { label: 'Itens divergentes', value: stats.div },
+            ],
+            table: {
+              caption: 'Última conferência',
+              columns: ['Título', 'Seção', 'Status', 'Abertura', 'Conclusão'],
+              rows: last ? [[last.title, last.section_name, CONFERENCE_STATUS_LABELS[last.status] || last.status, fmtDate(last.started_at), last.completed_at ? fmtDate(last.completed_at) : null]] : [],
+              emptyText: 'Nenhuma conferência registrada.',
+            },
+          },
+          {
+            title: 'Resumo de Notebooks / Equipamentos',
+            metrics: [
+              { label: 'Notebooks', value: data.notebooks.length },
+              { label: 'Em uso', value: stats.nbUso },
+              { label: 'Em manutenção', value: stats.nbManut },
+              { label: 'Sem seção', value: stats.nbSemSecao },
+            ],
+            table: {
+              caption: 'Últimas movimentações',
+              columns: ['Patrimônio', 'Evento', 'Origem', 'Destino', 'Data'],
+              rows: data.movements.map(mv => [nbLabel(mv.item_id), mv.tipo_evento, mv.secao_origem, mv.secao_destino, fmtDate(mv.data_hora)]),
+              emptyText: 'Nenhuma movimentação recente.',
+            },
+          },
+        ],
+      });
+      await logAudit({
+        action: 'Exportação de PDF da Central da Seção',
+        entityType: 'central_secao', entityLabel: label, eventType: 'sistema', severity: 'baixo',
+        details: { secao: label, escopo: multi ? 'todas_as_secoes' : 'secao_especifica', perfil: role, emitido_em: new Date().toISOString() },
+      });
+      toast.success('PDF da Central da Seção gerado.');
+    } catch (e: any) {
+      toast.error('Erro ao gerar PDF: ' + (e?.message || 'desconhecido'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const Mini = ({ label, value, warn }: { label: string; value: number | string; warn?: boolean }) => (
     <div className="rounded-lg border border-border/60 px-3 py-2">
       <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -170,6 +280,9 @@ export default function CentralSecao() {
             {isChefeSecao && <Badge variant="outline" className="h-9 px-3">{sectionName}</Badge>}
             <Button variant="outline" size="sm" className="h-9" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />Atualizar
+            </Button>
+            <Button size="sm" className="h-9" onClick={exportPdf} disabled={loading || exporting || !stats}>
+              {exporting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <FileDown className="h-4 w-4 mr-1.5" />}Exportar PDF
             </Button>
           </>}
         />
