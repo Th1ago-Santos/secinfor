@@ -92,7 +92,13 @@ export function generateCentralPDF(opts: {
         didParseCell: (d) => {
           if (d.section === 'body' && t.colorMap && t.colorColumnIndex === d.column.index) {
             const rgb = t.colorMap[String(d.cell.raw ?? '')];
-            if (rgb) { d.cell.styles.textColor = rgb; d.cell.styles.fontStyle = 'bold'; }
+            if (rgb) {
+              // escurece cores claras (ex.: amarelo) para manter leitura no papel
+              const lum = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+              const f = lum > 150 ? 0.6 : 1;
+              d.cell.styles.textColor = [Math.round(rgb[0] * f), Math.round(rgb[1] * f), Math.round(rgb[2] * f)];
+              d.cell.styles.fontStyle = 'bold';
+            }
           }
         },
       });
