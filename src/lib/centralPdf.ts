@@ -72,7 +72,7 @@ export function generateCentralPDF(opts: {
     doc.text(b.title, M, y);
     doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(M, y + 1.5, W - M, y + 1.5);
     y += 5;
-    cards(b.metrics, Math.min(b.metrics.length, 6), 11);
+    cards(b.metrics, Math.min(b.metrics.length, 6), 12.5);
     if (b.table) {
       ensure(18);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...MUTED);
