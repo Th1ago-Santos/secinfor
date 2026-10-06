@@ -8,6 +8,13 @@
       "when": 1790867137330,
       "tag": "0000_fix_conference_fn_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791284805515,
+      "tag": "0001_create_preventive_maintenances",
+      "breakpoints": true
     }
   ]
 }

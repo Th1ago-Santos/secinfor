@@ -533,6 +533,112 @@ export type Database = {
         }
         Relationships: []
       }
+      preventive_maintenances: {
+        Row: {
+          assigned_name: string | null
+          assigned_to: string | null
+          cancelled_at: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          equipment_label: string | null
+          equipment_type: string
+          id: string
+          maintenance_type: string
+          material_id: string | null
+          next_due_date: string | null
+          notebook_id: string | null
+          notes: string | null
+          priority: string
+          result: string | null
+          scheduled_date: string
+          section_id: string | null
+          section_name: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_name?: string | null
+          assigned_to?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipment_label?: string | null
+          equipment_type?: string
+          id?: string
+          maintenance_type: string
+          material_id?: string | null
+          next_due_date?: string | null
+          notebook_id?: string | null
+          notes?: string | null
+          priority?: string
+          result?: string | null
+          scheduled_date: string
+          section_id?: string | null
+          section_name?: string | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_name?: string | null
+          assigned_to?: string | null
+          cancelled_at?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipment_label?: string | null
+          equipment_type?: string
+          id?: string
+          maintenance_type?: string
+          material_id?: string | null
+          next_due_date?: string | null
+          notebook_id?: string | null
+          notes?: string | null
+          priority?: string
+          result?: string | null
+          scheduled_date?: string
+          section_id?: string | null
+          section_name?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preventive_maintenances_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preventive_maintenances_notebook_id_fkey"
+            columns: ["notebook_id"]
+            isOneToOne: false
+            referencedRelation: "notebooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preventive_maintenances_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
