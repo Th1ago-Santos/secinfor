@@ -22,7 +22,7 @@ import {
 import {
   Building2, LogOut, Monitor, Printer, Package, ClipboardCheck, ClipboardList,
   Laptop, BarChart3, ArrowRightLeft, Bell, Map, Settings, ListOrdered, Search, Users,
-  Ticket, SlidersHorizontal, Wallet, PieChart,
+  Ticket, SlidersHorizontal, Wallet, PieChart, Wrench,
   ScrollText,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -41,6 +41,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
   { title: 'Patrimônio', items: [
     { label: 'Notebooks', path: '/notebooks', icon: Laptop, roles: ['admin', 'operador', 'chefe_secao'] },
     { label: 'Inventário', path: '/inventario', icon: ClipboardCheck, roles: ['admin', 'operador', 'chefe_secao'] },
+    { label: 'Manutenção Preventiva', path: '/manutencao-preventiva', icon: Wrench, roles: ['admin', 'operador', 'chefe_secao'] },
     { label: 'Movimentações', path: '/movimentacoes', icon: ArrowRightLeft, roles: ['admin', 'operador'] },
     { label: 'Prioridades', path: '/prioridades', icon: ListOrdered, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },
     { label: 'Mapa de Seções', path: '/mapa-secoes', icon: Map, roles: ['admin', 'operador', 'visualizador', 'chefe_secao'] },

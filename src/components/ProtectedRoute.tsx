@@ -22,6 +22,7 @@ const routeTitles: Record<string, string> = {
   '/pesquisa': 'Pesquisa',
   '/usuarios': 'Usuários',
   '/central-secao': 'Central da Seção',
+  '/manutencao-preventiva': 'Manutenção Preventiva',
   '/chamados': 'Chamados',
   '/chamados/novo': 'Abrir Chamado',
   '/chamados/config': 'Filas e Status',
@@ -30,8 +31,8 @@ const routeTitles: Record<string, string> = {
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
   admin: ['*'], // all routes
-  chefe_secao: ['/central-secao', '/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa', '/materiais'],
-  operador: ['/', '/central-secao', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
+  chefe_secao: ['/central-secao', '/manutencao-preventiva', '/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa', '/materiais'],
+  operador: ['/', '/central-secao', '/manutencao-preventiva', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
   visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
 
