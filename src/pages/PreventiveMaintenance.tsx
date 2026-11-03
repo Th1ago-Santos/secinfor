@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
+import { ROLE_LABELS, useUserRole } from '@/hooks/useUserRole';
 import { useSections } from '@/hooks/useSections';
 import { logAudit } from '@/lib/audit';
 import { toast } from 'sonner';
@@ -21,41 +21,9 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { statusColorAlpha } from '@/lib/statusColor';
-import { Wrench, Plus, Play, CheckCircle2, XCircle, RotateCcw, Pencil, AlertTriangle, CalendarClock, Clock, ListChecks, CalendarX } from 'lucide-react';
-
-type PM = {
-  id: string; equipment_type: string; notebook_id: string | null; material_id: string | null;
-  equipment_label: string | null; section_id: string | null; section_name: string | null;
-  title: string; description: string | null; maintenance_type: string; status: string; priority: string;
-  scheduled_date: string; started_at: string | null; completed_at: string | null; cancelled_at: string | null;
-  assigned_to: string | null; assigned_name: string | null; completed_by: string | null;
-  notes: string | null; result: string | null; next_due_date: string | null; created_at: string;
-};
-
-export const PM_STATUS: Record<string, { label: string; color: string }> = {
-  planejada: { label: 'Planejada', color: '#3b82f6' },
-  em_andamento: { label: 'Em andamento', color: '#d97706' },
-  concluida: { label: 'Concluída', color: '#16a34a' },
-  atrasada: { label: 'Atrasada', color: '#dc2626' },
-  cancelada: { label: 'Cancelada', color: '#64748b' },
-};
-export const PM_TYPES: Record<string, string> = {
-  limpeza: 'Limpeza', verificacao_fisica: 'Verificação física', atualizacao_sistema: 'Atualização de sistema',
-  antivirus: 'Antivírus', backup: 'Backup', diagnostico: 'Diagnóstico', outro: 'Outro',
-};
-const PM_PRIORITY: Record<string, { label: string; color: string }> = {
-  baixa: { label: 'Baixa', color: '#64748b' }, normal: { label: 'Normal', color: '#0ea5e9' },
-  alta: { label: 'Alta', color: '#f97316' }, urgente: { label: 'Urgente', color: '#ef4444' },
-};
-
-const today = () => new Date().toISOString().slice(0, 10);
-const fmtDate = (d: string | null) => (d ? d.slice(0, 10).split('-').reverse().join('/') : '—');
-
-/** Status exibido: planejada/em andamento com data vencida aparece como atrasada. */
-function effectiveStatus(m: PM): string {
-  if ((m.status === 'planejada' || m.status === 'em_andamento') && m.scheduled_date < today()) return 'atrasada';
-  return m.status;
-}
+import { generatePreventivePDF } from '@/lib/preventivePdf';
+import { effectiveStatus, filterMaintenances, maintenanceSummary, today, fmtDate, PM_STATUS, PM_TYPES, PM_PRIORITY, type Maintenance as PM } from '@/lib/preventiveMaintenance';
+import { FileDown, Loader2, RefreshCw, Wrench, Plus, Play, CheckCircle2, XCircle, RotateCcw, Pencil, AlertTriangle, CalendarClock, Clock, ListChecks, CalendarX } from 'lucide-react';
 
 function Pill({ label, color }: { label: string; color: string }) {
   return (
@@ -77,12 +45,13 @@ const emptyForm: FormState = {
 
 export default function PreventiveMaintenance() {
   const { user } = useAuth();
-  const { canEdit, isChefeSecao, sectionId, sectionName, missingSection } = useUserRole();
+  const { role, loading: roleLoading, canEdit, isChefeSecao, sectionId, sectionName, missingSection } = useUserRole();
   const { sections } = useSections();
   const [items, setItems] = useState<PM[]>([]);
   const [notebooks, setNotebooks] = useState<{ id: string; patrimonio: string; modelo: string; secao: string }[]>([]);
   const [people, setPeople] = useState<{ user_id: string; display_name: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [q, setQ] = useState('');
@@ -119,37 +88,36 @@ export default function PreventiveMaintenance() {
 
   const sectionLabel = (m: PM) => m.section_name || sections.find(s => s.id === m.section_id)?.name || 'Não informado';
 
-  const filtered = useMemo(() => items.filter(m => {
-    const st = effectiveStatus(m);
-    if (fSection !== 'all' && m.section_id !== fSection) return false;
-    if (fStatus !== 'all' && st !== fStatus) return false;
-    if (fType !== 'all' && m.maintenance_type !== fType) return false;
-    if (fPriority !== 'all' && m.priority !== fPriority) return false;
-    if (fResp !== 'all' && (m.assigned_name || '') !== fResp) return false;
-    if (fFrom && m.scheduled_date < fFrom) return false;
-    if (fTo && m.scheduled_date > fTo) return false;
-    if (q) {
-      const s = q.toLowerCase();
-      if (![m.title, m.equipment_label, m.section_name, m.assigned_name, m.description].some(v => v?.toLowerCase().includes(s))) return false;
-    }
-    return true;
-  }), [items, q, fSection, fStatus, fType, fPriority, fResp, fFrom, fTo]);
+  const filters = useMemo(() => ({ section: isChefeSecao ? sectionId || 'none' : fSection, status: fStatus, type: fType,
+    priority: fPriority, responsible: fResp, from: fFrom, to: fTo, query: q }),
+    [isChefeSecao, sectionId, fSection, fStatus, fType, fPriority, fResp, fFrom, fTo, q]);
+  const filtered = useMemo(() => filterMaintenances(items, filters, isChefeSecao ? sectionId : null), [items, filters, isChefeSecao, sectionId]);
+  const scopedNotebooks = useMemo(() => {
+    const name = isChefeSecao ? sectionName : sections.find(s => s.id === fSection)?.name;
+    return notebooks.filter(n => !name || n.secao?.toLowerCase() === name.toLowerCase());
+  }, [notebooks, isChefeSecao, sectionName, sections, fSection]);
+  const stats = useMemo(() => maintenanceSummary(filtered, scopedNotebooks), [filtered, scopedNotebooks]);
 
-  const stats = useMemo(() => {
-    const t = today();
-    const in7 = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
-    const month = t.slice(0, 7);
-    const eff = items.map(m => ({ m, st: effectiveStatus(m) }));
-    const withNext = new Set(items.filter(m => m.notebook_id && (m.status !== 'cancelada') && ((m.next_due_date && m.next_due_date >= t) || ['planejada', 'em_andamento'].includes(m.status))).map(m => m.notebook_id));
-    return {
-      planejadas: eff.filter(e => e.st === 'planejada').length,
-      andamento: eff.filter(e => e.st === 'em_andamento').length,
-      atrasadas: eff.filter(e => e.st === 'atrasada').length,
-      concluidasMes: items.filter(m => m.status === 'concluida' && m.completed_at?.slice(0, 7) === month).length,
-      proximas: items.filter(m => ['planejada', 'em_andamento'].includes(m.status) && m.scheduled_date >= t && m.scheduled_date <= in7).length,
-      semProxima: notebooks.filter(n => !withNext.has(n.id)).length,
-    };
-  }, [items, notebooks]);
+  const exportPdf = async () => {
+    if (!role || roleLoading || role === 'visualizador' || loading || error || exporting || missingSection) return;
+    setExporting(true);
+    try {
+      const issuedAt = new Date();
+      const section = isChefeSecao ? sectionName || 'Não informado' : sections.find(s => s.id === fSection)?.name || 'Todas as seções';
+      const applied = [q.trim() && `Busca: ${q.trim()}`, fStatus !== 'all' && `Status: ${PM_STATUS[fStatus]?.label}`,
+        fType !== 'all' && `Tipo: ${PM_TYPES[fType]}`, fPriority !== 'all' && `Prioridade: ${PM_PRIORITY[fPriority]?.label}`,
+        fResp !== 'all' && `Responsável: ${fResp}`, fFrom && `De: ${fmtDate(fFrom)}`, fTo && `Até: ${fmtDate(fTo)}`].filter((v): v is string => Boolean(v));
+      generatePreventivePDF({ rows: filtered.map(m => ({ ...m, section_name: sectionLabel(m) })), section,
+        singleSection: isChefeSecao || fSection !== 'all' || new Set(filtered.map(m => m.section_id || m.section_name)).size === 1,
+        emitter: user?.email || 'Não informado', role: ROLE_LABELS[role], filters: applied,
+        summary: cards.map(c => ({ label: c.label, value: c.value })), issuedAt });
+      await logAudit({ action: 'Exportação de PDF da Manutenção Preventiva', entityType: 'manutencao_preventiva',
+        entityLabel: section, eventType: 'equipamento', severity: 'baixo',
+        details: { usuario: user?.id, perfil: role, secao: section, filtros: filters, quantidade: filtered.length, emissao: issuedAt.toISOString() } });
+      toast.success('PDF exportado.');
+    } catch { toast.error('Não foi possível exportar o PDF.'); }
+    finally { setExporting(false); }
+  };
 
   const responsaveis = useMemo(() => Array.from(new Set(items.map(m => m.assigned_name).filter(Boolean))) as string[], [items]);
 
@@ -259,7 +227,13 @@ export default function PreventiveMaintenance() {
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <PageHeader icon={Wrench} title="Manutenção Preventiva"
         description={isChefeSecao ? `Manutenções da seção ${sectionName}` : 'Planejamento e acompanhamento das manutenções dos equipamentos'}
-        actions={canEdit && <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" />Nova Manutenção</Button>} />
+        actions={<div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={load} disabled={loading}><RefreshCw className="h-4 w-4 mr-1" />Atualizar</Button>
+          <Button variant="outline" onClick={exportPdf} disabled={loading || roleLoading || exporting || !!error || !role || role === 'visualizador'}>
+            {exporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileDown className="h-4 w-4 mr-1" />}{exporting ? 'Gerando PDF...' : 'Exportar PDF'}
+          </Button>
+          {canEdit && <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" />Nova Manutenção</Button>}
+        </div>} />
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
         {cards.map(c => (
@@ -279,29 +253,29 @@ export default function PreventiveMaintenance() {
           <Input value={sectionName || ''} disabled />
         ) : (
           <Select value={fSection} onValueChange={setFSection}>
-            <SelectTrigger><SelectValue placeholder="Seção" /></SelectTrigger>
+            <SelectTrigger aria-label="Seção"><SelectValue placeholder="Seção" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Todas as seções</SelectItem>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
           </Select>
         )}
         <Select value={fStatus} onValueChange={setFStatus}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Status"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todos os status</SelectItem>{Object.entries(PM_STATUS).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fType} onValueChange={setFType}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Tipo"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todos os tipos</SelectItem>{Object.entries(PM_TYPES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fPriority} onValueChange={setFPriority}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Prioridade"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todas prioridades</SelectItem>{Object.entries(PM_PRIORITY).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fResp} onValueChange={setFResp}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger aria-label="Responsável"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">Todos responsáveis</SelectItem>{responsaveis.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
         </Select>
         <div className="col-span-2 md:col-span-4 xl:col-span-8 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          Período agendado: <Input type="date" className="w-40 h-8" value={fFrom} onChange={e => setFFrom(e.target.value)} />
-          até <Input type="date" className="w-40 h-8" value={fTo} onChange={e => setFTo(e.target.value)} />
+          Período agendado: <Input type="date" aria-label="Período inicial" className="w-40 h-8" value={fFrom} onChange={e => setFFrom(e.target.value)} />
+          até <Input type="date" aria-label="Período final" className="w-40 h-8" value={fTo} onChange={e => setFTo(e.target.value)} />
         </div>
       </CardContent></Card>
 
