@@ -83,7 +83,7 @@ export default function PreventiveMaintenance() {
     load();
     supabase.from('notebooks').select('id, patrimonio, modelo, secao').order('patrimonio').then(({ data }) => setNotebooks(data || []));
     if (canEdit) supabase.from('profiles').select('user_id, display_name').order('display_name').then(({ data }) => setPeople(data || []));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [canEdit]);
 
   const sectionLabel = (m: PM) => m.section_name || sections.find(s => s.id === m.section_id)?.name || 'Não informado';
