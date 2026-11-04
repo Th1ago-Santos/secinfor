@@ -10,6 +10,8 @@ import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,8 +24,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { statusColorAlpha } from '@/lib/statusColor';
 import { generatePreventivePDF } from '@/lib/preventivePdf';
-import { effectiveStatus, filterMaintenances, maintenanceSummary, today, fmtDate, PM_STATUS, PM_TYPES, PM_PRIORITY, type Maintenance as PM } from '@/lib/preventiveMaintenance';
-import { FileDown, Loader2, RefreshCw, Wrench, Plus, Play, CheckCircle2, XCircle, RotateCcw, Pencil, AlertTriangle, CalendarClock, Clock, ListChecks, CalendarX } from 'lucide-react';
+import { effectiveStatus, filterMaintenances, maintenanceSummary, today, fmtDate, recurrenceLabel, validRecurrence, RECURRENCE_UNITS, PM_STATUS, PM_TYPES, PM_PRIORITY, type Maintenance as PM } from '@/lib/preventiveMaintenance';
+import { FileDown, Loader2, RefreshCw, Wrench, Plus, Play, CheckCircle2, XCircle, RotateCcw, Pencil, AlertTriangle, CalendarClock, Clock, ListChecks, CalendarX, Repeat2, Eye, ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
 
 function Pill({ label, color }: { label: string; color: string }) {
   return (
@@ -36,11 +38,11 @@ function Pill({ label, color }: { label: string; color: string }) {
 
 type FormState = {
   notebook_id: string; equipment_label: string; section_id: string; title: string; maintenance_type: string;
-  description: string; priority: string; scheduled_date: string; assigned_to: string; notes: string; next_due_date: string;
+  description: string; priority: string; scheduled_date: string; assigned_to: string; notes: string; next_due_date: string; recurrence_enabled: boolean; recurrence_interval: string; recurrence_unit: string;
 };
 const emptyForm: FormState = {
   notebook_id: '', equipment_label: '', section_id: '', title: '', maintenance_type: '', description: '',
-  priority: 'normal', scheduled_date: '', assigned_to: '', notes: '', next_due_date: '',
+  priority: 'normal', scheduled_date: '', assigned_to: '', notes: '', next_due_date: '', recurrence_enabled: false, recurrence_interval: '', recurrence_unit: '',
 };
 
 export default function PreventiveMaintenance() {
@@ -67,6 +69,8 @@ export default function PreventiveMaintenance() {
   const [editing, setEditing] = useState<PM | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [viewing, setViewing] = useState<PM | null>(null);
+  const [deleting, setDeleting] = useState<PM | null>(null);
   const [completing, setCompleting] = useState<PM | null>(null);
   const [completeResult, setCompleteResult] = useState('');
   const [completeNext, setCompleteNext] = useState('');
@@ -133,7 +137,7 @@ export default function PreventiveMaintenance() {
     setForm({
       notebook_id: m.notebook_id || '', equipment_label: m.equipment_label || '', section_id: m.section_id || '', title: m.title,
       maintenance_type: m.maintenance_type, description: m.description || '', priority: m.priority, scheduled_date: m.scheduled_date,
-      assigned_to: m.assigned_to || '', notes: m.notes || '', next_due_date: m.next_due_date || '',
+      assigned_to: m.assigned_to || '', notes: m.notes || '', next_due_date: m.next_due_date || '', recurrence_enabled: !!m.recurrence_enabled, recurrence_interval: String(m.recurrence_interval || ''), recurrence_unit: m.recurrence_unit || '',
     });
     setFormOpen(true);
   };
@@ -151,6 +155,9 @@ export default function PreventiveMaintenance() {
     if (form.next_due_date && form.next_due_date < form.scheduled_date) {
       toast.error('A próxima manutenção deve ser depois da data agendada.'); return;
     }
+    if (form.recurrence_enabled && !validRecurrence(Number(form.recurrence_interval), form.recurrence_unit)) {
+      toast.error('Informe um intervalo inteiro maior que zero e uma unidade.'); return;
+    }
     setSaving(true);
     const sec = sections.find(s => s.id === form.section_id);
     const person = people.find(p => p.user_id === form.assigned_to);
@@ -163,6 +170,7 @@ export default function PreventiveMaintenance() {
       priority: form.priority, scheduled_date: form.scheduled_date,
       assigned_to: form.assigned_to || null, assigned_name: person?.display_name || null,
       notes: form.notes.trim() || null, next_due_date: form.next_due_date || null,
+      recurrence_enabled: form.recurrence_enabled, recurrence_interval: form.recurrence_enabled ? Number(form.recurrence_interval) : null, recurrence_unit: form.recurrence_enabled ? form.recurrence_unit : null,
     };
     if (editing) {
       const { error } = await supabase.from('preventive_maintenances').update(payload).eq('id', editing.id);
@@ -196,13 +204,28 @@ export default function PreventiveMaintenance() {
   const start = (m: PM) => setStatus(m, 'em_andamento', { started_at: new Date().toISOString() }, 'Início de manutenção preventiva', 'baixo');
   const reopen = (m: PM) => setStatus(m, 'planejada', { completed_at: null, completed_by: null, cancelled_at: null }, 'Reabertura de manutenção preventiva', 'medio');
   const confirmComplete = async () => {
-    if (!completing) return;
+    if (!completing || saving) return;
     if (completeNext && completeNext < today()) { toast.error('A próxima manutenção deve ser uma data futura.'); return; }
-    const ok = await setStatus(completing, 'concluida', {
-      completed_at: new Date().toISOString(), completed_by: user?.id, result: completeResult.trim() || null,
-      next_due_date: completeNext || completing.next_due_date,
-    }, 'Conclusão de manutenção preventiva', 'medio');
-    if (ok) setCompleting(null);
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.rpc('complete_preventive_maintenance', {
+        p_id: completing.id, p_result: completeResult.trim() || undefined, p_next_date: completeNext || undefined,
+      });
+      if (error) throw error;
+      const result = data as { next_id?: string; reused?: boolean; removed?: boolean };
+      toast.success(result.removed ? 'Concluída. A próxima ocorrência já havia sido gerada e excluída.' : result.next_id ?
+        result.reused ? 'Concluída. Próxima ocorrência existente reutilizada.' : 'Concluída. Próxima ocorrência planejada criada.' : 'Manutenção concluída.');
+      setCompleting(null); await load();
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Não foi possível concluir a manutenção.'); }
+    finally { setSaving(false); }
+  };
+  const confirmDelete = async () => {
+    if (!deleting || role !== 'admin' || saving) return;
+    setSaving(true);
+    const { error } = await supabase.from('preventive_maintenances').delete().eq('id', deleting.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Ocorrência excluída.'); setDeleting(null); await load();
   };
   const confirmCancel = async () => {
     if (!cancelling) return;
@@ -291,7 +314,7 @@ export default function PreventiveMaintenance() {
             <TableHeader><TableRow>
               <TableHead>Equipamento</TableHead><TableHead>Seção</TableHead><TableHead>Tipo</TableHead><TableHead>Status</TableHead>
               <TableHead>Prioridade</TableHead><TableHead>Agendada</TableHead><TableHead>Responsável</TableHead><TableHead>Próxima</TableHead>
-              {canEdit && <TableHead className="text-right">Ações</TableHead>}
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow></TableHeader>
             <TableBody>
               {filtered.map(m => {
@@ -299,7 +322,7 @@ export default function PreventiveMaintenance() {
                 const open = m.status === 'planejada' || m.status === 'em_andamento';
                 return (
                   <TableRow key={m.id}>
-                    <TableCell><p className="font-medium text-sm">{m.title}</p><p className="text-xs text-muted-foreground">{m.equipment_label || 'Não informado'}</p></TableCell>
+                    <TableCell><p className="font-medium text-sm">{m.title}</p><p className="text-xs text-muted-foreground">{m.equipment_label || 'Não informado'}</p><p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">{m.recurrence_enabled && <Repeat2 className="h-3 w-3 shrink-0" />}{recurrenceLabel(m)}</p></TableCell>
                     <TableCell className="text-sm">{sectionLabel(m)}</TableCell>
                     <TableCell className="text-sm">{PM_TYPES[m.maintenance_type] || m.maintenance_type}</TableCell>
                     <TableCell><Pill label={PM_STATUS[st]?.label || st} color={PM_STATUS[st]?.color || '#64748b'} /></TableCell>
@@ -307,15 +330,17 @@ export default function PreventiveMaintenance() {
                     <TableCell className="text-sm font-mono">{fmtDate(m.scheduled_date)}</TableCell>
                     <TableCell className="text-sm">{m.assigned_name || '—'}</TableCell>
                     <TableCell className="text-sm font-mono">{fmtDate(m.next_due_date)}</TableCell>
-                    {canEdit && (
-                      <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="text-right whitespace-nowrap">
+                        <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Detalhes" onClick={() => setViewing(m)}><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Detalhes</TooltipContent></Tooltip>
+                        {canEdit && <>
                         {open && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>}
                         {m.status === 'planejada' && <Button size="icon" variant="ghost" title="Iniciar" onClick={() => start(m)}><Play className="h-4 w-4" /></Button>}
                         {open && <Button size="icon" variant="ghost" title="Concluir" onClick={() => { setCompleting(m); setCompleteResult(m.result || ''); setCompleteNext(m.next_due_date || ''); }}><CheckCircle2 className="h-4 w-4" /></Button>}
                         {open && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => setCancelling(m)}><XCircle className="h-4 w-4" /></Button>}
                         {!open && <Button size="icon" variant="ghost" title="Reabrir" onClick={() => reopen(m)}><RotateCcw className="h-4 w-4" /></Button>}
+                        </>}
+                        {role === 'admin' && <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Excluir ocorrência" onClick={() => setDeleting(m)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Excluir ocorrência</TooltipContent></Tooltip>}
                       </TableCell>
-                    )}
                   </TableRow>
                 );
               })}
@@ -362,6 +387,12 @@ export default function PreventiveMaintenance() {
             </div>
             <div><Label>Data agendada *</Label><Input type="date" value={form.scheduled_date} onChange={e => setForm({ ...form, scheduled_date: e.target.value })} /></div>
             <div><Label>Próxima data prevista</Label><Input type="date" value={form.next_due_date} onChange={e => setForm({ ...form, next_due_date: e.target.value })} /></div>
+            <div className="md:col-span-2 flex items-center gap-3"><Switch id="recurrence" checked={form.recurrence_enabled} onCheckedChange={enabled => setForm({ ...form, recurrence_enabled: enabled, recurrence_interval: enabled ? '1' : '', recurrence_unit: enabled ? 'meses' : '' })} /><Label htmlFor="recurrence">Manutenção recorrente</Label></div>
+            {form.recurrence_enabled && <>
+              <div><Label htmlFor="recurrence-quantity">Quantidade do intervalo</Label><Input id="recurrence-quantity" type="number" min="1" step="1" value={form.recurrence_interval} onChange={e => setForm({ ...form, recurrence_interval: e.target.value })} /></div>
+              <div><Label>Unidade</Label><Select value={form.recurrence_unit} onValueChange={v => setForm({ ...form, recurrence_unit: v })}><SelectTrigger aria-label="Unidade de recorrência"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(RECURRENCE_UNITS).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select></div>
+            </>}
+            <p className="md:col-span-2 text-sm text-muted-foreground">{recurrenceLabel({ recurrence_enabled: form.recurrence_enabled, recurrence_interval: Number(form.recurrence_interval), recurrence_unit: form.recurrence_unit })}</p>
             <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} maxLength={2000} /></div>
             <div className="md:col-span-2"><Label>Observações</Label><Textarea rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} maxLength={2000} /></div>
           </div>
@@ -375,16 +406,28 @@ export default function PreventiveMaintenance() {
       <Dialog open={!!completing} onOpenChange={o => !o && setCompleting(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Concluir manutenção</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">{completing?.title}</p>
+          <p className="text-sm text-muted-foreground">{completing?.title} · {completing && recurrenceLabel(completing)}</p>
           <div><Label>Resultado</Label><Textarea rows={3} value={completeResult} onChange={e => setCompleteResult(e.target.value)} maxLength={2000} /></div>
           <div><Label>Próxima manutenção</Label><Input type="date" value={completeNext} onChange={e => setCompleteNext(e.target.value)} /></div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompleting(null)}>Voltar</Button>
-            <Button onClick={confirmComplete}>Concluir</Button>
+            <Button onClick={confirmComplete} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}Concluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!viewing} onOpenChange={o => !o && setViewing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{viewing?.title}</DialogTitle></DialogHeader>
+          {viewing && <div className="space-y-3 text-sm break-words">
+            <p>{viewing.equipment_label || 'Não informado'} · {sectionLabel(viewing)}</p>
+            <p className="flex gap-2 items-center"><Repeat2 className="h-4 w-4" />{recurrenceLabel(viewing)}</p>
+            <p>{PM_STATUS[effectiveStatus(viewing)]?.label} · {fmtDate(viewing.scheduled_date)}</p>
+            <p>{viewing.description || 'Não informado'}</p><p>Resultado: {viewing.result || 'Não informado'}</p>
+            <div className="flex flex-wrap gap-2">{items.filter(m => m.id === viewing.generated_from_id || m.generated_from_id === viewing.id).map(m => <Button key={m.id} variant="outline" onClick={() => setViewing(m)}>{m.id === viewing.generated_from_id ? <ArrowLeft className="h-4 w-4 mr-1" /> : <ArrowRight className="h-4 w-4 mr-1" />}{m.id === viewing.generated_from_id ? 'Anterior' : 'Próxima'} · {fmtDate(m.scheduled_date)}</Button>)}</div>
+          </div>}
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={!!deleting} onOpenChange={o => !o && setDeleting(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir ocorrência?</AlertDialogTitle><AlertDialogDescription>Somente “{deleting?.title}” será excluída. Equipamentos e outras ocorrências serão preservados.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Voltar</AlertDialogCancel><AlertDialogAction disabled={saving} onClick={confirmDelete}>Excluir ocorrência</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <AlertDialog open={!!cancelling} onOpenChange={o => !o && setCancelling(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
