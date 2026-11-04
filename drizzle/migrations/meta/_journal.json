@@ -15,6 +15,13 @@
       "when": 1791284805515,
       "tag": "0001_create_preventive_maintenances",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793787706514,
+      "tag": "0002_preventive_recurrence_atomic",
+      "breakpoints": true
     }
   ]
 }

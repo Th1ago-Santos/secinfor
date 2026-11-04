@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveStatus, filterMaintenances, maintenanceSummary, type Maintenance, type MaintenanceFilters } from '../lib/preventiveMaintenance';
+import { effectiveStatus, filterMaintenances, maintenanceSummary, nextRecurrenceDate, validRecurrence, type Maintenance, type MaintenanceFilters } from '../lib/preventiveMaintenance';
 
 const date = '2026-11-03';
 const row: Maintenance = {
@@ -12,6 +12,18 @@ const row: Maintenance = {
 const filters: MaintenanceFilters = { section: 'all', status: 'all', type: 'all', priority: 'all', responsible: 'all', from: '', to: '', query: '' };
 
 describe('Manutenção preventiva: regras compartilhadas', () => {
+  it('Recorrência em dias soma a quantidade', () => expect(nextRecurrenceDate('2026-11-04', 3, 'dias')).toBe('2026-11-07'));
+  it('Recorrência semanal soma sete dias por semana', () => expect(nextRecurrenceDate('2026-11-04', 2, 'semanas')).toBe('2026-11-18'));
+  it('Mensal preserva calendário e limita ao último dia', () => expect(nextRecurrenceDate('2026-01-31', 1, 'meses')).toBe('2026-02-28'));
+  it('Anual limita dia bissexto ao último dia de fevereiro', () => expect(nextRecurrenceDate('2024-02-29', 1, 'anos')).toBe('2025-02-28'));
+  it('Próxima data explícita prevalece', () => expect(nextRecurrenceDate('2026-11-04', 1, 'dias', '2026-12-20')).toBe('2026-12-20'));
+  it.each([0, -1, 1.5])('Intervalo %s não é inteiro positivo válido', quantity => expect(validRecurrence(quantity, 'dias')).toBe(false));
+  it('Unidade desconhecida é rejeitada', () => expect(validRecurrence(1, 'horas')).toBe(false));
+  it('Filha planejada entra no resumo e filtros', () => {
+    const child = { ...row, status: 'planejada', scheduled_date: '2026-11-05', generated_from_id: 'parent', recurrence_enabled: true };
+    const rows = filterMaintenances([child], { ...filters, status: 'planejada' }, null, date);
+    expect(maintenanceSummary(rows, [], date).planejadas).toBe(1);
+  });
   it('Planejada vencida é Atrasada', () => expect(effectiveStatus(row, date)).toBe('atrasada'));
   it('Em andamento vencida é Atrasada', () => expect(effectiveStatus({ ...row, status: 'em_andamento' }, date)).toBe('atrasada'));
   it('Concluída não é Atrasada', () => expect(effectiveStatus({ ...row, status: 'concluida' }, date)).toBe('concluida'));

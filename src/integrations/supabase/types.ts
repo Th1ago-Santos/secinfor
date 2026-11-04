@@ -545,17 +545,23 @@ export type Database = {
           description: string | null
           equipment_label: string | null
           equipment_type: string
+          generated_from_id: string | null
           id: string
           maintenance_type: string
           material_id: string | null
           next_due_date: string | null
+          next_generated: boolean
           notebook_id: string | null
           notes: string | null
           priority: string
+          recurrence_enabled: boolean
+          recurrence_interval: number | null
+          recurrence_unit: string | null
           result: string | null
           scheduled_date: string
           section_id: string | null
           section_name: string | null
+          series_id: string | null
           started_at: string | null
           status: string
           title: string
@@ -572,17 +578,23 @@ export type Database = {
           description?: string | null
           equipment_label?: string | null
           equipment_type?: string
+          generated_from_id?: string | null
           id?: string
           maintenance_type: string
           material_id?: string | null
           next_due_date?: string | null
+          next_generated?: boolean
           notebook_id?: string | null
           notes?: string | null
           priority?: string
+          recurrence_enabled?: boolean
+          recurrence_interval?: number | null
+          recurrence_unit?: string | null
           result?: string | null
           scheduled_date: string
           section_id?: string | null
           section_name?: string | null
+          series_id?: string | null
           started_at?: string | null
           status?: string
           title: string
@@ -599,17 +611,23 @@ export type Database = {
           description?: string | null
           equipment_label?: string | null
           equipment_type?: string
+          generated_from_id?: string | null
           id?: string
           maintenance_type?: string
           material_id?: string | null
           next_due_date?: string | null
+          next_generated?: boolean
           notebook_id?: string | null
           notes?: string | null
           priority?: string
+          recurrence_enabled?: boolean
+          recurrence_interval?: number | null
+          recurrence_unit?: string | null
           result?: string | null
           scheduled_date?: string
           section_id?: string | null
           section_name?: string | null
+          series_id?: string | null
           started_at?: string | null
           status?: string
           title?: string
@@ -1122,6 +1140,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      complete_preventive_maintenance: {
+        Args: { p_id: string; p_next_date?: string; p_result?: string }
+        Returns: Json
+      }
       get_user_section: { Args: { _user_id: string }; Returns: string }
       get_user_section_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -1151,6 +1173,10 @@ export type Database = {
       }
       lookup_patrimonio: { Args: { p_patrimonio: string }; Returns: Json }
       lookup_ticket_public: { Args: { p_token: string }; Returns: Json }
+      pm_next_date: {
+        Args: { p_date: string; p_quantity: number; p_unit: string }
+        Returns: string
+      }
       soft_delete_ticket: { Args: { p_ticket_id: string }; Returns: string }
       update_ticket_attachment_metadata: {
         Args: {

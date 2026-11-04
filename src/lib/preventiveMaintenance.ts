@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears, format } from 'date-fns';
 
 export type Maintenance = {
   id: string; equipment_type: string; notebook_id: string | null; material_id: string | null;
@@ -7,7 +7,24 @@ export type Maintenance = {
   scheduled_date: string; started_at: string | null; completed_at: string | null; cancelled_at: string | null;
   assigned_to: string | null; assigned_name: string | null; completed_by: string | null;
   notes: string | null; result: string | null; next_due_date: string | null; created_at: string;
+  recurrence_enabled?: boolean; recurrence_interval?: number | null; recurrence_unit?: string | null;
+  series_id?: string | null; generated_from_id?: string | null; next_generated?: boolean;
 };
+export const RECURRENCE_UNITS: Record<string, string> = { dias: 'dias', semanas: 'semanas', meses: 'meses', anos: 'anos' };
+export function validRecurrence(quantity: number, unit: string) {
+  return Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 2147483647 && Object.prototype.hasOwnProperty.call(RECURRENCE_UNITS, unit);
+}
+export function recurrenceLabel(m: Pick<Maintenance, 'recurrence_enabled' | 'recurrence_interval' | 'recurrence_unit'>) {
+  return m.recurrence_enabled ? `A cada ${m.recurrence_interval} ${RECURRENCE_UNITS[m.recurrence_unit || ''] || ''}` : 'Não recorrente';
+}
+export function nextRecurrenceDate(date: string, quantity: number, unit: string, explicit?: string) {
+  if (!validRecurrence(quantity, unit)) throw new Error('Periodicidade inválida');
+  if (explicit) return explicit;
+  const base = new Date(`${date}T12:00:00`);
+  const add = { dias: addDays, semanas: addWeeks, meses: addMonths, anos: addYears }[unit];
+  if (!add) throw new Error('Unidade inválida');
+  return format(add(base, quantity), 'yyyy-MM-dd');
+}
 export const PM_STATUS: Record<string, { label: string; color: string }> = {
   planejada: { label: 'Planejada', color: '#3b82f6' },
   em_andamento: { label: 'Em andamento', color: '#d97706' },

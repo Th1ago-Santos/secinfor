@@ -1,5 +1,5 @@
-# Bloco 7C
-- [x] Integrar a base existente do PDF com filtros, resumo e auditoria, sem duplicar regras.
-- [x] Remover somente “Teste 7B limpeza” como administrador, sem excluir equipamento.
-- [x] Testar filtros, atraso, quatro perfis, PDFs vazios e multipágina; remover os 36 registros temporários criados para homologação.
-- [x] Validar 16 testes de regras, lint restrito sem avisos e compilação automática da prévia OK.
+# Bloco 7D
+- [ ] Adicionar recorrência e conclusão atômica idempotente, preservando RLS e auditoria.
+- [ ] Integrar formulário, vínculos, exclusão administrativa e indicação no PDF existente.
+- [ ] Testar regras, banco e navegador com os quatro perfis, PDF e auditoria; limpar registros temporários.
+- [ ] Conferir lint restrito e compilação automática da prévia.

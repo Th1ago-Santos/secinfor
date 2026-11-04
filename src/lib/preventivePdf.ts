@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ORG_NAME } from './pdfExport';
 import { statusColorRgb } from './statusColor';
-import { effectiveStatus, fmtDate, PM_PRIORITY, PM_STATUS, PM_TYPES, type Maintenance } from './preventiveMaintenance';
+import { effectiveStatus, fmtDate, recurrenceLabel, PM_PRIORITY, PM_STATUS, PM_TYPES, type Maintenance } from './preventiveMaintenance';
 
 const INK: [number, number, number] = [17, 24, 39];
 const MUTED: [number, number, number] = [75, 85, 99];
@@ -50,7 +50,7 @@ export function generatePreventivePDF(options: {
   const columns = ['Equipamento', 'Tipo de equipamento', ...(!options.singleSection ? ['Seção'] : []), 'Título da manutenção', 'Tipo da manutenção', 'Status', 'Prioridade', 'Agendada', 'Responsável', 'Início', 'Conclusão', 'Resultado', 'Próxima manutenção'];
   const statusIndex = options.singleSection ? 4 : 5, priorityIndex = statusIndex + 1;
   const rows = options.rows.map(m => [text(m.equipment_label), ({ notebook: 'Notebook', material: 'Material', outro: 'Outro equipamento' } as Record<string, string>)[m.equipment_type] || text(m.equipment_type),
-    ...(!options.singleSection ? [text(m.section_name)] : []), text(m.title), PM_TYPES[m.maintenance_type] || text(m.maintenance_type),
+    ...(!options.singleSection ? [text(m.section_name)] : []), `${text(m.title)}\n${recurrenceLabel(m)}`, PM_TYPES[m.maintenance_type] || text(m.maintenance_type),
     PM_STATUS[effectiveStatus(m)]?.label || m.status, PM_PRIORITY[m.priority]?.label || m.priority, fmtDate(m.scheduled_date), text(m.assigned_name),
     fmtDate(m.started_at), fmtDate(m.completed_at), text(m.result), fmtDate(m.next_due_date)]);
   if (rows.length) {
