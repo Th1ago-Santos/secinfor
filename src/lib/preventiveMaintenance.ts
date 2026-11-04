@@ -12,7 +12,7 @@ export type Maintenance = {
 };
 export const RECURRENCE_UNITS: Record<string, string> = { dias: 'dias', semanas: 'semanas', meses: 'meses', anos: 'anos' };
 export function validRecurrence(quantity: number, unit: string) {
-  return Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 2147483647 && Object.hasOwn(RECURRENCE_UNITS, unit);
+  return Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 2147483647 && Object.prototype.hasOwnProperty.call(RECURRENCE_UNITS, unit);
 }
 export function recurrenceLabel(m: Pick<Maintenance, 'recurrence_enabled' | 'recurrence_interval' | 'recurrence_unit'>) {
   return m.recurrence_enabled ? `A cada ${m.recurrence_interval} ${RECURRENCE_UNITS[m.recurrence_unit || ''] || ''}` : 'Não recorrente';
