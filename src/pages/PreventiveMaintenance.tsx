@@ -233,6 +233,21 @@ export default function PreventiveMaintenance() {
     if (ok) setCancelling(null);
   };
 
+  const maintenanceActions = (m: PM) => {
+    const open = m.status === 'planejada' || m.status === 'em_andamento';
+    return <>
+      <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Detalhes" onClick={() => setViewing(m)}><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Detalhes</TooltipContent></Tooltip>
+      {canEdit && <>
+        {open && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>}
+        {m.status === 'planejada' && <Button size="icon" variant="ghost" title="Iniciar" onClick={() => start(m)}><Play className="h-4 w-4" /></Button>}
+        {open && <Button size="icon" variant="ghost" title="Concluir" onClick={() => { setCompleting(m); setCompleteResult(m.result || ''); setCompleteNext(m.next_due_date || ''); }}><CheckCircle2 className="h-4 w-4" /></Button>}
+        {open && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => setCancelling(m)}><XCircle className="h-4 w-4" /></Button>}
+        {!open && <Button size="icon" variant="ghost" title="Reabrir" onClick={() => reopen(m)}><RotateCcw className="h-4 w-4" /></Button>}
+      </>}
+      {role === 'admin' && <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Excluir ocorrência" onClick={() => setDeleting(m)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Excluir ocorrência</TooltipContent></Tooltip>}
+    </>;
+  };
+
   const cards = [
     { label: 'Planejadas', value: stats.planejadas, icon: ListChecks, color: PM_STATUS.planejada.color },
     { label: 'Em andamento', value: stats.andamento, icon: Clock, color: PM_STATUS.em_andamento.color },
@@ -302,7 +317,7 @@ export default function PreventiveMaintenance() {
         </div>
       </CardContent></Card>
 
-      <Card><CardContent className="p-0 overflow-x-auto">
+      <div className="overflow-x-auto">
         {loading ? (
           <div className="p-4 space-y-2">{[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
         ) : error ? (
@@ -310,6 +325,25 @@ export default function PreventiveMaintenance() {
         ) : filtered.length === 0 ? (
           <EmptyState icon={Wrench} title="Nenhuma manutenção encontrada" description={items.length ? 'Ajuste os filtros.' : 'Nenhuma manutenção preventiva cadastrada ainda.'} />
         ) : (
+          <>
+          <div className="space-y-3 md:hidden">
+            {filtered.map(m => {
+              const st = effectiveStatus(m);
+              return <Card key={m.id}><CardContent className="p-4 space-y-3">
+                <div className="min-w-0 break-words"><h2 className="font-semibold text-sm">{m.title}</h2><p className="text-xs text-muted-foreground mt-1">{m.equipment_label || 'Não informado'}</p></div>
+                <div className="flex flex-wrap gap-2"><Pill label={PM_STATUS[st]?.label || st} color={PM_STATUS[st]?.color || PM_STATUS.cancelada.color} /><Pill label={PM_PRIORITY[m.priority]?.label || m.priority} color={PM_PRIORITY[m.priority]?.color || PM_PRIORITY.baixa.color} /></div>
+                <p className="flex gap-1 items-center text-xs text-muted-foreground">{m.recurrence_enabled && <Repeat2 className="h-3 w-3" />}{recurrenceLabel(m)}</p>
+                <dl className="grid grid-cols-2 gap-2 text-xs">
+                  <div><dt className="text-muted-foreground">Seção</dt><dd className="break-words">{sectionLabel(m)}</dd></div>
+                  <div><dt className="text-muted-foreground">Agendada</dt><dd>{fmtDate(m.scheduled_date)}</dd></div>
+                  <div><dt className="text-muted-foreground">Responsável</dt><dd className="break-words">{m.assigned_name || 'Não informado'}</dd></div>
+                  <div><dt className="text-muted-foreground">Próxima</dt><dd>{fmtDate(m.next_due_date)}</dd></div>
+                </dl>
+                <div className="flex flex-wrap justify-end border-t pt-2">{maintenanceActions(m)}</div>
+              </CardContent></Card>;
+            })}
+          </div>
+          <div className="hidden md:block rounded-lg border">
           <Table>
             <TableHeader><TableRow>
               <TableHead>Equipamento</TableHead><TableHead>Seção</TableHead><TableHead>Tipo</TableHead><TableHead>Status</TableHead>
@@ -319,7 +353,6 @@ export default function PreventiveMaintenance() {
             <TableBody>
               {filtered.map(m => {
                 const st = effectiveStatus(m);
-                const open = m.status === 'planejada' || m.status === 'em_andamento';
                 return (
                   <TableRow key={m.id}>
                     <TableCell><p className="font-medium text-sm">{m.title}</p><p className="text-xs text-muted-foreground">{m.equipment_label || 'Não informado'}</p><p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">{m.recurrence_enabled && <Repeat2 className="h-3 w-3 shrink-0" />}{recurrenceLabel(m)}</p></TableCell>
@@ -331,23 +364,17 @@ export default function PreventiveMaintenance() {
                     <TableCell className="text-sm">{m.assigned_name || '—'}</TableCell>
                     <TableCell className="text-sm font-mono">{fmtDate(m.next_due_date)}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                        <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Detalhes" onClick={() => setViewing(m)}><Eye className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Detalhes</TooltipContent></Tooltip>
-                        {canEdit && <>
-                        {open && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>}
-                        {m.status === 'planejada' && <Button size="icon" variant="ghost" title="Iniciar" onClick={() => start(m)}><Play className="h-4 w-4" /></Button>}
-                        {open && <Button size="icon" variant="ghost" title="Concluir" onClick={() => { setCompleting(m); setCompleteResult(m.result || ''); setCompleteNext(m.next_due_date || ''); }}><CheckCircle2 className="h-4 w-4" /></Button>}
-                        {open && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => setCancelling(m)}><XCircle className="h-4 w-4" /></Button>}
-                        {!open && <Button size="icon" variant="ghost" title="Reabrir" onClick={() => reopen(m)}><RotateCcw className="h-4 w-4" /></Button>}
-                        </>}
-                        {role === 'admin' && <Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" aria-label="Excluir ocorrência" onClick={() => setDeleting(m)}><Trash2 className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Excluir ocorrência</TooltipContent></Tooltip>}
+                        {maintenanceActions(m)}
                       </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
+          </div>
+          </>
         )}
-      </CardContent></Card>
+      </div>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
