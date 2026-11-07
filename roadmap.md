@@ -1,5 +1,5 @@
-# Bloco 7D
-- [x] Adicionar recorrência e conclusão atômica idempotente, preservando RLS e auditoria.
-- [x] Integrar formulário, vínculos, exclusão administrativa e indicação no PDF existente.
-- [x] Testar regras, banco e navegador com os quatro perfis, PDF e auditoria; remover os 12 registros temporários, preservando 36 notebooks e 154 materiais.
-- [x] Conferir 26 testes, lint restrito sem avisos e compilação automática da prévia sem erros; comandos manuais de tipos/build não executados por regra da plataforma.
+# Bloco 7E — Alertas internos de Manutenção Preventiva
+- [ ] Migration aditiva `pm_alert_states` (usuário+manutenção+tipo único, RLS por usuário, limpeza ao concluir/cancelar).
+- [ ] Derivar alertas de manutenção (atrasada/vence hoje/7 dias/recorrência) sem duplicar dados; integrar à página Alertas com filtros e ações de leitura/dispensa.
+- [ ] Contador do menu incluindo alertas de manutenção não lidos; bloco compacto na Central da Seção.
+- [ ] Auditoria de leitura/dispensa; testes no navegador com os 4 perfis; remover registros temporários.
