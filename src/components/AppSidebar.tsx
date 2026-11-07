@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
+import { usePmUnreadCount } from '@/hooks/usePmUnreadCount';
 
 type NavItem = { label: string; path: string; icon: any; roles: string[] };
 const navGroups: { title: string; items: NavItem[] }[] = [
@@ -71,6 +72,8 @@ export default function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
+  const pmUnreadCount = usePmUnreadCount();
+  const totalAlertCount = (role === 'admin' || role === 'operador' ? alertCount : 0) + pmUnreadCount;
 
   const groups = navGroups
     .map(g => ({ ...g, items: g.items.filter(i => !role || i.roles.includes(role)) }))
@@ -109,7 +112,7 @@ export default function AppSidebar() {
     navigate('/login');
   };
 
-  const showAlerts = role === 'admin' || role === 'operador';
+  const showAlerts = role === 'admin' || role === 'operador' || role === 'chefe_secao';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
