@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSections } from '@/hooks/useSections';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,30 +11,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Download, FileText, Printer } from 'lucide-react';
+import { Bell, CheckCircle, AlertTriangle, Info, XCircle, RefreshCw, Download, FileText, Printer, Wrench, Eye, EyeOff, CheckCheck, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generatePDFReport } from '@/lib/pdfExport';
+import { logAudit } from '@/lib/audit';
+import { derivePmAlerts, PM_ALERT_TYPE_LABELS, type PmAlert, type PmAlertType } from '@/lib/maintenanceAlerts';
+import type { Maintenance } from '@/lib/preventiveMaintenance';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import type { Alert } from '@/types';
 
-const nivelConfig: Record<string, { icon: React.ElementType; colorClass: string; badge: string }> = {
-  informativo: { icon: Info, colorClass: 'text-info', badge: 'outline' },
-  atencao: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary' },
-  critico: { icon: XCircle, colorClass: 'text-destructive', badge: 'destructive' },
+const nivelConfig: Record<string, { icon: React.ElementType; colorClass: string; badge: string; label: string }> = {
+  informativo: { icon: Info, colorClass: 'text-info', badge: 'outline', label: 'Informativo' },
+  medio: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary', label: 'Média' },
+  atencao: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary', label: 'Atenção' },
+  alto: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary', label: 'Alta' },
+  critico: { icon: XCircle, colorClass: 'text-destructive', badge: 'destructive', label: 'Crítica' },
 };
+
+type PmAlertState = { maintenance_id: string; alert_type: string; read_at: string | null; dismissed_at: string | null };
 
 export default function Alerts() {
   const { user } = useAuth();
+  const { role, isAdmin, isOperador, isChefeSecao, sectionId, sectionName } = useUserRole();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { sections } = useSections();
   const [generating, setGenerating] = useState(false);
   const [filterNivel, setFilterNivel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('ativo');
+  const [filterOrigem, setFilterOrigem] = useState(isChefeSecao ? 'manutencao' : 'todos');
+  const [filterPmSituacao, setFilterPmSituacao] = useState('nao_lidos');
+  const [filterPmTipo, setFilterPmTipo] = useState('all');
+  const [filterSecao, setFilterSecao] = useState('all');
 
+  const canSeeTicketAlerts = isAdmin || isOperador;
+
+  // Alertas de chamados/equipamentos (tabela alerts) — somente admin/operador
   const { data: alerts = [], isLoading: loading } = useQuery({
     queryKey: ['alerts', filterNivel, filterStatus],
+    enabled: canSeeTicketAlerts,
     queryFn: async () => {
       let query = supabase.from('alerts').select('*').order('created_at', { ascending: false });
       if (filterStatus !== 'all') query = query.eq('status', filterStatus);
@@ -43,6 +61,51 @@ export default function Alerts() {
     },
     staleTime: 15_000,
   });
+
+  // Manutenções preventivas — o RLS já limita o Chefe à própria seção
+  const { data: maintenances = [], isLoading: loadingPm } = useQuery({
+    queryKey: ['pm-alerts-maintenances'],
+    queryFn: async () => {
+      const { data } = await supabase.from('preventive_maintenances').select('*').order('scheduled_date', { ascending: true });
+      return (data as Maintenance[]) || [];
+    },
+    staleTime: 15_000,
+  });
+
+  // Estado individual de leitura/dispensa do usuário
+  const { data: pmStates = [] } = useQuery({
+    queryKey: ['pm-alert-states', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from('pm_alert_states').select('maintenance_id, alert_type, read_at, dismissed_at');
+      return (data as PmAlertState[]) || [];
+    },
+    staleTime: 10_000,
+  });
+
+  const pmAlerts = useMemo(() => derivePmAlerts(maintenances), [maintenances]);
+
+  const stateMap = useMemo(() => {
+    const map = new Map<string, PmAlertState>();
+    pmStates.forEach(s => map.set(`${s.maintenance_id}:${s.alert_type}`, s));
+    return map;
+  }, [pmStates]);
+
+  const filteredPmAlerts = useMemo(() => {
+    return pmAlerts.filter(a => {
+      if (isChefeSecao && sectionId && a.sectionId !== sectionId) return false;
+      if ((isAdmin || isOperador) && filterSecao !== 'all' && a.sectionId !== filterSecao) return false;
+      if (filterPmTipo !== 'all' && a.type !== filterPmTipo) return false;
+      const st = stateMap.get(a.key);
+      if (filterPmSituacao === 'nao_lidos' && (st?.read_at || st?.dismissed_at)) return false;
+      if (filterPmSituacao === 'lidos' && !st?.read_at) return false;
+      if (filterPmSituacao === 'dispensados' && !st?.dismissed_at) return false;
+      return true;
+    });
+  }, [pmAlerts, stateMap, filterPmTipo, filterPmSituacao, filterSecao, isAdmin, isOperador, isChefeSecao, sectionId]);
+
+  const showTicketAlerts = canSeeTicketAlerts && (filterOrigem === 'todos' || filterOrigem === 'chamados');
+  const showPmAlerts = filterOrigem === 'todos' || filterOrigem === 'manutencao';
 
   const generateAlerts = async () => {
     setGenerating(true);
@@ -86,6 +149,71 @@ export default function Alerts() {
     await supabase.from('alerts').update({ status: 'resolvido', resolvido_em: new Date().toISOString(), resolvido_por: user?.id } as any).eq('id', id);
     toast.success('Alerta marcado como resolvido.');
     queryClient.invalidateQueries({ queryKey: ['alerts'] });
+  };
+
+  const upsertPmState = async (alert: PmAlert, patch: { read_at?: string | null; dismissed_at?: string | null }) => {
+    if (!user) return;
+    const { error } = await supabase.from('pm_alert_states').upsert({
+      user_id: user.id,
+      maintenance_id: alert.maintenanceId,
+      alert_type: alert.type,
+      ...patch,
+      updated_at: new Date().toISOString(),
+    } as any, { onConflict: 'user_id,maintenance_id,alert_type' });
+    if (error) toast.error('Não foi possível atualizar o alerta.');
+    queryClient.invalidateQueries({ queryKey: ['pm-alert-states'] });
+    queryClient.invalidateQueries({ queryKey: ['pm-unread-count'] });
+  };
+
+  const markPmRead = async (alert: PmAlert) => {
+    await upsertPmState(alert, { read_at: new Date().toISOString() });
+    toast.success('Alerta marcado como lido.');
+    logAudit({
+      action: 'Alerta de manutenção marcado como lido', entityType: 'manutencao_preventiva',
+      entityId: alert.maintenanceId, entityLabel: alert.title, eventType: 'sistema', severity: 'baixo',
+      details: { tipo_alerta: alert.type, secao: alert.sectionName, equipamento: alert.equipment },
+    });
+  };
+
+  const dismissPmAlert = async (alert: PmAlert) => {
+    await upsertPmState(alert, { dismissed_at: new Date().toISOString() });
+    toast.success('Alerta dispensado.');
+    logAudit({
+      action: 'Alerta de manutenção dispensado', entityType: 'manutencao_preventiva',
+      entityId: alert.maintenanceId, entityLabel: alert.title, eventType: 'sistema', severity: 'baixo',
+      details: { tipo_alerta: alert.type, secao: alert.sectionName, equipamento: alert.equipment },
+    });
+  };
+
+  const markAllPmRead = async () => {
+    const unread = filteredPmAlerts.filter(a => {
+      const st = stateMap.get(a.key);
+      return !st?.read_at && !st?.dismissed_at;
+    });
+    if (unread.length === 0) { toast.info('Nenhum alerta não lido.'); return; }
+    const now = new Date().toISOString();
+    const rows = unread.map(a => ({
+      user_id: user!.id, maintenance_id: a.maintenanceId, alert_type: a.type, read_at: now, updated_at: now,
+    }));
+    const { error } = await supabase.from('pm_alert_states').upsert(rows as any, { onConflict: 'user_id,maintenance_id,alert_type' });
+    if (error) { toast.error('Não foi possível marcar todos como lidos.'); return; }
+    toast.success(`${unread.length} alerta(s) marcado(s) como lido(s).`);
+    queryClient.invalidateQueries({ queryKey: ['pm-alert-states'] });
+    queryClient.invalidateQueries({ queryKey: ['pm-unread-count'] });
+    logAudit({
+      action: 'Todos os alertas de manutenção marcados como lidos', entityType: 'manutencao_preventiva',
+      eventType: 'sistema', severity: 'baixo',
+      details: { quantidade: unread.length, secao: isChefeSecao ? sectionName : filterSecao === 'all' ? 'Todas as seções' : sections.find(s => s.id === filterSecao)?.name },
+    });
+  };
+
+  const openMaintenance = (alert: PmAlert) => {
+    logAudit({
+      action: 'Manutenção aberta a partir do alerta', entityType: 'manutencao_preventiva',
+      entityId: alert.maintenanceId, entityLabel: alert.title, eventType: 'sistema', severity: 'baixo',
+      details: { tipo_alerta: alert.type },
+    });
+    navigate('/manutencao-preventiva');
   };
 
   const exportCSV = () => {
@@ -135,6 +263,14 @@ export default function Alerts() {
     toast.success('PDF exportado com sucesso.');
   };
 
+  const pmDaysLabel = (a: PmAlert) => {
+    if (a.days === null) return '—';
+    if (a.days < 0) return `${Math.abs(a.days)} dia(s) em atraso`;
+    if (a.days === 0) return 'Vence hoje';
+    return `Vence em ${a.days} dia(s)`;
+  };
+
+  const totalCount = (showTicketAlerts ? alerts.length : 0) + (showPmAlerts ? filteredPmAlerts.length : 0);
 
   return (
     <PageTransition>
@@ -142,51 +278,106 @@ export default function Alerts() {
         <PageHeader
           icon={Bell}
           title="Alertas do Sistema"
-          description={`${alerts.length} alerta(s)`}
+          description={`${totalCount} alerta(s)`}
           actions={
             <div className="flex gap-2 flex-wrap">
-              <Button size="sm" onClick={generateAlerts} disabled={generating} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
-                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
-                {generating ? 'Gerando...' : 'Gerar Alertas'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportPDF} disabled={alerts.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
-              <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
-              <Button variant="outline" size="sm" onClick={() => window.print()} disabled={alerts.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
+              {canSeeTicketAlerts && (
+                <>
+                  <Button size="sm" onClick={generateAlerts} disabled={generating} className="gradient-primary border-0 shadow-glow hover:opacity-90 transition-all duration-300">
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${generating ? 'animate-spin' : ''}`} />
+                    {generating ? 'Gerando...' : 'Gerar Alertas'}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportPDF} disabled={alerts.length === 0}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+                  <Button variant="outline" size="sm" onClick={exportCSV} disabled={alerts.length === 0}><Download className="h-3.5 w-3.5 mr-1.5" />CSV</Button>
+                  <Button variant="outline" size="sm" onClick={() => window.print()} disabled={alerts.length === 0}><Printer className="h-3.5 w-3.5 mr-1.5" />Imprimir</Button>
+                </>
+              )}
+              {showPmAlerts && (
+                <Button variant="outline" size="sm" onClick={markAllPmRead} disabled={filteredPmAlerts.length === 0}>
+                  <CheckCheck className="h-3.5 w-3.5 mr-1.5" />Marcar todos como lidos
+                </Button>
+              )}
             </div>
           }
         />
 
         <Card className="shadow-card border-border/50">
           <CardContent className="pt-5">
-            <div className="flex flex-col sm:flex-row gap-3 mb-5 no-print">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ativo">Ativos</SelectItem>
-                  <SelectItem value="resolvido">Resolvidos</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterNivel} onValueChange={setFilterNivel}>
-                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os níveis</SelectItem>
-                  <SelectItem value="informativo">Informativo</SelectItem>
-                  <SelectItem value="atencao">Atenção</SelectItem>
-                  <SelectItem value="critico">Crítico</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col sm:flex-row gap-3 mb-5 no-print flex-wrap">
+              {canSeeTicketAlerts && (
+                <Select value={filterOrigem} onValueChange={setFilterOrigem}>
+                  <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todas as origens</SelectItem>
+                    <SelectItem value="chamados">Chamados e equipamentos</SelectItem>
+                    <SelectItem value="manutencao">Manutenção Preventiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              {showTicketAlerts && (
+                <>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="ativo">Ativos</SelectItem>
+                      <SelectItem value="resolvido">Resolvidos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterNivel} onValueChange={setFilterNivel}>
+                    <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os níveis</SelectItem>
+                      <SelectItem value="informativo">Informativo</SelectItem>
+                      <SelectItem value="atencao">Atenção</SelectItem>
+                      <SelectItem value="critico">Crítico</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+              {showPmAlerts && (
+                <>
+                  <Select value={filterPmSituacao} onValueChange={setFilterPmSituacao}>
+                    <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nao_lidos">Não lidos</SelectItem>
+                      <SelectItem value="lidos">Lidos</SelectItem>
+                      <SelectItem value="dispensados">Dispensados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterPmTipo} onValueChange={setFilterPmTipo}>
+                    <SelectTrigger className="w-full sm:w-[200px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os tipos</SelectItem>
+                      {(Object.keys(PM_ALERT_TYPE_LABELS) as PmAlertType[]).map(t => (
+                        <SelectItem key={t} value={t}>{PM_ALERT_TYPE_LABELS[t]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(isAdmin || isOperador) && (
+                    <Select value={filterSecao} onValueChange={setFilterSecao}>
+                      <SelectTrigger className="w-full sm:w-[180px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as seções</SelectItem>
+                        {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </>
+              )}
             </div>
 
-            {loading ? (
+            {(loading || loadingPm) ? (
               <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
-            ) : alerts.length === 0 ? (
+            ) : totalCount === 0 ? (
               <div className="text-center py-20 text-muted-foreground">
                 <div className="mx-auto w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
                   <Bell className="h-7 w-7 text-muted-foreground/30" />
                 </div>
                 <p className="text-base font-semibold">Nenhum alerta encontrado</p>
-                <p className="text-sm mt-1 text-muted-foreground/70">Clique em "Gerar Alertas" para verificar o sistema.</p>
+                <p className="text-sm mt-1 text-muted-foreground/70">
+                  {canSeeTicketAlerts ? 'Clique em "Gerar Alertas" para verificar o sistema.' : 'Não há alertas de manutenção para os filtros selecionados.'}
+                </p>
               </div>
             ) : (
               <>
@@ -196,24 +387,62 @@ export default function Alerts() {
                     <TableHeader>
                       <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/50">
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground w-10">Nível</TableHead>
+                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Origem</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Tipo</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Mensagem</TableHead>
-                        <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Patrimônio</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Seção</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground">Data</TableHead>
                         <TableHead className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {alerts.map(a => {
+                      {showPmAlerts && filteredPmAlerts.map(a => {
+                        const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
+                        const Icon = cfg.icon;
+                        const st = stateMap.get(a.key);
+                        const isRead = !!st?.read_at;
+                        const isDismissed = !!st?.dismissed_at;
+                        return (
+                          <TableRow key={a.key} className={`hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0 ${isDismissed ? 'opacity-50' : ''}`}>
+                            <TableCell><Icon className={`h-4 w-4 ${cfg.colorClass}`} /></TableCell>
+                            <TableCell><Badge variant="outline" className="text-[10px] font-medium gap-1"><Wrench className="h-3 w-3" />Manutenção</Badge></TableCell>
+                            <TableCell><Badge variant={cfg.badge as any} className="text-[10px] font-medium">{PM_ALERT_TYPE_LABELS[a.type]}</Badge></TableCell>
+                            <TableCell className="text-sm max-w-[340px]">
+                              <div>{a.message}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {a.type === 'recorrencia_gerada'
+                                  ? `Criada em ${new Date(a.createdAt).toLocaleDateString('pt-BR')}`
+                                  : `${pmDaysLabel(a)} · Responsável: ${a.responsible || 'Não informado'}`}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{a.sectionName || '—'}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{a.scheduledDate ? a.scheduledDate.slice(0, 10).split('-').reverse().join('/') : '—'}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary hover:bg-primary/10 rounded-lg" onClick={() => openMaintenance(a)} title="Abrir manutenção"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                                {!isRead && !isDismissed && (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success hover:bg-success/10 rounded-lg" onClick={() => markPmRead(a)} title="Marcar como lido"><Eye className="h-3.5 w-3.5" /></Button>
+                                )}
+                                {!isDismissed && (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:bg-muted rounded-lg" onClick={() => dismissPmAlert(a)} title="Dispensar"><EyeOff className="h-3.5 w-3.5" /></Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {showTicketAlerts && alerts.map(a => {
                         const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
                         const Icon = cfg.icon;
                         return (
                           <TableRow key={a.id} className="hover:bg-muted/30 transition-colors duration-200 group border-b border-border/30 last:border-0">
                             <TableCell><Icon className={`h-4 w-4 ${cfg.colorClass}`} /></TableCell>
+                            <TableCell><Badge variant="outline" className="text-[10px] font-medium">Chamados</Badge></TableCell>
                             <TableCell><Badge variant={cfg.badge as any} className="text-[10px] font-medium">{a.tipo}</Badge></TableCell>
-                            <TableCell className="text-sm max-w-[300px]">{a.mensagem}</TableCell>
-                            <TableCell className="text-sm font-mono text-muted-foreground">{a.item_patrimonio || '—'}</TableCell>
+                            <TableCell className="text-sm max-w-[300px]">
+                              <div>{a.mensagem}</div>
+                              {a.item_patrimonio && <div className="text-xs text-muted-foreground font-mono mt-0.5">{a.item_patrimonio}</div>}
+                            </TableCell>
                             <TableCell className="text-sm text-muted-foreground">{a.secao || '—'}</TableCell>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(a.created_at).toLocaleDateString('pt-BR')}</TableCell>
                             <TableCell className="text-right">
@@ -238,7 +467,49 @@ export default function Alerts() {
 
                 {/* Mobile card view */}
                 <div className="space-y-3 md:hidden">
-                  {alerts.map(a => {
+                  {showPmAlerts && filteredPmAlerts.map(a => {
+                    const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
+                    const Icon = cfg.icon;
+                    const st = stateMap.get(a.key);
+                    const isRead = !!st?.read_at;
+                    const isDismissed = !!st?.dismissed_at;
+                    return (
+                      <Card key={a.key} className={`border-border/50 shadow-sm ${isDismissed ? 'opacity-50' : ''}`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className={`p-1.5 rounded-lg ${cfg.colorClass === 'text-destructive' ? 'bg-destructive/10' : cfg.colorClass === 'text-warning' ? 'bg-warning/10' : 'bg-info/10'} shrink-0 mt-0.5`}>
+                              <Icon className={`h-4 w-4 ${cfg.colorClass}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Badge variant={cfg.badge as any} className="text-[10px] font-medium">{PM_ALERT_TYPE_LABELS[a.type]}</Badge>
+                                <Badge variant="outline" className="text-[10px] font-medium">Manutenção</Badge>
+                              </div>
+                              <p className="text-sm">{a.message}</p>
+                              <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
+                                {a.sectionName && <span>{a.sectionName}</span>}
+                                <span>{a.type === 'recorrencia_gerada' ? `Criada em ${new Date(a.createdAt).toLocaleDateString('pt-BR')}` : pmDaysLabel(a)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-1 mt-3 pt-2 border-t border-border/30">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openMaintenance(a)}>Abrir manutenção</Button>
+                            {!isRead && !isDismissed && (
+                              <Button variant="ghost" size="sm" className="h-7 text-xs text-success" onClick={() => markPmRead(a)}>
+                                <Eye className="h-3 w-3 mr-1" />Lido
+                              </Button>
+                            )}
+                            {!isDismissed && (
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => dismissPmAlert(a)}>
+                                <EyeOff className="h-3 w-3 mr-1" />Dispensar
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  {showTicketAlerts && alerts.map(a => {
                     const cfg = nivelConfig[a.nivel] || nivelConfig.informativo;
                     const Icon = cfg.icon;
                     return (
