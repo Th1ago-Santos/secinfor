@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
+import { usePmUnreadCount } from '@/hooks/usePmUnreadCount';
 
 type NavItem = { label: string; path: string; icon: any; roles: string[] };
 const navGroups: { title: string; items: NavItem[] }[] = [
@@ -71,6 +72,8 @@ export default function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const [alertCount, setAlertCount] = useState(0);
+  const pmUnreadCount = usePmUnreadCount();
+  const totalAlertCount = (role === 'admin' || role === 'operador' ? alertCount : 0) + pmUnreadCount;
 
   const groups = navGroups
     .map(g => ({ ...g, items: g.items.filter(i => !role || i.roles.includes(role)) }))
@@ -109,7 +112,7 @@ export default function AppSidebar() {
     navigate('/login');
   };
 
-  const showAlerts = role === 'admin' || role === 'operador';
+  const showAlerts = role === 'admin' || role === 'operador' || role === 'chefe_secao';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/60">
@@ -186,18 +189,18 @@ export default function AppSidebar() {
                         >
                           <div className="relative shrink-0">
                             <Bell className="h-4 w-4" />
-                            {alertCount > 0 && (
+                            {totalAlertCount > 0 && (
                               <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center ring-2 ring-sidebar-background">
-                                {alertCount}
+                                {totalAlertCount}
                               </span>
                             )}
                           </div>
                           {!collapsed && (
                             <span className="truncate flex items-center gap-2 text-[13px]">
                               Alertas
-                              {alertCount > 0 && (
+                              {totalAlertCount > 0 && (
                                 <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-semibold">
-                                  {alertCount}
+                                  {totalAlertCount}
                                 </Badge>
                               )}
                             </span>
@@ -207,7 +210,7 @@ export default function AppSidebar() {
                     </TooltipTrigger>
                     {collapsed && (
                       <TooltipContent side="right" className="font-medium">
-                        Alertas {alertCount > 0 ? `(${alertCount})` : ''}
+                        Alertas {totalAlertCount > 0 ? `(${totalAlertCount})` : ''}
                       </TooltipContent>
                     )}
                   </Tooltip>

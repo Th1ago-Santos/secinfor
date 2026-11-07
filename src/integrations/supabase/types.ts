@@ -533,6 +533,47 @@ export type Database = {
         }
         Relationships: []
       }
+      pm_alert_states: {
+        Row: {
+          alert_type: string
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          maintenance_id: string
+          read_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          maintenance_id: string
+          read_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          maintenance_id?: string
+          read_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_alert_states_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "preventive_maintenances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       preventive_maintenances: {
         Row: {
           assigned_name: string | null
