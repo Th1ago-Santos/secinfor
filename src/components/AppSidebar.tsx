@@ -189,18 +189,18 @@ export default function AppSidebar() {
                         >
                           <div className="relative shrink-0">
                             <Bell className="h-4 w-4" />
-                            {alertCount > 0 && (
+                            {totalAlertCount > 0 && (
                               <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[8px] font-bold flex items-center justify-center ring-2 ring-sidebar-background">
-                                {alertCount}
+                                {totalAlertCount}
                               </span>
                             )}
                           </div>
                           {!collapsed && (
                             <span className="truncate flex items-center gap-2 text-[13px]">
                               Alertas
-                              {alertCount > 0 && (
+                              {totalAlertCount > 0 && (
                                 <Badge variant="destructive" className="h-5 px-1.5 text-[10px] font-semibold">
-                                  {alertCount}
+                                  {totalAlertCount}
                                 </Badge>
                               )}
                             </span>
