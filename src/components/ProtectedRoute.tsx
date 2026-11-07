@@ -31,7 +31,7 @@ const routeTitles: Record<string, string> = {
 // Routes accessible by each role
 const roleRoutes: Record<string, string[]> = {
   admin: ['*'], // all routes
-  chefe_secao: ['/central-secao', '/manutencao-preventiva', '/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa', '/materiais'],
+  chefe_secao: ['/central-secao', '/manutencao-preventiva', '/alertas', '/chamados', '/notebooks', '/inventario', '/mapa-secoes', '/prioridades', '/pesquisa', '/materiais'],
   operador: ['/', '/central-secao', '/manutencao-preventiva', '/notebooks', '/itens', '/materiais', '/movimentacoes', '/inventario', '/alertas', '/prioridades', '/mapa-secoes', '/impressao', '/pesquisa', '/chamados'],
   visualizador: ['/prioridades', '/mapa-secoes', '/chamados'],
 };
