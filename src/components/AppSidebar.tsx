@@ -210,7 +210,7 @@ export default function AppSidebar() {
                     </TooltipTrigger>
                     {collapsed && (
                       <TooltipContent side="right" className="font-medium">
-                        Alertas {alertCount > 0 ? `(${alertCount})` : ''}
+                        Alertas {totalAlertCount > 0 ? `(${totalAlertCount})` : ''}
                       </TooltipContent>
                     )}
                   </Tooltip>
