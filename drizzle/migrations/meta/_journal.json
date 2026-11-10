@@ -36,6 +36,13 @@
       "when": 1794011022080,
       "tag": "0004_create_pm_alert_states",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794307696683,
+      "tag": "0005_scope_pm_alert_states_to_authorized_maintenance",
+      "breakpoints": true
     }
   ]
 }
