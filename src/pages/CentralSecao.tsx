@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { logAudit } from '@/lib/audit';
 import { statusColorRgb } from '@/lib/statusColor';
 import { generateCentralPDF } from '@/lib/centralPdf';
+import { usePmAlertData } from '@/hooks/usePmUnreadCount';
+import { activePmAlerts, PM_ALERT_TYPE_LABELS } from '@/lib/maintenanceAlerts';
 
 const ALL = '__all__';
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('pt-BR') : '—');
@@ -46,9 +48,14 @@ export default function CentralSecao() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [exporting, setExporting] = useState(false);
   const { user } = useAuth();
+  const pm = usePmAlertData();
 
   // chefe_secao: seção fixa (RLS também restringe no banco)
   const section = isChefeSecao ? sectionName : selected === ALL ? null : selected;
+  const attention = useMemo(() => activePmAlerts(pm.alerts, pm.states, section), [pm.alerts, pm.states, section]);
+  const urgent = attention.filter(a => a.type !== 'recorrencia_gerada').slice(0, 5);
+  const recentRecurrences = attention.filter(a => a.type === 'recorrencia_gerada')
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3);
 
   const load = useCallback(async () => {
     if (isChefeSecao && !sectionName) { setLoading(false); return; }
@@ -278,7 +285,7 @@ export default function CentralSecao() {
               </Select>
             )}
             {isChefeSecao && <Badge variant="outline" className="h-9 px-3">{sectionName}</Badge>}
-            <Button variant="outline" size="sm" className="h-9" onClick={load} disabled={loading}>
+            <Button variant="outline" size="sm" className="h-9" onClick={() => { load(); pm.refresh(); }} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />Atualizar
             </Button>
             <Button size="sm" className="h-9" onClick={exportPdf} disabled={loading || exporting || !stats}>
@@ -308,6 +315,40 @@ export default function CentralSecao() {
 
         {!loading && stats && data && (
           <>
+            <section aria-label="Manutenções que exigem atenção" className="space-y-3 border-y border-border py-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4" />Manutenções que exigem atenção</h2>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/alertas')}>Ver todos os alertas</Button>
+              </div>
+              {pm.loading ? <Skeleton className="h-24" /> : pm.error ? (
+                <p role="alert" className="text-sm text-destructive">Não foi possível carregar os alertas de manutenção.</p>
+              ) : <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {(['atrasada', 'vence_hoje', 'proximos_7_dias', 'recorrencia_gerada'] as const).map(type => (
+                    <div key={type} className="min-w-0">
+                      <p className="text-xs text-muted-foreground">{type === 'proximos_7_dias' ? 'Próximos 7 dias' : PM_ALERT_TYPE_LABELS[type]}</p>
+                      <p className={`text-xl font-semibold ${type === 'atrasada' ? 'text-destructive' : ''}`}>{attention.filter(a => a.type === type).length}</p>
+                    </div>
+                  ))}
+                </div>
+                {urgent.length === 0 && recentRecurrences.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma manutenção exige atenção nesta seção.</p>}
+                {[{ label: 'Mais urgentes', rows: urgent }, { label: 'Últimas recorrências geradas', rows: recentRecurrences }].map(group => group.rows.length > 0 && (
+                  <div key={group.label}>
+                    <h3 className="text-xs font-semibold text-muted-foreground mb-1">{group.label}</h3>
+                    <div className="divide-y divide-border">
+                      {group.rows.map(a => <div key={a.key} className="flex flex-wrap items-center gap-2 py-2">
+                        <div className="flex-1 min-w-0 basis-48">
+                          <p className="text-sm font-medium break-words">{a.title}</p>
+                          <p className="text-xs text-muted-foreground break-words">{a.equipment}{!section ? ` · ${a.sectionName || 'Sem seção'}` : ''} · {fmtDate(a.scheduledDate)}</p>
+                        </div>
+                        <Badge variant={a.type === 'atrasada' ? 'destructive' : 'outline'}>{PM_ALERT_TYPE_LABELS[a.type]}</Badge>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/manutencao-preventiva?manutencao=${a.maintenanceId}`)}>Abrir manutenção</Button>
+                      </div>)}
+                    </div>
+                  </div>
+                ))}
+              </>}
+            </section>
             {/* Chamados */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">

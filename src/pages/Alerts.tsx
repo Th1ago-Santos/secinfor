@@ -16,8 +16,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { generatePDFReport } from '@/lib/pdfExport';
 import { logAudit } from '@/lib/audit';
-import { derivePmAlerts, PM_ALERT_TYPE_LABELS, type PmAlert, type PmAlertType } from '@/lib/maintenanceAlerts';
-import type { Maintenance } from '@/lib/preventiveMaintenance';
+import { pmAlertStateMap, PM_ALERT_TYPE_LABELS, type PmAlert, type PmAlertType } from '@/lib/maintenanceAlerts';
+import { usePmAlertData } from '@/hooks/usePmUnreadCount';
 import PageTransition from '@/components/PageTransition';
 import PageHeader from '@/components/PageHeader';
 import type { Alert } from '@/types';
@@ -29,8 +29,6 @@ const nivelConfig: Record<string, { icon: React.ElementType; colorClass: string;
   alto: { icon: AlertTriangle, colorClass: 'text-warning', badge: 'secondary', label: 'Alta' },
   critico: { icon: XCircle, colorClass: 'text-destructive', badge: 'destructive', label: 'Crítica' },
 };
-
-type PmAlertState = { maintenance_id: string; alert_type: string; read_at: string | null; dismissed_at: string | null };
 
 export default function Alerts() {
   const { user } = useAuth();
@@ -62,34 +60,8 @@ export default function Alerts() {
     staleTime: 15_000,
   });
 
-  // Manutenções preventivas — o RLS já limita o Chefe à própria seção
-  const { data: maintenances = [], isLoading: loadingPm } = useQuery({
-    queryKey: ['pm-alerts-maintenances'],
-    queryFn: async () => {
-      const { data } = await supabase.from('preventive_maintenances').select('*').order('scheduled_date', { ascending: true });
-      return (data as Maintenance[]) || [];
-    },
-    staleTime: 15_000,
-  });
-
-  // Estado individual de leitura/dispensa do usuário
-  const { data: pmStates = [] } = useQuery({
-    queryKey: ['pm-alert-states', user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase.from('pm_alert_states').select('maintenance_id, alert_type, read_at, dismissed_at');
-      return (data as PmAlertState[]) || [];
-    },
-    staleTime: 10_000,
-  });
-
-  const pmAlerts = useMemo(() => derivePmAlerts(maintenances), [maintenances]);
-
-  const stateMap = useMemo(() => {
-    const map = new Map<string, PmAlertState>();
-    pmStates.forEach(s => map.set(`${s.maintenance_id}:${s.alert_type}`, s));
-    return map;
-  }, [pmStates]);
+  const { alerts: pmAlerts, states: pmStates, loading: loadingPm, error: pmError } = usePmAlertData();
+  const stateMap = useMemo(() => pmAlertStateMap(pmStates), [pmStates]);
 
   const filteredPmAlerts = useMemo(() => {
     return pmAlerts.filter(a => {
@@ -98,7 +70,8 @@ export default function Alerts() {
       if (filterPmTipo !== 'all' && a.type !== filterPmTipo) return false;
       const st = stateMap.get(a.key);
       if (filterPmSituacao === 'nao_lidos' && (st?.read_at || st?.dismissed_at)) return false;
-      if (filterPmSituacao === 'lidos' && !st?.read_at) return false;
+      if (filterPmSituacao === 'ativos' && st?.dismissed_at) return false;
+      if (filterPmSituacao === 'lidos' && (!st?.read_at || st?.dismissed_at)) return false;
       if (filterPmSituacao === 'dispensados' && !st?.dismissed_at) return false;
       return true;
     });
@@ -152,21 +125,21 @@ export default function Alerts() {
   };
 
   const upsertPmState = async (alert: PmAlert, patch: { read_at?: string | null; dismissed_at?: string | null }) => {
-    if (!user) return;
+    if (!user) return false;
     const { error } = await supabase.from('pm_alert_states').upsert({
       user_id: user.id,
       maintenance_id: alert.maintenanceId,
       alert_type: alert.type,
       ...patch,
       updated_at: new Date().toISOString(),
-    } as any, { onConflict: 'user_id,maintenance_id,alert_type' });
-    if (error) toast.error('Não foi possível atualizar o alerta.');
+    }, { onConflict: 'user_id,maintenance_id,alert_type' });
+    if (error) { toast.error('Não foi possível atualizar o alerta.'); return false; }
     queryClient.invalidateQueries({ queryKey: ['pm-alert-states'] });
-    queryClient.invalidateQueries({ queryKey: ['pm-unread-count'] });
+    return true;
   };
 
   const markPmRead = async (alert: PmAlert) => {
-    await upsertPmState(alert, { read_at: new Date().toISOString() });
+    if (!await upsertPmState(alert, { read_at: new Date().toISOString() })) return;
     toast.success('Alerta marcado como lido.');
     logAudit({
       action: 'Alerta de manutenção marcado como lido', entityType: 'manutencao_preventiva',
@@ -176,7 +149,7 @@ export default function Alerts() {
   };
 
   const dismissPmAlert = async (alert: PmAlert) => {
-    await upsertPmState(alert, { dismissed_at: new Date().toISOString() });
+    if (!await upsertPmState(alert, { dismissed_at: new Date().toISOString() })) return;
     toast.success('Alerta dispensado.');
     logAudit({
       action: 'Alerta de manutenção dispensado', entityType: 'manutencao_preventiva',
@@ -186,6 +159,7 @@ export default function Alerts() {
   };
 
   const markAllPmRead = async () => {
+    if (!user) return;
     const unread = filteredPmAlerts.filter(a => {
       const st = stateMap.get(a.key);
       return !st?.read_at && !st?.dismissed_at;
@@ -193,9 +167,9 @@ export default function Alerts() {
     if (unread.length === 0) { toast.info('Nenhum alerta não lido.'); return; }
     const now = new Date().toISOString();
     const rows = unread.map(a => ({
-      user_id: user!.id, maintenance_id: a.maintenanceId, alert_type: a.type, read_at: now, updated_at: now,
+      user_id: user.id, maintenance_id: a.maintenanceId, alert_type: a.type, read_at: now, updated_at: now,
     }));
-    const { error } = await supabase.from('pm_alert_states').upsert(rows as any, { onConflict: 'user_id,maintenance_id,alert_type' });
+    const { error } = await supabase.from('pm_alert_states').upsert(rows, { onConflict: 'user_id,maintenance_id,alert_type' });
     if (error) { toast.error('Não foi possível marcar todos como lidos.'); return; }
     toast.success(`${unread.length} alerta(s) marcado(s) como lido(s).`);
     queryClient.invalidateQueries({ queryKey: ['pm-alert-states'] });
@@ -213,7 +187,7 @@ export default function Alerts() {
       entityId: alert.maintenanceId, entityLabel: alert.title, eventType: 'sistema', severity: 'baixo',
       details: { tipo_alerta: alert.type },
     });
-    navigate('/manutencao-preventiva');
+    navigate(`/manutencao-preventiva?manutencao=${alert.maintenanceId}`);
   };
 
   const exportCSV = () => {
@@ -341,6 +315,7 @@ export default function Alerts() {
                     <SelectTrigger className="w-full sm:w-[160px] h-9 bg-muted/30 border-border/50"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="nao_lidos">Não lidos</SelectItem>
+                      <SelectItem value="ativos">Ativos</SelectItem>
                       <SelectItem value="lidos">Lidos</SelectItem>
                       <SelectItem value="dispensados">Dispensados</SelectItem>
                     </SelectContent>
@@ -367,6 +342,7 @@ export default function Alerts() {
               )}
             </div>
 
+            {pmError && <p role="alert" className="text-sm text-destructive mb-3">Não foi possível carregar os alertas de manutenção.</p>}
             {(loading || loadingPm) ? (
               <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
             ) : totalCount === 0 ? (
