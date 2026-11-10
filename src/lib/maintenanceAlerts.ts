@@ -34,6 +34,22 @@ export const PM_ALERT_NIVEL: Record<PmAlertType, PmAlert['nivel']> = {
   recorrencia_gerada: 'informativo',
 };
 
+export type PmAlertState = { maintenance_id: string; alert_type: string; read_at: string | null; dismissed_at: string | null };
+
+export function pmAlertStateMap(states: PmAlertState[]) {
+  return new Map(states.map(s => [`${s.maintenance_id}:${s.alert_type}`, s]));
+}
+
+export function activePmAlerts(alerts: PmAlert[], states: PmAlertState[], sectionName: string | null = null) {
+  const map = pmAlertStateMap(states);
+  return alerts.filter(a => (!sectionName || a.sectionName === sectionName) && !map.get(a.key)?.dismissed_at);
+}
+
+export function unreadPmAlerts(alerts: PmAlert[], states: PmAlertState[]) {
+  const map = pmAlertStateMap(states);
+  return activePmAlerts(alerts, states).filter(a => !map.get(a.key)?.read_at);
+}
+
 /**
  * Deriva os alertas de manutenção diretamente dos dados atuais —
  * nenhuma cópia é gravada, então atualizar a página nunca duplica alertas.

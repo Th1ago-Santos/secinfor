@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ROLE_LABELS, useUserRole } from '@/hooks/useUserRole';
@@ -46,6 +47,7 @@ const emptyForm: FormState = {
 };
 
 export default function PreventiveMaintenance() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { role, loading: roleLoading, canEdit, isChefeSecao, sectionId, sectionName, missingSection } = useUserRole();
   const { sections } = useSections();
@@ -75,6 +77,15 @@ export default function PreventiveMaintenance() {
   const [completeResult, setCompleteResult] = useState('');
   const [completeNext, setCompleteNext] = useState('');
   const [cancelling, setCancelling] = useState<PM | null>(null);
+
+  useEffect(() => {
+    const id = searchParams.get('manutencao');
+    if (!id || loading || roleLoading) return;
+    const item = items.find(m => m.id === id);
+    if (item) setViewing(item);
+    else toast.error('Manutenção não encontrada ou sem permissão de acesso.');
+    setSearchParams({}, { replace: true });
+  }, [items, loading, roleLoading, searchParams, setSearchParams]);
 
   const load = async () => {
     setLoading(true); setError(null);

@@ -1,5 +1,6 @@
 # Bloco 7E — Alertas internos de Manutenção Preventiva
-- [ ] Migration aditiva `pm_alert_states` (usuário+manutenção+tipo único, RLS por usuário, limpeza ao concluir/cancelar).
-- [ ] Derivar alertas de manutenção (atrasada/vence hoje/7 dias/recorrência) sem duplicar dados; integrar à página Alertas com filtros e ações de leitura/dispensa.
-- [ ] Contador do menu incluindo alertas de manutenção não lidos; bloco compacto na Central da Seção.
-- [ ] Auditoria de leitura/dispensa; testes no navegador com os 4 perfis; remover registros temporários.
+- [x] Reutilizar tabela, derivação de quatro tipos, filtros e estados individuais existentes.
+- [ ] Revisar permissões dos estados e corrigir inconsistências de leitura/dispensa.
+- [ ] Integrar resumo compacto na Central com a mesma lógica e escopo de seção.
+- [ ] Homologar quatro perfis, isolamento, contador, estados, recorrência e auditoria no navegador.
+- [ ] Remover apenas dados temporários; executar testes e lint restrito; conferir prévia.
